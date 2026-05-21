@@ -60,6 +60,7 @@
 		"@better-auth/stripe": "^1.6.11",
 		"@tanstack/svelte-form": "^1.32.0",
 		"better-auth": "^1.6.11",
+		"mode-watcher": "^1.1.0",
 		"stripe": "^22.1.1",
 		"zod": "^4.4.3"
 	}
