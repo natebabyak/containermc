@@ -35,7 +35,7 @@
 			password: ''
 		},
 		validators: {
-			onDynamic: schema
+			onSubmit: schema
 		},
 		onSubmit: async ({ value }) => {
 			authClient.signUp.email({
@@ -63,7 +63,7 @@
 			}}
 		>
 			<Field.Group>
-				<form.Field name="name">
+				<form.Field name="name" validators={{ onBlur: schema.shape.name }}>
 					{#snippet children(field)}
 						<Field.Field>
 							<Field.Label for={field.name}>Name</Field.Label>
@@ -86,7 +86,7 @@
 						</Field.Field>
 					{/snippet}
 				</form.Field>
-				<form.Field name="email">
+				<form.Field name="email" validators={{ onBlur: schema.shape.email }}>
 					{#snippet children(field)}
 						<Field.Field>
 							<Field.Label for={field.name}>Email</Field.Label>
@@ -109,7 +109,7 @@
 						</Field.Field>
 					{/snippet}
 				</form.Field>
-				<form.Field name="password">
+				<form.Field name="password" validators={{ onChange: schema.shape.password }}>
 					{#snippet children(field)}
 						<Field.Field>
 							<Field.Label for={field.name}>Password</Field.Label>
@@ -152,6 +152,11 @@
 									</Tooltip.Root>
 								</InputGroup.Addon>
 							</InputGroup.Root>
+							{#if field.state.meta.errors[0]}
+								<Field.Error>
+									{field.state.meta.errors[0].message}
+								</Field.Error>
+							{/if}
 						</Field.Field>
 					{/snippet}
 				</form.Field>
