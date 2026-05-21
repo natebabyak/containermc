@@ -9,7 +9,6 @@
 	import ArrowRight from '@lucide/svelte/icons/arrow-right';
 	import { sineOut } from 'svelte/easing';
 	import { cn } from '$lib/utils';
-	import * as Item from '$lib/components/ui/item/index.js';
 
 	let scrollY = $state(0);
 

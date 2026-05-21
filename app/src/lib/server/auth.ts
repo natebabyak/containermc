@@ -1,9 +1,15 @@
-import { betterAuth } from 'better-auth/minimal';
+import { betterAuth } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { sveltekitCookies } from 'better-auth/svelte-kit';
 import { env } from '$env/dynamic/private';
 import { getRequestEvent } from '$app/server';
 import { db } from '$lib/server/db';
+import { stripe } from '@better-auth/stripe';
+import Stripe from 'stripe';
+
+const stripeClient = new Stripe(env.STRIPE_SECRET_KEY, {
+	apiVersion: '2026-04-22.dahlia'
+});
 
 export const auth = betterAuth({
 	baseURL: env.ORIGIN,
@@ -24,5 +30,12 @@ export const auth = betterAuth({
 			clientSecret: env.GOOGLE_CLIENT_SECRET
 		}
 	},
-	plugins: [sveltekitCookies(getRequestEvent)]
+	plugins: [
+		stripe({
+			stripeClient,
+			stripeWebhookSecret: env.STRIPE_WEBHOOK_SECRET,
+			createCustomerOnSignUp: true
+		}),
+		sveltekitCookies(getRequestEvent)
+	]
 });

@@ -1,9 +1,17 @@
-import { pgTable, serial, integer, text } from 'drizzle-orm/pg-core';
+import { pgTable, text, uuid, timestamp, jsonb } from 'drizzle-orm/pg-core';
+import { user } from './auth.schema';
 
-export const task = pgTable('task', {
-	id: serial('id').primaryKey(),
-	title: text('title').notNull(),
-	priority: integer('priority').notNull().default(1)
+export const server = pgTable('server', {
+	id: uuid('id').primaryKey().defaultRandom(),
+	name: text('name').notNull(),
+	properties: jsonb('properties').default({}).notNull(),
+	userId: text('user_id')
+		.notNull()
+		.references(() => user.id, { onDelete: 'cascade' }),
+	createdAt: timestamp('created_at').defaultNow().notNull(),
+	updatedAt: timestamp('updated_at')
+		.$onUpdate(() => new Date())
+		.notNull()
 });
 
 export * from './auth.schema';
