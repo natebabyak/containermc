@@ -9,6 +9,9 @@
 	import Stripe from 'stripe';
 	import type { Region } from '@aws-sdk/client-ec2';
 	import * as Select from '$lib/components/ui/select/index.js';
+	import Server from '@lucide/svelte/icons/server';
+	import { onMount } from 'svelte';
+	import * as Item from '$lib/components/ui/item/index.js';
 
 	interface CreateServerDialogProps {
 		paymentMethods: Stripe.PaymentMethod[];
@@ -17,45 +20,46 @@
 
 	let { paymentMethods, regions }: CreateServerDialogProps = $props();
 
-	let regionGroups = $derived([
-		{
-			code: 'ap',
-			name: 'Asia Pacific',
-			regions: regions.filter((r) => r.RegionName?.startsWith('ap')).toSorted()
-		},
-		{
-			code: 'ca',
-			name: 'Canada',
-			regions: regions.filter((r) => r.RegionName?.startsWith('ca')).toSorted()
-		},
-		{
-			code: 'eu',
-			name: 'Europe',
-			regions: regions.filter((r) => r.RegionName?.startsWith('eu')).toSorted()
-		},
-		{
-			code: 'sa',
-			name: 'South America',
-			regions: regions.filter((r) => r.RegionName?.startsWith('sa')).toSorted()
-		},
-		{
-			code: 'us',
-			name: 'United States',
-			regions: regions.filter((r) => r.RegionName?.startsWith('us')).toSorted()
-		}
-	]);
+	function range(start: number, stop: number, step: number) {
+		return Array.from({ length: (stop - start) / step + 1 }, (_, i) => start + i * step);
+	}
 
-	const schema = z.object({
-		name: z.string().min(1, 'Name is required'),
-		ipAddress: z.string(),
-		region: z.string()
-	});
+	const schema = z
+		.object({
+			name: z.string().min(1, 'Name is required'),
+			ipAddress: z.string(),
+			region: z.string(),
+			cpu: z.number(),
+			memory: z.number()
+		})
+		.refine((val) => {
+			switch (val.cpu) {
+				case 0.25:
+					return val.memory in [0.5, 1, 2];
+				case 0.5:
+					return val.memory in range(1, 4, 1);
+				case 1:
+					return val.memory in range(2, 8, 1);
+				case 2:
+					return val.memory in range(4, 16, 1);
+				case 4:
+					return val.memory in range(8, 30, 1);
+				case 8:
+					return val.memory in range(16, 60, 4);
+				case 16:
+					return val.memory in range(32, 120, 8);
+				default:
+					return false;
+			}
+		});
 
 	const form = createForm(() => ({
 		defaultValues: {
 			name: '',
 			ipAddress: '',
-			region: ''
+			region: '',
+			cpu: 0.25,
+			memory: 0.5
 		},
 		validators: {
 			onSubmit: schema
@@ -65,7 +69,70 @@
 		}
 	}));
 
+	interface RegionGroup {
+		id: string;
+		name: string;
+		regions: (Region & {
+			ping: number;
+		})[];
+	}
+
 	let activeStep = $state('server');
+	let regionGroups = $state<RegionGroup[] | null>(null);
+
+	async function measurePing(region: Region) {
+		const url = `https://${region.Endpoint}`;
+		const start = performance.now();
+		try {
+			await fetch(url, { method: 'HEAD', mode: 'no-cors' });
+			return performance.now() - start;
+		} catch {
+			return -1;
+		}
+	}
+
+	async function mapRegions(regionGroupId: string) {
+		return (
+			await Promise.all(
+				regions
+					.filter((r) => r.RegionName?.startsWith(regionGroupId))
+					.map(async (r) => ({
+						...r,
+						ping: await measurePing(r)
+					}))
+			)
+		).toSorted((a, b) => a.ping - b.ping);
+	}
+
+	onMount(async () => {
+		regionGroups = [
+			{
+				id: 'ap',
+				name: 'Asia Pacific',
+				regions: await mapRegions('ap')
+			},
+			{
+				id: 'ca',
+				name: 'Canada',
+				regions: await mapRegions('ca')
+			},
+			{
+				id: 'eu',
+				name: 'Europe',
+				regions: await mapRegions('eu')
+			},
+			{
+				id: 'sa',
+				name: 'South America',
+				regions: await mapRegions('sa')
+			},
+			{
+				id: 'us',
+				name: 'United States',
+				regions: await mapRegions('us')
+			}
+		].toSorted((a, b) => a.regions[0].ping - b.regions[0].ping);
+	});
 </script>
 
 <Dialog.Root open>
@@ -132,22 +199,34 @@
 											value={field.state.value}
 											onValueChange={(value) => field.handleChange(value)}
 										>
-											<Select.Trigger>Select Region</Select.Trigger>
+											<Select.Trigger>{field.state.value || 'Select Region'}</Select.Trigger>
 											<Select.Content class="max-h-75">
 												{#each regionGroups as regionGroup, i (i)}
 													<Select.Group>
 														<Select.Label>{regionGroup.name}</Select.Label>
 														{#each regionGroup.regions as region, i (i)}
-															<Select.Item value={region.RegionName}>
-																{region.RegionName}
-																{console.log(region.Geography)}
-															</Select.Item>
+															<Item.Root>
+																{#snippet child({ props })}
+																	<Select.Item {...props} value={region.RegionName!}>
+																		<Item.Content>
+																			<Item.Title>
+																				{region.RegionName}
+																			</Item.Title>
+																			<Item.Description>
+																				{region.Geography?.[0].Name}
+																			</Item.Description>
+																		</Item.Content>
+																		<Item.Actions>
+																			{region.ping} ms
+																		</Item.Actions>
+																	</Select.Item>
+																{/snippet}
+															</Item.Root>
 														{/each}
 													</Select.Group>
 												{/each}
 											</Select.Content>
 										</Select.Root>
-										<Button>Choose For Me</Button>
 									</Field.Field>
 								{/snippet}
 							</form.Field>
@@ -162,7 +241,7 @@
 					<Accordion.Content>
 						<Field.Group>
 							<Field.Field>
-								<Field.Label></Field.Label>
+								<Field.Label>Payment Method</Field.Label>
 							</Field.Field>
 							<Field.Field>
 								<Button onclick={() => (activeStep = 'review')}>Continue to Review</Button>
