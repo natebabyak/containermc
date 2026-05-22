@@ -1,13 +1,14 @@
 <script lang="ts">
-	import DashboardSidebar from './dashboard-sidebar.svelte';
 	import * as Sidebar from '$lib/components/ui/sidebar/index.js';
-	import type { PageData } from './$types';
+	import type { PageProps } from './$types';
 	import Server from '@lucide/svelte/icons/server';
 	import * as Empty from '$lib/components/ui/empty/index.js';
 	import { Button } from '$lib/components/ui/button/index.js';
 	import * as Item from '$lib/components/ui/item/index.js';
+	import DashboardSidebar from './dashboard-sidebar.svelte';
+	import CreateServerDialog from './create-server-dialog.svelte';
 
-	let { data }: PageData = $props();
+	let { data }: PageProps = $props();
 </script>
 
 <Sidebar.Provider>
@@ -37,13 +38,13 @@
 						<Server />
 					</Empty.Media>
 					<Empty.Title>No Servers</Empty.Title>
-					<Empty.Description
-						>You haven't created any servers yet. Get started by creating your first server.</Empty.Description
-					>
+					<Empty.Description>
+						You haven't created any servers yet. Get started by creating your first server.
+					</Empty.Description>
 				</Empty.Header>
 				<Empty.Content>
 					<div class="flex gap-2">
-						<Button>Create Server</Button>
+						<CreateServerDialog paymentMethods={data.paymentMethods} regions={data.regions} />
 						<Button variant="outline">Connect Server</Button>
 					</div>
 				</Empty.Content>

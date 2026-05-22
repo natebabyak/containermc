@@ -1,8 +1,6 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
 	import { Button } from '$lib/components/ui/button/index.js';
-	import * as NavigationMenu from '$lib/components/ui/navigation-menu/index.js';
-	import { navigationMenuTriggerStyle } from '$lib/components/ui/navigation-menu/navigation-menu-trigger.svelte';
 	import ChevronRight from '@lucide/svelte/icons/chevron-right';
 	import { blur } from 'svelte/transition';
 	import Container from '@lucide/svelte/icons/container';
@@ -23,19 +21,9 @@
 
 <header class="sticky top-0 bg-background">
 	<div class="flex items-center justify-between p-8">
-		<NavigationMenu.Root>
-			<NavigationMenu.List>
-				<NavigationMenu.Item>
-					<NavigationMenu.Link>
-						{#snippet child()}
-							<a href={resolve('/')} class={navigationMenuTriggerStyle()}>
-								<Container />
-							</a>
-						{/snippet}
-					</NavigationMenu.Link>
-				</NavigationMenu.Item>
-			</NavigationMenu.List>
-		</NavigationMenu.Root>
+		<Button href={resolve('/')} size="icon-lg" variant="ghost">
+			<Container />
+		</Button>
 		<div class="flex gap-2">
 			<Button href={resolve('/sign-in')} variant="ghost">Sign in</Button>
 			<Button href={resolve('/sign-up')} variant="outline">Sign up</Button>

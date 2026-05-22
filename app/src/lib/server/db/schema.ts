@@ -16,13 +16,12 @@ export const server = pgTable('server', {
 });
 
 export const serverSession = pgTable('server_session', {
-  id: uuid('id').primaryKey().defaultRandom(),
+	id: uuid('id').primaryKey().defaultRandom(),
 	startedAt: timestamp('started_at').defaultNow().notNull(),
 	endedAt: timestamp('ended_at'),
 	serverId: text('server_id')
 		.notNull()
-		.references(() => server.id, { onDelete: 'cascade' }),
-	
+		.references(() => server.id, { onDelete: 'cascade' })
 });
 
 export const serverRelations = relations(server, ({ one }) => ({

@@ -57,6 +57,8 @@
 		"vite": "^8.0.7"
 	},
 	"dependencies": {
+		"@aws-sdk/client-ec2": "^3.1052.0",
+		"@aws-sdk/client-ecs": "^3.1052.0",
 		"@better-auth/stripe": "^1.6.11",
 		"@tanstack/svelte-form": "^1.32.0",
 		"better-auth": "^1.6.11",
