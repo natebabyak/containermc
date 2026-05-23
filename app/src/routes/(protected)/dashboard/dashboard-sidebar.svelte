@@ -9,30 +9,27 @@
 	import Sun from '@lucide/svelte/icons/sun';
 	import Moon from '@lucide/svelte/icons/moon';
 	import { resetMode, setMode, userPrefersMode } from 'mode-watcher';
+	import Container from '@lucide/svelte/icons/container';
+	import ChevronsUpDown from '@lucide/svelte/icons/chevrons-up-down';
 
 	const session = authClient.useSession();
 </script>
 
-<svelte:head>
-	<title>Dashboard | ContainerMC</title>
-	<meta name="description" content="" />
-</svelte:head>
 <Sidebar.Root>
 	<Sidebar.Header>
 		<DropdownMenu.Root>
 			<DropdownMenu.Trigger>
-				{#snippet child(props)}
-					<Sidebar.MenuButton {...props}></Sidebar.MenuButton>
+				{#snippet child({ props })}
+					<Sidebar.MenuButton {...props} size="lg">
+						<Container />
+						My Servers
+						<ChevronsUpDown class="ml-auto" />
+					</Sidebar.MenuButton>
 				{/snippet}
 			</DropdownMenu.Trigger>
 			<DropdownMenu.Content>
 				<DropdownMenu.Group>
-					<DropdownMenu.Label>My Account</DropdownMenu.Label>
-					<DropdownMenu.Separator />
-					<DropdownMenu.Item>Profile</DropdownMenu.Item>
-					<DropdownMenu.Item>Billing</DropdownMenu.Item>
-					<DropdownMenu.Item>Team</DropdownMenu.Item>
-					<DropdownMenu.Item>Subscription</DropdownMenu.Item>
+					<DropdownMenu.Label>My Servers</DropdownMenu.Label>
 				</DropdownMenu.Group>
 			</DropdownMenu.Content>
 		</DropdownMenu.Root>

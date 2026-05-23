@@ -1,16 +1,6 @@
-export const HARDWARE_MAP = {
-	'0.25': { min: 1, max: 2, step: 1 },
-	'0.5': { min: 1, max: 4, step: 1 },
-	'1': { min: 2, max: 8, step: 1 },
-	'2': { min: 4, max: 16, step: 1 },
-	'4': { min: 8, max: 30, step: 1 },
-	'8': { min: 16, max: 60, step: 4 },
-	'16': { min: 32, max: 120, step: 8 }
-} as const;
-
-export const HARDWARE_PRESETS = [
+export const HARDWARE_OPTIONS = [
 	{
-		name: 'XS',
+		name: 'X-Small',
 		cpu: '2',
 		memory: 1,
 		rate: 0.01
@@ -34,13 +24,13 @@ export const HARDWARE_PRESETS = [
 		rate: 0.08
 	},
 	{
-		name: 'XL',
+		name: 'X-Large',
 		cpu: '4',
 		memory: 16,
 		rate: 0.16
 	},
 	{
-		name: '2XL',
+		name: 'XX-Large',
 		cpu: '8',
 		memory: 32,
 		rate: 0.32

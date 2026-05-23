@@ -10,11 +10,10 @@
 	import * as Select from '$lib/components/ui/select/index.js';
 	import { onMount } from 'svelte';
 	import * as Item from '$lib/components/ui/item/index.js';
-	import { Slider } from '$lib/components/ui/slider/index.js';
 	import * as RadioGroup from '$lib/components/ui/radio-group/index.js';
 	import type { RegionGroup } from './types';
 	import { mapRegionGroups } from './utils';
-	import { HARDWARE_MAP, HARDWARE_PRESETS, MINECRAFT_VERSIONS, SERVER_TYPES } from './constants';
+	import { HARDWARE_OPTIONS, MINECRAFT_VERSIONS, SERVER_TYPES } from './constants';
 	import z from 'zod';
 	import * as Drawer from '$lib/components/ui/drawer/index.js';
 	import { IsMobile } from '$lib/hooks/is-mobile.svelte';
@@ -31,28 +30,34 @@
 	let { paymentMethods, regions }: CreateServerDialogProps = $props();
 
 	const schema = z.object({
-		name: z.string().min(1, 'Name is required'),
-		version: z.enum(MINECRAFT_VERSIONS),
-		type: z.enum(SERVER_TYPES),
-		region: z.string().min(1, 'Region is required'),
-		hardware: z.object({
-			cpu: z.string(),
-			memory: z.number()
+		step1: z.object({
+			name: z.string().min(1, 'Name is required'),
+			version: z.enum(MINECRAFT_VERSIONS),
+			type: z.enum(SERVER_TYPES)
 		}),
-		paymentMethodId: z.string().min(1, 'Payment method is required')
+		step2: z.object({
+			region: z.string().min(1, 'Region is required'),
+			hardware: z.enum(HARDWARE_OPTIONS.map((h) => h.name))
+		}),
+		step3: z.object({
+			paymentMethodId: z.string().min(1, 'Payment method is required')
+		})
 	});
 
 	const form = createForm(() => ({
 		defaultValues: {
-			name: '',
-			version: 'LATEST',
-			type: 'VANILLA',
-			region: '',
-			hardware: {
-				cpu: '2',
-				memory: 4
+			step1: {
+				name: '',
+				version: 'LATEST',
+				type: 'VANILLA'
 			},
-			paymentMethodId: ''
+			step2: {
+				region: '',
+				hardware: 'Medium'
+			},
+			step3: {
+				paymentMethodId: ''
+			}
 		},
 		validators: {
 			onSubmit: schema
@@ -72,14 +77,12 @@
 	});
 </script>
 
-{#snippet accordionTrigger(
-	stepNumber: number,
-	stepName: string,
-	fieldIds: (keyof typeof form.state.values)[]
-)}
+{#snippet accordionTrigger(stepNumber: 1 | 2 | 3, stepName: string)}
 	<form.Subscribe selector={(state) => state.values}>
 		{#snippet children(values)}
-			{@const isComplete = fieldIds.every((id) => schema.shape[id].safeParse(values[id]).success)}
+			{@const isComplete = schema.shape[`step${stepNumber}`].safeParse(
+				values[`step${stepNumber}`]
+			).success}
 			<Accordion.Trigger class="flex items-center gap-2 hover:no-underline">
 				<div class="relative size-8 rounded-full border">
 					{#if isComplete}
@@ -116,10 +119,10 @@
 	>
 		<Accordion.Root type="single" bind:value={activeStep}>
 			<Accordion.Item value="step-1">
-				{@render accordionTrigger(1, 'Server Configuration', ['name', 'version', 'type'])}
+				{@render accordionTrigger(1, 'Server Configuration')}
 				<Accordion.Content>
 					<Field.Group>
-						<form.Field name="name" validators={{ onBlur: schema.shape.name }}>
+						<form.Field name="step1.name">
 							{#snippet children(field)}
 								<Field.Field>
 									<Field.Label for={field.name}>Name</Field.Label>
@@ -142,7 +145,7 @@
 							{/snippet}
 						</form.Field>
 						<div class="grid grid-cols-2 gap-4">
-							<form.Field name="version">
+							<form.Field name="step1.version">
 								{#snippet children(field)}
 									<Field.Field>
 										<Field.Label for={field.name}>Version</Field.Label>
@@ -168,7 +171,7 @@
 									</Field.Field>
 								{/snippet}
 							</form.Field>
-							<form.Field name="type">
+							<form.Field name="step1.type">
 								{#snippet children(field)}
 									<Field.Field>
 										<Field.Label for={field.name}>Type</Field.Label>
@@ -200,10 +203,10 @@
 				</Accordion.Content>
 			</Accordion.Item>
 			<Accordion.Item value="step-2">
-				{@render accordionTrigger(2, 'Deployment Configuration', ['region', 'hardware'])}
+				{@render accordionTrigger(2, 'Deployment Configuration')}
 				<Accordion.Content>
 					<Field.Group>
-						<form.Field name="region">
+						<form.Field name="step2.region">
 							{#snippet children(field)}
 								<Field.Field>
 									<Field.Label for={field.name}>Region</Field.Label>
@@ -245,42 +248,32 @@
 								</Field.Field>
 							{/snippet}
 						</form.Field>
-						<form.Field name="hardware">
+						<form.Field name="step2.hardware">
 							{#snippet children(field)}
-								{@const { cpu, memory } = field.state.value}
 								<Field.Field>
 									<Field.Label>Hardware</Field.Label>
 									<Select.Root
 										type="single"
-										value={HARDWARE_PRESETS.find((p) => p.cpu === cpu && p.memory === memory)
-											?.name ?? 'Custom'}
-										onValueChange={(value) => {
-											const preset = HARDWARE_PRESETS.find((p) => p.name === value);
-											if (!preset) return;
-											field.handleChange({
-												cpu: preset.cpu,
-												memory: preset.memory
-											});
-										}}
+										value={field.state.value}
+										onValueChange={(value) => field.handleChange(value)}
 									>
 										<Select.Trigger id={field.name}>
-											{HARDWARE_PRESETS.find((p) => p.cpu === cpu && p.memory === memory)?.name ??
-												'Custom'}
+											{field.state.value || 'Select Hardware'}
 										</Select.Trigger>
 										<Select.Content class="max-h-75">
 											<Select.Group>
-												{#each HARDWARE_PRESETS as hardwarePreset, i (i)}
+												{#each HARDWARE_OPTIONS as o, i (i)}
 													<Item.Root>
 														{#snippet child({ props })}
-															<Select.Item {...props} value={hardwarePreset.name}>
+															<Select.Item {...props} value={o.name}>
 																<Item.Content>
-																	<Item.Title>{hardwarePreset.name}</Item.Title>
+																	<Item.Title>{o.name}</Item.Title>
 																	<Item.Description>
-																		{hardwarePreset.cpu} vCPU, {hardwarePreset.memory} GB
+																		{o.cpu} vCPU &bull; {o.memory} GB
 																	</Item.Description>
 																</Item.Content>
 																<Item.Actions class="mr-4">
-																	${hardwarePreset.rate * 180}/mo
+																	${o.rate}/hr
 																</Item.Actions>
 															</Select.Item>
 														{/snippet}
@@ -292,43 +285,6 @@
 								</Field.Field>
 							{/snippet}
 						</form.Field>
-						<form.Field name="hardware.cpu">
-							{#snippet children(field)}
-								<Field.Field orientation="horizontal">
-									<Field.Label>CPU</Field.Label>
-									<Slider
-										onValueChange={(value) => field.handleChange(value.toString())}
-										step={Object.keys(HARDWARE_MAP).map((k) => Number(k))}
-										type="single"
-										value={Number(field.state.value)}
-									/>
-									<Field.Label class="text-nowrap">
-										{field.state.value} vCPU
-									</Field.Label>
-								</Field.Field>
-							{/snippet}
-						</form.Field>
-						<form.Field name="hardware">
-							{#snippet children(field)}
-								{@const hardware = HARDWARE_MAP[field.state.value.cpu as keyof typeof HARDWARE_MAP]}
-								<Field.Field orientation="horizontal">
-									<Field.Label>Memory</Field.Label>
-									<Slider
-										max={hardware.max}
-										min={hardware.min}
-										onValueChange={(value) =>
-											field.handleChange({ ...field.state.value, memory: value })}
-										type="single"
-										step={hardware.step}
-										value={field.state.value.memory}
-									/>
-									<Field.Label class="text-nowrap">
-										{field.state.value.memory} GB
-									</Field.Label>
-								</Field.Field>
-							{/snippet}
-						</form.Field>
-						<Field.Field></Field.Field>
 						<Field.Field>
 							<Button onclick={() => (activeStep = 'step-3')}>Continue to Payment</Button>
 						</Field.Field>
@@ -336,10 +292,10 @@
 				</Accordion.Content>
 			</Accordion.Item>
 			<Accordion.Item value="step-3">
-				{@render accordionTrigger(3, 'Checkout & Review', ['paymentMethodId'])}
+				{@render accordionTrigger(3, 'Checkout & Review')}
 				<Accordion.Content>
 					<Field.Group>
-						<form.Field name="paymentMethodId">
+						<form.Field name="step3.paymentMethodId">
 							{#snippet children(field)}
 								<Field.Field>
 									<RadioGroup.Root
