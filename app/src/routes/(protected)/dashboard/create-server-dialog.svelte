@@ -16,12 +16,12 @@
 	import { mapRegionGroups } from './utils';
 	import { HARDWARE_MAP, HARDWARE_PRESETS, MINECRAFT_VERSIONS, SERVER_TYPES } from './constants';
 	import z from 'zod';
-	import Circle from '@lucide/svelte/icons/circle';
 	import * as Drawer from '$lib/components/ui/drawer/index.js';
 	import { IsMobile } from '$lib/hooks/is-mobile.svelte';
 	import Check from '@lucide/svelte/icons/check';
 	import { blur } from 'svelte/transition';
 	import { sineOut } from 'svelte/easing';
+	import * as Empty from '$lib/components/ui/empty/index.js';
 
 	interface CreateServerDialogProps {
 		paymentMethods: Stripe.PaymentMethod[];
@@ -34,7 +34,7 @@
 		name: z.string().min(1, 'Name is required'),
 		version: z.enum(MINECRAFT_VERSIONS),
 		type: z.enum(SERVER_TYPES),
-		region: z.string(),
+		region: z.string().min(1, 'Region is required'),
 		hardware: z.object({
 			cpu: z.string(),
 			memory: z.number()
@@ -62,7 +62,7 @@
 		}
 	}));
 
-	let activeStep = $state<'server' | 'deployment' | 'payment' | 'review'>('server');
+	let activeStep = $state<'step-1' | 'step-2' | 'step-3'>('step-1');
 	const isMobile = new IsMobile();
 	let open = $state(true);
 	let regionGroups = $state<RegionGroup[]>([]);
@@ -80,7 +80,7 @@
 	<form.Subscribe selector={(state) => state.values}>
 		{#snippet children(values)}
 			{@const isComplete = fieldIds.every((id) => schema.shape[id].safeParse(values[id]).success)}
-			<Accordion.Trigger class="flex items-center gap-2">
+			<Accordion.Trigger class="flex items-center gap-2 hover:no-underline">
 				<div class="relative size-8 rounded-full border">
 					{#if isComplete}
 						<div
@@ -115,8 +115,8 @@
 		}}
 	>
 		<Accordion.Root type="single" bind:value={activeStep}>
-			<Accordion.Item value="server">
-				{@render accordionTrigger(1, 'Server', ['name', 'version', 'type'])}
+			<Accordion.Item value="step-1">
+				{@render accordionTrigger(1, 'Server Configuration', ['name', 'version', 'type'])}
 				<Accordion.Content>
 					<Field.Group>
 						<form.Field name="name" validators={{ onBlur: schema.shape.name }}>
@@ -194,13 +194,13 @@
 							</form.Field>
 						</div>
 						<Field.Field>
-							<Button onclick={() => (activeStep = 'deployment')}>Continue to Deployment</Button>
+							<Button onclick={() => (activeStep = 'step-2')}>Continue to Deployment</Button>
 						</Field.Field>
 					</Field.Group>
 				</Accordion.Content>
 			</Accordion.Item>
-			<Accordion.Item value="deployment">
-				<Accordion.Trigger>Deployment</Accordion.Trigger>
+			<Accordion.Item value="step-2">
+				{@render accordionTrigger(2, 'Deployment Configuration', ['region', 'hardware'])}
 				<Accordion.Content>
 					<Field.Group>
 						<form.Field name="region">
@@ -328,14 +328,15 @@
 								</Field.Field>
 							{/snippet}
 						</form.Field>
+						<Field.Field></Field.Field>
 						<Field.Field>
-							<Button onclick={() => (activeStep = 'payment-method')}>Continue to Payment</Button>
+							<Button onclick={() => (activeStep = 'step-3')}>Continue to Payment</Button>
 						</Field.Field>
 					</Field.Group>
 				</Accordion.Content>
 			</Accordion.Item>
-			<Accordion.Item value="payment-method">
-				<Accordion.Trigger>Payment Method</Accordion.Trigger>
+			<Accordion.Item value="step-3">
+				{@render accordionTrigger(3, 'Checkout & Review', ['paymentMethodId'])}
 				<Accordion.Content>
 					<Field.Group>
 						<form.Field name="paymentMethodId">
@@ -351,23 +352,17 @@
 													<RadioGroup.Item {...props} value={paymentMethod.id}></RadioGroup.Item>
 												{/snippet}
 											</Item.Root>
+										{:else}
+											<Empty.Root>
+												<Empty.Content>No Payment Methods</Empty.Content>
+											</Empty.Root>
 										{/each}
 									</RadioGroup.Root>
 								</Field.Field>
 							{/snippet}
 						</form.Field>
 						<Field.Field>
-							<Button onclick={() => (activeStep = 'review')}>Continue to Review</Button>
-						</Field.Field>
-					</Field.Group>
-				</Accordion.Content>
-			</Accordion.Item>
-			<Accordion.Item value="review">
-				<Accordion.Trigger>Review</Accordion.Trigger>
-				<Accordion.Content>
-					<Field.Group>
-						<Field.Field>
-							<Button>Create Server</Button>
+							<Button type="submit">Create Server</Button>
 						</Field.Field>
 					</Field.Group>
 				</Accordion.Content>
