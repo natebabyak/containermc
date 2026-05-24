@@ -1,39 +1,51 @@
 export const HARDWARE_OPTIONS = [
 	{
 		name: 'X-Small',
-		cpu: '2',
+		cpu: 2,
 		memory: 1,
-		rate: 0.01
+		rate: 0.01,
+		players: '1–2',
+		tag: null
 	},
 	{
 		name: 'Small',
-		cpu: '2',
+		cpu: 2,
 		memory: 2,
-		rate: 0.02
+		rate: 0.02,
+		players: '2–5',
+		tag: null
 	},
 	{
 		name: 'Medium',
-		cpu: '2',
+		cpu: 2,
 		memory: 4,
-		rate: 0.04
+		rate: 0.04,
+		players: '5–10',
+		tag: 'Recommended'
 	},
 	{
 		name: 'Large',
-		cpu: '2',
+		cpu: 2,
 		memory: 8,
-		rate: 0.08
+		rate: 0.08,
+		players: '10–20',
+		tag: null
 	},
 	{
 		name: 'X-Large',
-		cpu: '4',
+		cpu: 4,
 		memory: 16,
-		rate: 0.16
+		rate: 0.16,
+		players: '20–50',
+		tag: null
 	},
 	{
 		name: 'XX-Large',
-		cpu: '8',
+		cpu: 8,
 		memory: 32,
-		rate: 0.32
+		rate: 0.32,
+		players: '50+',
+		tag: null
 	}
 ] as const;
 
@@ -160,24 +172,82 @@ export const MINECRAFT_VERSION_GROUPS = [
 	}
 ] as const;
 
-export const MINECRAFT_VERSIONS = MINECRAFT_VERSION_GROUPS.flatMap((group) => group.versions);
+export const MINECRAFT_VERSIONS = [
+	...MINECRAFT_VERSION_GROUPS.flatMap((group) => group.versions)
+] as const;
 
-export const SERVER_STATUSES = ['running', 'pending', 'stopped', 'error'] as const;
+export const SERVER_STATUSES = [
+	'running',
+	'starting',
+	'pending',
+	'stopping',
+	'stopped',
+	'error'
+] as const;
 
 export const SERVER_TYPES = [
-	'AUTO_CURSEFORGE',
-	'BUKKIT',
-	'CRUCIBLE',
-	'FABRIC',
-	'FORGE',
-	'FTBA',
-	'GTNH',
-	'LIMBO',
-	'MODRINTH',
-	'NANOLIMBO',
-	'PAPER',
-	'QUILT',
-	'SPIGOT',
-	'SPONGEVANILLA',
-	'VANILLA'
+	{
+		value: 'AUTO_CURSEFORGE',
+		label: 'CurseForge'
+	},
+	{
+		value: 'BUKKIT',
+		label: 'Bukkit'
+	},
+	{
+		value: 'CRUCIBLE',
+		label: 'Crucible'
+	},
+	{
+		value: 'FABRIC',
+		label: 'Fabric'
+	},
+	{
+		value: 'FORGE',
+		label: 'Forge'
+	},
+	{
+		value: 'FTBA',
+		label: 'Feed The Beast'
+	},
+	{
+		value: 'GTNH',
+		label: 'GregTech: New Horizons'
+	},
+	{
+		value: 'LIMBO',
+		label: 'Limbo'
+	},
+	{
+		value: 'MODRINTH',
+		label: 'Modrinth'
+	},
+	{
+		value: 'NANOLIMBO',
+		label: 'NanoLimbo'
+	},
+	{
+		value: 'NEOFORGE',
+		label: 'NeoForge'
+	},
+	{
+		value: 'PAPER',
+		label: 'PaperMC'
+	},
+	{
+		value: 'QUILT',
+		label: 'QuiltMC'
+	},
+	{
+		value: 'SPIGOT',
+		label: 'SpigotMC'
+	},
+	{
+		value: 'SPONGEVANILLA',
+		label: 'SpongeVanilla'
+	},
+	{
+		value: 'VANILLA',
+		label: 'Vanilla'
+	}
 ] as const;
