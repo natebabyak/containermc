@@ -3,7 +3,6 @@ import type { Region } from '@aws-sdk/client-ec2';
 export async function measurePing(region: Region) {
 	const url = `https://${region.Endpoint}`;
 	const start = performance.now();
-
 	try {
 		await fetch(url, { method: 'HEAD', mode: 'no-cors' });
 		return performance.now() - start;

@@ -5,7 +5,6 @@
 	import { Input } from '$lib/components/ui/input/index.js';
 	import * as Field from '$lib/components/ui/field/index.js';
 	import { createForm } from '@tanstack/svelte-form';
-	import Stripe from 'stripe';
 	import type { Region } from '@aws-sdk/client-ec2';
 	import * as Select from '$lib/components/ui/select/index.js';
 	import { onMount } from 'svelte';
@@ -20,43 +19,36 @@
 	import Check from '@lucide/svelte/icons/check';
 	import { blur } from 'svelte/transition';
 	import { sineOut } from 'svelte/easing';
-	import * as Empty from '$lib/components/ui/empty/index.js';
+	import { Label } from '$lib/components/ui/label/index.js';
 
 	interface CreateServerDialogProps {
-		paymentMethods: Stripe.PaymentMethod[];
 		regions: Region[];
 	}
 
-	let { paymentMethods, regions }: CreateServerDialogProps = $props();
+	let { regions }: CreateServerDialogProps = $props();
 
 	const schema = z.object({
 		step1: z.object({
-			name: z.string().min(1, 'Name is required'),
-			version: z.enum(MINECRAFT_VERSIONS),
-			type: z.enum(SERVER_TYPES)
+			serverName: z.string().min(1, 'Name is required'),
+			minecraftVersion: z.enum(MINECRAFT_VERSIONS),
+			serverType: z.enum(SERVER_TYPES)
 		}),
 		step2: z.object({
 			region: z.string().min(1, 'Region is required'),
 			hardware: z.enum(HARDWARE_OPTIONS.map((h) => h.name))
-		}),
-		step3: z.object({
-			paymentMethodId: z.string().min(1, 'Payment method is required')
 		})
 	});
 
 	const form = createForm(() => ({
 		defaultValues: {
 			step1: {
-				name: '',
-				version: 'LATEST',
-				type: 'VANILLA'
+				serverName: '',
+				minecraftVersion: 'LATEST',
+				serverType: 'VANILLA'
 			},
 			step2: {
 				region: '',
-				hardware: 'Medium'
-			},
-			step3: {
-				paymentMethodId: ''
+				hardware: ''
 			}
 		},
 		validators: {
@@ -67,46 +59,61 @@
 		}
 	}));
 
-	let activeStep = $state<'step-1' | 'step-2' | 'step-3'>('step-1');
+	const formValues = form.useStore((state) => state.values);
 	const isMobile = new IsMobile();
-	let open = $state(true);
+
+	let activeStep = $state<'step-1' | 'step-2' | 'step-3'>('step-1');
+	const isStep1Complete = $derived(schema.shape.step1.safeParse(formValues.current.step1).success);
+	const isStep2Complete = $derived(schema.shape.step2.safeParse(formValues.current.step2).success);
+	const isComplete = $derived(isStep1Complete && isStep2Complete);
+	let open = $state(false);
 	let regionGroups = $state<RegionGroup[]>([]);
 
 	onMount(async () => {
 		regionGroups = await mapRegionGroups(regions);
+		form.setFieldValue('step2.region', regionGroups[0].regions[0].RegionName ?? '');
 	});
 </script>
 
 {#snippet accordionTrigger(stepNumber: 1 | 2 | 3, stepName: string)}
-	<form.Subscribe selector={(state) => state.values}>
-		{#snippet children(values)}
-			{@const isComplete = schema.shape[`step${stepNumber}`].safeParse(
-				values[`step${stepNumber}`]
-			).success}
-			<Accordion.Trigger class="flex items-center gap-2 hover:no-underline">
-				<div class="relative size-8 rounded-full border">
-					{#if isComplete}
-						<div
-							transition:blur={{ easing: sineOut }}
-							class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"
-						>
-							<Check class="size-4" />
-						</div>
-					{:else}
-						<span
-							transition:blur={{ easing: sineOut }}
-							class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 font-mono"
-						>
-							{stepNumber}
-						</span>
-					{/if}
+	{@const isStepComplete =
+		stepNumber === 1 ? isStep1Complete : stepNumber === 2 ? isStep2Complete : false}
+	{@const arePrevStepsComplete =
+		stepNumber === 1
+			? true
+			: stepNumber === 2
+				? isStep1Complete
+				: isStep1Complete && isStep2Complete}
+	<Accordion.Trigger
+		disabled={!arePrevStepsComplete}
+		onclick={(e) => {
+			if (!arePrevStepsComplete) {
+				e.preventDefault();
+			}
+		}}
+		class="flex items-center gap-2 hover:no-underline"
+	>
+		<div class="relative size-8 rounded-full border">
+			{#if isStepComplete}
+				<div
+					transition:blur={{ easing: sineOut }}
+					class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"
+				>
+					<Check class="size-4" />
 				</div>
-				<Item.Content>
-					<Item.Title>{stepName}</Item.Title>
-				</Item.Content>
-			</Accordion.Trigger>
-		{/snippet}
-	</form.Subscribe>
+			{:else}
+				<span
+					transition:blur={{ easing: sineOut }}
+					class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 font-mono"
+				>
+					{stepNumber}
+				</span>
+			{/if}
+		</div>
+		<Item.Content>
+			<Item.Title>{stepName}</Item.Title>
+		</Item.Content>
+	</Accordion.Trigger>
 {/snippet}
 
 {#snippet content()}
@@ -119,13 +126,13 @@
 	>
 		<Accordion.Root type="single" bind:value={activeStep}>
 			<Accordion.Item value="step-1">
-				{@render accordionTrigger(1, 'Server Configuration')}
+				{@render accordionTrigger(1, 'Server')}
 				<Accordion.Content>
 					<Field.Group>
-						<form.Field name="step1.name">
+						<form.Field name="step1.serverName">
 							{#snippet children(field)}
 								<Field.Field>
-									<Field.Label for={field.name}>Name</Field.Label>
+									<Field.Label for={field.name}>Server Name</Field.Label>
 									<Input
 										aria-invalid={!!field.state.meta.errors[0]}
 										id={field.name}
@@ -145,10 +152,10 @@
 							{/snippet}
 						</form.Field>
 						<div class="grid grid-cols-2 gap-4">
-							<form.Field name="step1.version">
+							<form.Field name="step1.minecraftVersion">
 								{#snippet children(field)}
 									<Field.Field>
-										<Field.Label for={field.name}>Version</Field.Label>
+										<Field.Label for={field.name}>Minecraft Version</Field.Label>
 										<Select.Root
 											name={field.name}
 											onValueChange={(value) => field.handleChange(value)}
@@ -171,10 +178,10 @@
 									</Field.Field>
 								{/snippet}
 							</form.Field>
-							<form.Field name="step1.type">
+							<form.Field name="step1.serverType">
 								{#snippet children(field)}
 									<Field.Field>
-										<Field.Label for={field.name}>Type</Field.Label>
+										<Field.Label for={field.name}>Server Type</Field.Label>
 										<Select.Root
 											name={field.name}
 											onValueChange={(value) => field.handleChange(value)}
@@ -197,13 +204,15 @@
 							</form.Field>
 						</div>
 						<Field.Field>
-							<Button onclick={() => (activeStep = 'step-2')}>Continue to Deployment</Button>
+							<Button disabled={!isStep1Complete} onclick={() => (activeStep = 'step-2')}>
+								Continue to Deployment
+							</Button>
 						</Field.Field>
 					</Field.Group>
 				</Accordion.Content>
 			</Accordion.Item>
 			<Accordion.Item value="step-2">
-				{@render accordionTrigger(2, 'Deployment Configuration')}
+				{@render accordionTrigger(2, 'Deployment')}
 				<Accordion.Content>
 					<Field.Group>
 						<form.Field name="step2.region">
@@ -211,9 +220,9 @@
 								<Field.Field>
 									<Field.Label for={field.name}>Region</Field.Label>
 									<Select.Root
-										onValueChange={(value) => field.handleChange(value)}
 										type="single"
 										value={field.state.value}
+										onValueChange={(value) => field.handleChange(value)}
 									>
 										<Select.Trigger id={field.name}>
 											{field.state.value || 'Select Region'}
@@ -234,9 +243,7 @@
 																			{region.Geography?.[0].Name}
 																		</Item.Description>
 																	</Item.Content>
-																	<Item.Actions class="mr-4">
-																		{region.ping} ms
-																	</Item.Actions>
+																	<p class="mr-4">{region.ping} ms</p>
 																</Select.Item>
 															{/snippet}
 														</Item.Root>
@@ -251,74 +258,101 @@
 						<form.Field name="step2.hardware">
 							{#snippet children(field)}
 								<Field.Field>
-									<Field.Label>Hardware</Field.Label>
-									<Select.Root
-										type="single"
-										value={field.state.value}
-										onValueChange={(value) => field.handleChange(value)}
-									>
-										<Select.Trigger id={field.name}>
-											{field.state.value || 'Select Hardware'}
-										</Select.Trigger>
-										<Select.Content class="max-h-75">
-											<Select.Group>
-												{#each HARDWARE_OPTIONS as o, i (i)}
-													<Item.Root>
-														{#snippet child({ props })}
-															<Select.Item {...props} value={o.name}>
-																<Item.Content>
-																	<Item.Title>{o.name}</Item.Title>
-																	<Item.Description>
-																		{o.cpu} vCPU &bull; {o.memory} GB
-																	</Item.Description>
-																</Item.Content>
-																<Item.Actions class="mr-4">
-																	${o.rate}/hr
-																</Item.Actions>
-															</Select.Item>
-														{/snippet}
-													</Item.Root>
-												{/each}
-											</Select.Group>
-										</Select.Content>
-									</Select.Root>
-								</Field.Field>
-							{/snippet}
-						</form.Field>
-						<Field.Field>
-							<Button onclick={() => (activeStep = 'step-3')}>Continue to Payment</Button>
-						</Field.Field>
-					</Field.Group>
-				</Accordion.Content>
-			</Accordion.Item>
-			<Accordion.Item value="step-3">
-				{@render accordionTrigger(3, 'Checkout & Review')}
-				<Accordion.Content>
-					<Field.Group>
-						<form.Field name="step3.paymentMethodId">
-							{#snippet children(field)}
-								<Field.Field>
+									<Field.Label for={field.name}>Hardware</Field.Label>
 									<RadioGroup.Root
+										id={field.name}
 										value={field.state.value}
 										onValueChange={(value) => field.handleChange(value)}
+										class="grid grid-cols-2 gap-2"
 									>
-										{#each paymentMethods as paymentMethod (paymentMethod.id)}
-											<Item.Root>
+										{#each HARDWARE_OPTIONS as hardwareOption (hardwareOption.name)}
+											<Item.Root
+												variant="outline"
+												class="has-data-checked:border-primary/50 has-data-checked:bg-primary/10"
+											>
 												{#snippet child({ props })}
-													<RadioGroup.Item {...props} value={paymentMethod.id}></RadioGroup.Item>
+													<Label {...props} for={hardwareOption.name}>
+														<Item.Content>
+															<Item.Title>
+																{hardwareOption.name} &bull; ${hardwareOption.rate}/hr
+															</Item.Title>
+															<Item.Description>
+																{hardwareOption.cpu} vCPU &bull; {hardwareOption.memory} GB
+															</Item.Description>
+														</Item.Content>
+														<RadioGroup.Item
+															id={hardwareOption.name}
+															value={hardwareOption.name}
+															class="mb-auto"
+														/>
+													</Label>
 												{/snippet}
 											</Item.Root>
-										{:else}
-											<Empty.Root>
-												<Empty.Content>No Payment Methods</Empty.Content>
-											</Empty.Root>
 										{/each}
 									</RadioGroup.Root>
 								</Field.Field>
 							{/snippet}
 						</form.Field>
 						<Field.Field>
-							<Button type="submit">Create Server</Button>
+							<Button disabled={!isStep2Complete} onclick={() => (activeStep = 'step-3')}>
+								Continue to Review
+							</Button>
+						</Field.Field>
+					</Field.Group>
+				</Accordion.Content>
+			</Accordion.Item>
+			<Accordion.Item value="step-3">
+				{@render accordionTrigger(3, 'Review')}
+				<Accordion.Content class="space-y-4">
+					<Item.ItemGroup>
+						<Item.Root variant="outline">
+							<Item.Header>
+								<Item.Title>Server</Item.Title>
+								<Item.Actions>
+									<Button onclick={() => (activeStep = 'step-1')} size="sm" variant="outline">
+										Edit
+									</Button>
+								</Item.Actions>
+							</Item.Header>
+							<Item.Content class="grid grid-cols-2 gap-2">
+								<div class="flex flex-col gap-1">
+									<span class="text-xs text-muted-foreground">Server Name</span>
+									<span>{formValues.current.step1.serverName}</span>
+								</div>
+								<div class="flex flex-col gap-1">
+									<span class="text-xs text-muted-foreground">Minecraft Version</span>
+									<span>{formValues.current.step1.minecraftVersion}</span>
+								</div>
+								<div class="flex flex-col gap-1">
+									<span class="text-xs text-muted-foreground">Server Type</span>
+									<span>{formValues.current.step1.serverType}</span>
+								</div>
+							</Item.Content>
+						</Item.Root>
+						<Item.Root variant="outline">
+							<Item.Header>
+								<Item.Title>Deployment</Item.Title>
+								<Item.Actions>
+									<Button onclick={() => (activeStep = 'step-2')} size="sm" variant="outline">
+										Edit
+									</Button>
+								</Item.Actions>
+							</Item.Header>
+							<Item.Content class="grid grid-cols-2 gap-2">
+								<div class="flex flex-col gap-1">
+									<span class="text-xs text-muted-foreground">Region</span>
+									<span>{formValues.current.step2.region}</span>
+								</div>
+								<div class="flex flex-col gap-1">
+									<span class="text-xs text-muted-foreground">Hardware</span>
+									<span>{formValues.current.step2.hardware}</span>
+								</div>
+							</Item.Content>
+						</Item.Root>
+					</Item.ItemGroup>
+					<Field.Group>
+						<Field.Field>
+							<Button disabled={!isComplete} type="submit">Create Server</Button>
 						</Field.Field>
 					</Field.Group>
 				</Accordion.Content>
@@ -341,7 +375,7 @@
 				<Button {...props}>Create Server</Button>
 			{/snippet}
 		</Dialog.Trigger>
-		<Dialog.Content>
+		<Dialog.Content class="md:max-w-lg">
 			<Dialog.Header>
 				<Dialog.Title>Create Server</Dialog.Title>
 			</Dialog.Header>

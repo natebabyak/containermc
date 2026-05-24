@@ -43,7 +43,7 @@
 		</Empty.Header>
 		<Empty.Content>
 			<div class="flex gap-2">
-				<CreateServerDialog paymentMethods={data.paymentMethods} regions={data.regions} />
+				<CreateServerDialog regions={data.regions} />
 				<Button variant="outline">Connect Server</Button>
 			</div>
 		</Empty.Content>

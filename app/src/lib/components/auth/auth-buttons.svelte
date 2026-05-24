@@ -9,7 +9,8 @@
 		<Button
 			onclick={() =>
 				authClient.signIn.social({
-					provider: 'github'
+					provider: 'github',
+					callbackURL: '/dashboard'
 				})}
 			variant="outline"
 		>
@@ -29,7 +30,8 @@
 		<Button
 			onclick={() =>
 				authClient.signIn.social({
-					provider: 'google'
+					provider: 'google',
+					callbackURL: '/dashboard'
 				})}
 			variant="outline"
 		>
