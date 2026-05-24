@@ -19,6 +19,7 @@
 	import { IsMobile } from '$lib/hooks/is-mobile.svelte';
 	import { Separator } from '$lib/components/ui/separator/index.js';
 	import { Badge } from '$lib/components/ui/badge/index.js';
+	import { invalidateAll } from '$app/navigation';
 
 	interface RegionGroup {
 		id: string;
@@ -39,7 +40,10 @@
 		minecraftVersion: z.enum(MINECRAFT_VERSIONS),
 		type: z.enum(SERVER_TYPES.map((serverType) => serverType.value)),
 		region: z.string().min(1, 'Region is required'),
-		hardware: z.enum(HARDWARE_OPTIONS.map((hardwareOption) => hardwareOption.name))
+		hardware: z.enum(
+			HARDWARE_OPTIONS.map((hardwareOption) => hardwareOption.name),
+			'Hardware is required'
+		)
 	});
 
 	const form = createForm(() => ({
@@ -54,7 +58,23 @@
 			onSubmit: schema
 		},
 		onSubmit: async ({ value }) => {
-			console.log(value);
+			const formData = new FormData();
+			formData.append('name', value.name);
+			formData.append('minecraftVersion', value.minecraftVersion);
+			formData.append('type', value.type);
+			formData.append('region', value.region);
+			formData.append('hardware', value.hardware);
+
+			const response = await fetch('?/createServer', {
+				method: 'POST',
+				body: formData
+			});
+
+			if (response.ok) {
+				open = false;
+				form.reset();
+				invalidateAll();
+			}
 		}
 	}));
 
@@ -162,7 +182,7 @@
 								<Select.Trigger id={field.name} class="capitalize">
 									{field.state.value.toLowerCase()}
 								</Select.Trigger>
-								<Select.Content class="max-h-75">
+								<Select.Content class="max-h-100">
 									{#each MINECRAFT_VERSION_GROUPS as minecraftVersionGroup, i (i)}
 										<Select.Group>
 											<Select.Label>{minecraftVersionGroup.name}</Select.Label>
@@ -191,7 +211,7 @@
 								<Select.Trigger id={field.name}>
 									{SERVER_TYPES.find((serverType) => serverType.value === field.state.value)?.label}
 								</Select.Trigger>
-								<Select.Content class="max-h-75">
+								<Select.Content class="max-h-100">
 									<Select.Group>
 										{#each SERVER_TYPES as serverType, i (i)}
 											<Select.Item value={serverType.value}>
@@ -219,7 +239,7 @@
 							<Select.Trigger id={field.name}>
 								{field.state.value || 'Select Region'}
 							</Select.Trigger>
-							<Select.Content class="max-h-75">
+							<Select.Content class="max-h-100">
 								{#each regionGroups as regionGroup, i (i)}
 									<Select.Group>
 										<Select.Label>{regionGroup.name}</Select.Label>
@@ -247,6 +267,11 @@
 								{/each}
 							</Select.Content>
 						</Select.Root>
+						{#if field.state.meta.errors[0]}
+							<Field.Error>
+								{field.state.meta.errors[0].message}
+							</Field.Error>
+						{/if}
 					</Field.Field>
 				{/snippet}
 			</form.Field>
@@ -277,7 +302,7 @@
 															{/if}
 														</Item.Title>
 														<Item.Description>
-															{hardwareOption.cpu} vCPU &bull; {hardwareOption.memory} GB
+															{hardwareOption.cpu} vCPU &bull; {hardwareOption.memoryGb} GB
 														</Item.Description>
 													</Item.Content>
 													<Item.Content class="mr-4 *:ml-auto">
@@ -295,6 +320,11 @@
 								</Select.Group>
 							</Select.Content>
 						</Select.Root>
+						{#if field.state.meta.errors[0]}
+							<Field.Error>
+								{field.state.meta.errors[0].message}
+							</Field.Error>
+						{/if}
 					</Field.Field>
 				{/snippet}
 			</form.Field>
