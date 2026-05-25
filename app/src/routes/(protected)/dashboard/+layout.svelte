@@ -7,7 +7,7 @@
 
 <Sidebar.Provider>
 	<DashboardSidebar balance={data.balance} />
-	<main>
+	<main class="size-full">
 		{@render children()}
 	</main>
 </Sidebar.Provider>

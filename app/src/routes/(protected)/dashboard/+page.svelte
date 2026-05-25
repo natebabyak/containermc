@@ -11,48 +11,98 @@
 	import Play from '@lucide/svelte/icons/play';
 	import Square from '@lucide/svelte/icons/square';
 	import { resolve } from '$app/paths';
+	import * as Kbd from '$lib/components/ui/kbd/index.js';
+	import ChevronRight from '@lucide/svelte/icons/chevron-right';
+	import { Badge } from '$lib/components/ui/badge/index.js';
+	import Copy from '@lucide/svelte/icons/copy';
 
 	let { data }: PageProps = $props();
+
+	let inputRef = $state<HTMLInputElement | null>(null);
+
+	function handleKeyDown(e: KeyboardEvent) {
+		if (e.key === 'k' && (e.metaKey || e.ctrlKey)) {
+			e.preventDefault();
+			inputRef?.focus();
+		}
+	}
 </script>
 
 <svelte:head>
 	<title>Dashboard | ContainerMC</title>
 	<meta name="description" content="" />
 </svelte:head>
+<svelte:window on:keydown={handleKeyDown} />
 <div class="space-y-4 py-4">
-	<div class="flex justify-between px-4">
-		<InputGroup.Root>
-			<InputGroup.Input placeholder="Search server..." />
-			<InputGroup.Addon>
-				<Search />
-			</InputGroup.Addon>
-		</InputGroup.Root>
-		<CreateServerDialog regions={data.regions} />
-	</div>
 	{#if data.servers.length > 0}
+		<div class="flex justify-between px-4">
+			<InputGroup.Root class="w-full max-w-xs">
+				<InputGroup.Input bind:ref={inputRef} placeholder="Search servers..." />
+				<InputGroup.Addon>
+					<Search />
+				</InputGroup.Addon>
+				<InputGroup.Addon align="inline-end">
+					<Kbd.Group>
+						<Kbd.Root>⌘</Kbd.Root>
+						<Kbd.Root>K</Kbd.Root>
+					</Kbd.Group>
+				</InputGroup.Addon>
+			</InputGroup.Root>
+			<CreateServerDialog regions={data.regions} />
+		</div>
 		<ul class="grid gap-4 px-4">
 			{#each data.servers as server, i (i)}
 				<li>
 					<Item.Root variant="outline">
-						{#snippet child({ props })}
-							<a {...props} href={resolve(`/dashboard/servers/${server.slug}`)}>
-								<Item.Content>
-									<Item.Title>{server.name}</Item.Title>
-									<Item.Description>{server.slug}.containermc.com</Item.Description>
-								</Item.Content>
-								<Item.Media />
-								<Item.Actions>
-									<ButtonGroup.Root>
-										<Button size="icon-sm" variant="outline">
-											<Play />
-										</Button>
-										<Button size="icon-sm" variant="outline">
-											<Square />
-										</Button>
-									</ButtonGroup.Root>
-								</Item.Actions>
-							</a>
-						{/snippet}
+						<Item.Header>
+							<Item.Media variant="image">
+								<img
+									src={`https://avatar.vercel.sh/${server.name}`}
+									alt={server.name}
+									width="32"
+									height="32"
+									class="size-8 rounded object-cover grayscale"
+								/>
+							</Item.Media>
+							<Item.Title>
+								{server.name}
+								<Badge class="capitalize">
+									{server.status}
+								</Badge>
+							</Item.Title>
+							<Item.Actions>
+								<Button size="xs" variant="ghost">
+									{server.slug}.containermc.com
+									<Copy />
+								</Button>
+							</Item.Actions>
+						</Item.Header>
+						<Item.Content>
+							<Item.Title>Players</Item.Title>
+							<Item.Description>10/50</Item.Description>
+						</Item.Content>
+						<Item.Separator />
+						<Item.Footer>
+							<Item.Actions>
+								<ButtonGroup.Root>
+									<Button size="sm" variant="outline">
+										<Play />
+										Start
+									</Button>
+									<Button size="icon-sm" variant="outline">
+										<Square />
+									</Button>
+								</ButtonGroup.Root>
+								<Button
+									href={resolve(`/dashboard/servers/${server.slug}`)}
+									size="sm"
+									variant="outline"
+								>
+									Manage
+									<ChevronRight />
+								</Button>
+							</Item.Actions>
+						</Item.Footer>
 					</Item.Root>
 				</li>
 			{/each}
