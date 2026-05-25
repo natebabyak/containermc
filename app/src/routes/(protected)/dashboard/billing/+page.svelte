@@ -1,3 +1,6 @@
+<script lang="ts">
+</script>
+
 <svelte:head>
 	<title>Billing | ContainerMC</title>
 	<meta name="description" content="" />

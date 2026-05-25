@@ -11,6 +11,13 @@
 	import { resetMode, setMode, userPrefersMode } from 'mode-watcher';
 	import Container from '@lucide/svelte/icons/container';
 	import ChevronsUpDown from '@lucide/svelte/icons/chevrons-up-down';
+	import { resolve } from '$app/paths';
+
+	interface DashboardSidebarProps {
+		balance: string;
+	}
+
+	let { balance }: DashboardSidebarProps = $props();
 
 	const session = authClient.useSession();
 </script>
@@ -40,7 +47,11 @@
 			<Sidebar.GroupContent>
 				<Sidebar.Menu>
 					<Sidebar.MenuItem>
-						<Sidebar.MenuButton>Billing</Sidebar.MenuButton>
+						<Sidebar.MenuButton>
+							{#snippet child({ props })}
+								<a {...props} href={resolve('/dashboard/billing')}>Billing</a>
+							{/snippet}
+						</Sidebar.MenuButton>
 						<Sidebar.MenuButton>Usage</Sidebar.MenuButton>
 						<Sidebar.MenuButton>Analytics</Sidebar.MenuButton>
 					</Sidebar.MenuItem>
@@ -59,7 +70,15 @@
 								<Avatar.Image src={$session.data.user.image ?? undefined} />
 								<Avatar.Fallback>{$session.data.user.name.charAt(0).toUpperCase()}</Avatar.Fallback>
 							</Avatar.Root>
-							{$session.data.user.name}
+							<div class="flex flex-col">
+								<span>{$session.data.user.name}</span>
+								<span class="text-xs text-muted-foreground">
+									{new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(
+										Number(balance)
+									)}
+									remaining
+								</span>
+							</div>
 							<EllipsisVertical class="ml-auto" />
 						</Sidebar.MenuButton>
 					{/if}

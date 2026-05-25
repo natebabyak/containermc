@@ -2,11 +2,11 @@
 	import * as Sidebar from '$lib/components/ui/sidebar/index.js';
 	import DashboardSidebar from './dashboard-sidebar.svelte';
 
-	let { children } = $props();
+	let { children, data } = $props();
 </script>
 
 <Sidebar.Provider>
-	<DashboardSidebar />
+	<DashboardSidebar balance={data.balance} />
 	<main>
 		{@render children()}
 	</main>
