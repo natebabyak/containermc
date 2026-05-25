@@ -6,15 +6,11 @@
 	import * as Item from '$lib/components/ui/item/index.js';
 	import CreateServerDialog from './create-server-dialog.svelte';
 	import * as InputGroup from '$lib/components/ui/input-group/index.js';
-	import * as ButtonGroup from '$lib/components/ui/button-group/index.js';
 	import Search from '@lucide/svelte/icons/search';
-	import Play from '@lucide/svelte/icons/play';
-	import Square from '@lucide/svelte/icons/square';
 	import { resolve } from '$app/paths';
 	import * as Kbd from '$lib/components/ui/kbd/index.js';
-	import ChevronRight from '@lucide/svelte/icons/chevron-right';
 	import { Badge } from '$lib/components/ui/badge/index.js';
-	import Copy from '@lucide/svelte/icons/copy';
+	import SquareArrowOutUpRight from '@lucide/svelte/icons/square-arrow-out-up-right';
 
 	let { data }: PageProps = $props();
 
@@ -54,55 +50,50 @@
 			{#each data.servers as server, i (i)}
 				<li>
 					<Item.Root variant="outline">
-						<Item.Header>
-							<Item.Media variant="image">
-								<img
-									src={`https://avatar.vercel.sh/${server.name}`}
-									alt={server.name}
-									width="32"
-									height="32"
-									class="size-8 rounded object-cover grayscale"
-								/>
-							</Item.Media>
-							<Item.Title>
-								{server.name}
-								<Badge class="capitalize">
-									{server.status}
-								</Badge>
-							</Item.Title>
-							<Item.Actions>
-								<Button size="xs" variant="ghost">
-									{server.slug}.containermc.com
-									<Copy />
-								</Button>
-							</Item.Actions>
-						</Item.Header>
-						<Item.Content>
-							<Item.Title>Players</Item.Title>
-							<Item.Description>10/50</Item.Description>
-						</Item.Content>
-						<Item.Separator />
-						<Item.Footer>
-							<Item.Actions>
-								<ButtonGroup.Root>
-									<Button size="sm" variant="outline">
-										<Play />
-										Start
+						{#snippet child({ props })}
+							<a {...props} href={resolve(`/dashboard/servers/${server.slug}`)}>
+								<Item.Media variant="image">
+									<img
+										src={`https://avatar.vercel.sh/${server.name}`}
+										alt={server.name}
+										width="32"
+										height="32"
+										class="size-8 rounded object-cover grayscale"
+									/>
+								</Item.Media>
+								<Item.Content>
+									<Item.Title>
+										{server.name}
+										<Badge class="capitalize">
+											{server.status}
+										</Badge>
+									</Item.Title>
+									<Item.Description>
+										{server.slug}.containermc.com
+									</Item.Description>
+								</Item.Content>
+								<Item.Actions>
+									<Button size="sm" variant="ghost" class="pointer-events-none">
+										Manage
+										<SquareArrowOutUpRight />
 									</Button>
-									<Button size="icon-sm" variant="outline">
-										<Square />
-									</Button>
-								</ButtonGroup.Root>
-								<Button
-									href={resolve(`/dashboard/servers/${server.slug}`)}
-									size="sm"
-									variant="outline"
-								>
-									Manage
-									<ChevronRight />
-								</Button>
-							</Item.Actions>
-						</Item.Footer>
+								</Item.Actions>
+								<Item.Footer class="justify-start gap-8">
+									<div>
+										<Item.Title>Players</Item.Title>
+										<Item.Description>10/50</Item.Description>
+									</div>
+									<div>
+										<Item.Title>Session Uptime</Item.Title>
+										<Item.Description>2h 14m</Item.Description>
+									</div>
+									<div>
+										<Item.Title>Session Cost</Item.Title>
+										<Item.Description>$0.03</Item.Description>
+									</div>
+								</Item.Footer>
+							</a>
+						{/snippet}
 					</Item.Root>
 				</li>
 			{/each}
