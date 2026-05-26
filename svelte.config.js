@@ -1,3 +1,4 @@
+import { mdsvex } from 'mdsvex';
 import adapter from 'svelte-adapter-bun';
 
 /** @type {import('@sveltejs/kit').Config} */
@@ -18,7 +19,9 @@ const config = {
 				include: [...config.include, '../drizzle.config.ts']
 			})
 		}
-	}
+	},
+	preprocess: [mdsvex({ extensions: ['.svx', '.md'] })],
+	extensions: ['.svelte', '.svx', '.md']
 };
 
 export default config;
