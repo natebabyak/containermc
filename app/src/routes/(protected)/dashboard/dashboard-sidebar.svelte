@@ -12,6 +12,8 @@
 	import Container from '@lucide/svelte/icons/container';
 	import ChevronsUpDown from '@lucide/svelte/icons/chevrons-up-down';
 	import { resolve } from '$app/paths';
+	import CreditCard from '@lucide/svelte/icons/credit-card';
+	import Server from '@lucide/svelte/icons/server';
 
 	interface DashboardSidebarProps {
 		balance: string;
@@ -43,22 +45,47 @@
 	</Sidebar.Header>
 	<Sidebar.Content>
 		<Sidebar.Group>
-			<Sidebar.GroupLabel>Overview</Sidebar.GroupLabel>
+			<Sidebar.GroupLabel>Navigation</Sidebar.GroupLabel>
 			<Sidebar.GroupContent>
 				<Sidebar.Menu>
 					<Sidebar.MenuItem>
 						<Sidebar.MenuButton>
 							{#snippet child({ props })}
-								<a {...props} href={resolve('/dashboard/billing')}>Billing</a>
+								<a {...props} href={resolve('/dashboard/analytics')}>Analytics</a>
 							{/snippet}
 						</Sidebar.MenuButton>
-						<Sidebar.MenuButton>Usage</Sidebar.MenuButton>
-						<Sidebar.MenuButton>Analytics</Sidebar.MenuButton>
+						<Sidebar.MenuButton>
+							{#snippet child({ props })}
+								<a {...props} href={resolve('/dashboard/billing')}>
+									<CreditCard />
+									Billing
+								</a>
+							{/snippet}
+						</Sidebar.MenuButton>
+						<Sidebar.MenuButton>
+							{#snippet child({ props })}
+								<a {...props} href={resolve('/dashboard/servers')}>
+									<Server />
+									Servers
+								</a>
+							{/snippet}
+						</Sidebar.MenuButton>
 					</Sidebar.MenuItem>
 				</Sidebar.Menu>
 			</Sidebar.GroupContent>
 		</Sidebar.Group>
-		<Sidebar.Group />
+		<Sidebar.Group>
+			<Sidebar.GroupLabel>Resources</Sidebar.GroupLabel>
+			<Sidebar.GroupContent>
+				<Sidebar.Menu>
+					<Sidebar.MenuItem>
+						<Sidebar.MenuButton>What is a Container?</Sidebar.MenuButton>
+						<Sidebar.MenuButton>Self-Hosting Guide</Sidebar.MenuButton>
+						<Sidebar.MenuButton>Pricing Calculator</Sidebar.MenuButton>
+					</Sidebar.MenuItem>
+				</Sidebar.Menu>
+			</Sidebar.GroupContent>
+		</Sidebar.Group>
 	</Sidebar.Content>
 	<Sidebar.Footer class="border-t">
 		<DropdownMenu.Root>

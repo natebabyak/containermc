@@ -18,7 +18,7 @@ export const userBalance = pgTable('user_balance', {
 	userId: text('user_id')
 		.primaryKey()
 		.references(() => user.id, { onDelete: 'cascade' }),
-	balanceDollars: numeric('balance_dollars').notNull().default('0'),
+	amountUsd: numeric('amount_usd').notNull().default('0'),
 	updatedAt: timestamp('updated_at')
 		.defaultNow()
 		.$onUpdate(() => new Date())
@@ -29,9 +29,11 @@ export const userSettings = pgTable('user_settings', {
 	userId: text('user_id')
 		.primaryKey()
 		.references(() => user.id, { onDelete: 'cascade' }),
-	autoDeposit: boolean('auto_deposit').notNull().default(false),
-	autoDepositThreshold: numeric('auto_deposit_threshold'),
-	autoDepositAmountDollars: numeric('auto_deposit_amount_dollars'),
+	currency: text('currency').notNull().default('USD'),
+	mode: text('mode').notNull().default('system'),
+	autodepositEnabled: boolean('autodeposit_enabled').notNull().default(false),
+	autodepositAmountUsd: numeric('autodeposit_amount_usd'),
+	autodepositThresholdUsd: numeric('autodeposit_threshold_usd'),
 	updatedAt: timestamp('updated_at')
 		.defaultNow()
 		.$onUpdate(() => new Date())
@@ -42,6 +44,7 @@ export const server = pgTable('server', {
 	id: uuid('id').primaryKey().defaultRandom(),
 	name: text('name').notNull(),
 	slug: text('slug').notNull().unique(),
+	iconUrl: text('icon_url'),
 	status: serverStatusEnum('status').notNull().default('stopped'),
 	minecraftVersion: text('minecraft_version').notNull(),
 	type: text('type').notNull(),
@@ -91,7 +94,7 @@ export const backup = pgTable('backup', {
 	serverId: uuid('server_id')
 		.notNull()
 		.references(() => server.id, { onDelete: 'cascade' }),
-	createdAt: timestamp('created_at').notNull().defaultNow()
+	createdAt: timestamp('created_at').notNull().defaultNow(),
 });
 
 export const userBalanceRelations = relations(user, ({ one }) => ({
