@@ -1,7 +1,8 @@
 import { db } from '$lib/server/db';
-import type { PageServerLoad } from './$types';
+import { error } from '@sveltejs/kit';
+import type { LayoutServerLoad } from './$types';
 
-export const load: PageServerLoad = async ({ locals, params }) => {
+export const load: LayoutServerLoad = async ({ locals, params }) => {
 	const { slug } = params;
 
 	const server = await db.query.server.findFirst({
@@ -9,11 +10,11 @@ export const load: PageServerLoad = async ({ locals, params }) => {
 	});
 
 	if (!server) {
-		throw new Error('Server not found');
+		error(404, 'Server not found');
 	}
 
 	if (server.userId !== locals.user.id) {
-		throw new Error('Unauthorized');
+		error(403, 'Forbidden');
 	}
 
 	return {

@@ -1,5 +1,5 @@
 {
-	"name": "containermc",
+	"name": "containermc-web",
 	"private": true,
 	"version": "0.0.1",
 	"type": "module",
@@ -40,6 +40,7 @@
 		"eslint-config-prettier": "^10.1.8",
 		"eslint-plugin-svelte": "^3.17.0",
 		"globals": "^17.4.0",
+		"layerchart": "2.0.0-next.48",
 		"mdsvex": "^0.12.7",
 		"postgres": "^3.4.9",
 		"prettier": "^3.8.1",

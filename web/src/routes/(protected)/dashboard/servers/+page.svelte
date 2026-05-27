@@ -10,7 +10,11 @@
 	import { resolve } from '$app/paths';
 	import * as Kbd from '$lib/components/ui/kbd/index.js';
 	import { Badge } from '$lib/components/ui/badge/index.js';
-	import SquareArrowOutUpRight from '@lucide/svelte/icons/square-arrow-out-up-right';
+	import ExternalLink from '@lucide/svelte/icons/external-link';
+	import Box from '@lucide/svelte/icons/box';
+	import * as Avatar from '$lib/components/ui/avatar/index.js';
+	import Copy from '@lucide/svelte/icons/copy';
+	import Spinner from '$lib/components/ui/spinner/spinner.svelte';
 
 	let { data }: PageProps = $props();
 
@@ -50,50 +54,56 @@
 			{#each data.servers as server, i (i)}
 				<li>
 					<Item.Root variant="outline">
-						{#snippet child({ props })}
-							<a {...props} href={resolve(`/dashboard/servers/${server.slug}`)}>
-								<Item.Media variant="image">
-									<img
-										src={`https://avatar.vercel.sh/${server.name}`}
-										alt={server.name}
-										width="32"
-										height="32"
-										class="size-8 rounded object-cover grayscale"
-									/>
-								</Item.Media>
-								<Item.Content>
-									<Item.Title>
-										{server.name}
-										<Badge class="capitalize">
-											{server.status}
-										</Badge>
-									</Item.Title>
-									<Item.Description>
-										{server.slug}.containermc.com
-									</Item.Description>
-								</Item.Content>
-								<Item.Actions>
-									<Button size="sm" variant="ghost" class="pointer-events-none">
-										Manage
-										<SquareArrowOutUpRight />
-									</Button>
-								</Item.Actions>
-								<Item.Footer class="justify-start gap-8">
-									<div>
-										<Item.Title>Players</Item.Title>
-										<Item.Description>10/50</Item.Description>
-									</div>
-									<div>
-										<Item.Title>Session Uptime</Item.Title>
-										<Item.Description>2h 14m</Item.Description>
-									</div>
-									<div>
-										<Item.Title>Session Cost</Item.Title>
-										<Item.Description>$0.03</Item.Description>
-									</div>
-								</Item.Footer>
-							</a>
-						{/snippet}
+						<Item.Media variant="image">
+							<Avatar.Root>
+								<Avatar.Image src={server.iconUrl ?? undefined} />
+								<Avatar.Fallback>
+									<Box />
+								</Avatar.Fallback>
+							</Avatar.Root>
+						</Item.Media>
+						<Item.Content>
+							<Item.Title>
+								{server.name}
+								<Badge class="capitalize">
+									<Spinner />
+									{server.status}
+								</Badge>
+							</Item.Title>
+							{@const ipAddress = `${server.slug}.containermc.com`}
+							<Button
+								onclick={() => navigator.clipboard.writeText(ipAddress)}
+								size="xs"
+								variant="ghost"
+							>
+								{ipAddress}
+								<Copy />
+							</Button>
+						</Item.Content>
+						<Item.Actions>
+							<Button
+								href={resolve(`/dashboard/servers/${server.slug}`)}
+								size="sm"
+								variant="outline"
+							>
+								Manage
+								<ExternalLink />
+							</Button>
+						</Item.Actions>
+						<Item.Footer class="justify-start gap-8">
+							<div>
+								<Item.Title>Players</Item.Title>
+								<Item.Description>10/50</Item.Description>
+							</div>
+							<div>
+								<Item.Title>Session Uptime</Item.Title>
+								<Item.Description>2h 14m</Item.Description>
+							</div>
+							<div>
+								<Item.Title>Session Cost</Item.Title>
+								<Item.Description>$0.03</Item.Description>
+							</div>
+						</Item.Footer>
 					</Item.Root>
 				</li>
 			{/each}

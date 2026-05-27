@@ -9,6 +9,6 @@ export const load: LayoutServerLoad = async ({ locals }) => {
 	if (!userBalance) throw new Error('User balance not found');
 
 	return {
-		balance: userBalance.balanceDollars
+		balance: userBalance.amountUsd
 	};
 };
