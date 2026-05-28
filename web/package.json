@@ -60,8 +60,12 @@
 		"vite": "^8.0.7"
 	},
 	"dependencies": {
-		"@aws-sdk/client-ec2": "^3.1052.0",
-		"@aws-sdk/client-ecs": "^3.1052.0",
+		"@aws-sdk/client-cloudwatch-logs": "^3.1055.0",
+		"@aws-sdk/client-ec2": "^3.1055.0",
+		"@aws-sdk/client-ecs": "^3.1055.0",
+		"@aws-sdk/client-route-53": "^3.1055.0",
+		"@aws-sdk/client-s3": "^3.1055.0",
+		"@aws-sdk/client-ssm": "^3.1055.0",
 		"@better-auth/stripe": "^1.6.11",
 		"@sindresorhus/slugify": "^3.0.0",
 		"@tanstack/svelte-form": "^1.32.0",
