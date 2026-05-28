@@ -307,7 +307,7 @@
 													</Item.Content>
 													<Item.Content class="mr-4 *:ml-auto">
 														<Item.Title>
-															${hardwareOption.rate}/hr
+															${hardwareOption.hourlyRateUsd}/hr
 														</Item.Title>
 														<Item.Description>
 															{hardwareOption.players} players

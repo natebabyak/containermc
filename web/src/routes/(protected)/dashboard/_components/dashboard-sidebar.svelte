@@ -16,6 +16,8 @@
 	import * as Item from '$lib/components/ui/item/index.js';
 	import type { Server } from '$lib/types';
 	import { blur } from 'svelte/transition';
+	import { CURRENCIES } from '$lib/constants';
+	import { getCurrency, setCurrency } from '$lib/state/currency.svelte';
 
 	interface Props {
 		balance: string;
@@ -163,6 +165,22 @@
 			<DropdownMenu.Content>
 				<DropdownMenu.Group>
 					<DropdownMenu.Label>Preferences</DropdownMenu.Label>
+					<DropdownMenu.Sub>
+						<DropdownMenu.SubTrigger>Currency</DropdownMenu.SubTrigger>
+						<DropdownMenu.SubContent>
+							<DropdownMenu.Label>Currency</DropdownMenu.Label>
+							<DropdownMenu.RadioGroup bind:value={getCurrency, setCurrency}>
+								{#each CURRENCIES as currency (currency.code)}
+									<DropdownMenu.RadioItem value={currency.code}>
+										<span>
+											{currency.code}
+											<span>{currency.symbol}</span>
+										</span>
+									</DropdownMenu.RadioItem>
+								{/each}
+							</DropdownMenu.RadioGroup>
+						</DropdownMenu.SubContent>
+					</DropdownMenu.Sub>
 					<DropdownMenu.Sub>
 						<DropdownMenu.SubTrigger>Mode</DropdownMenu.SubTrigger>
 						<DropdownMenu.SubContent>

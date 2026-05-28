@@ -1,16 +1,16 @@
 <script lang="ts">
+	import { page } from '$app/state';
 	import * as Breadcrumb from '$lib/components/ui/breadcrumb/index.js';
 	import type { Server } from '$lib/types';
 
 	interface Props {
-		pathname: string;
 		servers: Server[];
 	}
 
-	let { pathname, servers }: Props = $props();
+	let { servers }: Props = $props();
 
 	let crumbs = $derived(
-		pathname
+		page.url.pathname
 			.split('/')
 			.filter(Boolean)
 			.map((segment, i, arr) => {
