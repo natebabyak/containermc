@@ -67,8 +67,8 @@ export async function launchServer(server: Server) {
 		})
 	);
 
-	const task = runResult.tasks![0];
-	const taskArn = task.taskArn!;
+	const task = runResult.tasks?.[0];
+	const taskArn = task?.taskArn;
 
 	return { taskArn };
 }

@@ -7,6 +7,7 @@ import slugify from '@sindresorhus/slugify';
 import { nanoid } from 'nanoid';
 import { HARDWARE_OPTIONS } from '$lib/constants';
 import { ec2 } from '$lib/server/aws/client';
+import { eq } from 'drizzle-orm';
 
 export const load: PageServerLoad = async () => {
 	const regions = (await ec2.send(new DescribeRegionsCommand({}))).Regions ?? [];
@@ -45,6 +46,21 @@ export const actions = {
 				memoryGb,
 				userId: event.locals.user.id
 			});
+			return { success: true };
+		} catch {
+			return { success: false };
+		}
+	},
+	startServer: async ({ request }) => {
+		const formData = await request.formData();
+		const serverId = formData.get('serverId')?.toString();
+
+		if (!serverId) {
+			return { success: false };
+		}
+
+		try {
+			await db.update(server).set({ status: 'starting' }).where(eq(server.id, serverId));
 			return { success: true };
 		} catch {
 			return { success: false };

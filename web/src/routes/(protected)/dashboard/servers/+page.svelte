@@ -3,11 +3,11 @@
 	import Server from '@lucide/svelte/icons/server';
 	import * as Empty from '$lib/components/ui/empty/index.js';
 	import { Button } from '$lib/components/ui/button/index.js';
-	import CreateServerDialog from './create-server-dialog.svelte';
 	import * as InputGroup from '$lib/components/ui/input-group/index.js';
 	import Search from '@lucide/svelte/icons/search';
 	import * as Kbd from '$lib/components/ui/kbd/index.js';
 	import ServerItem from './_components/server-item.svelte';
+	import CreateServerDialog from './_components/create-server-dialog.svelte';
 
 	let { data }: PageProps = $props();
 
@@ -28,7 +28,7 @@
 <svelte:window on:keydown={handleKeyDown} />
 <div class="space-y-4 py-4">
 	{#if data.servers.length > 0}
-		<div class="flex justify-between px-4">
+		<div class="flex justify-between">
 			<InputGroup.Root class="w-full max-w-xs">
 				<InputGroup.Input bind:ref={inputRef} placeholder="Search servers..." />
 				<InputGroup.Addon>
@@ -43,8 +43,8 @@
 			</InputGroup.Root>
 			<CreateServerDialog regions={data.regions} />
 		</div>
-		<ul class="grid gap-4 px-4">
-			{#each data.servers as server, i (i)}
+		<ul class="space-y-4">
+			{#each data.servers as server (server.id)}
 				<li>
 					<ServerItem {server} />
 				</li>
