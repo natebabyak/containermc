@@ -18,7 +18,7 @@ export const userBalance = pgTable('user_balance', {
 	userId: text('user_id')
 		.primaryKey()
 		.references(() => user.id, { onDelete: 'cascade' }),
-	amountUsd: numeric('amount_usd').notNull().default('0'),
+	amountUsd: numeric('amount_usd', { precision: 10, scale: 2 }).notNull().default('0'),
 	updatedAt: timestamp('updated_at')
 		.defaultNow()
 		.$onUpdate(() => new Date())
@@ -94,7 +94,7 @@ export const backup = pgTable('backup', {
 	serverId: uuid('server_id')
 		.notNull()
 		.references(() => server.id, { onDelete: 'cascade' }),
-	createdAt: timestamp('created_at').notNull().defaultNow(),
+	createdAt: timestamp('created_at').notNull().defaultNow()
 });
 
 export const userBalanceRelations = relations(user, ({ one }) => ({

@@ -1,21 +1,18 @@
 import { db } from '$lib/server/db';
 import type { PageServerLoad } from './$types';
-import { DescribeRegionsCommand, EC2Client } from '@aws-sdk/client-ec2';
+import { DescribeRegionsCommand } from '@aws-sdk/client-ec2';
 import type { Actions } from './$types';
 import { server } from '$lib/server/db/schema';
 import slugify from '@sindresorhus/slugify';
 import { nanoid } from 'nanoid';
 import { HARDWARE_OPTIONS } from '$lib/constants';
+import { ec2 } from '$lib/server/aws/client';
 
-export const load: PageServerLoad = async ({ locals }) => {
-	const regions = (await new EC2Client({}).send(new DescribeRegionsCommand({}))).Regions ?? [];
-	const servers = await db.query.server.findMany({
-		where: (server, { eq }) => eq(server.userId, locals.user.id)
-	});
+export const load: PageServerLoad = async () => {
+	const regions = (await ec2.send(new DescribeRegionsCommand({}))).Regions ?? [];
 
 	return {
-		regions,
-		servers
+		regions
 	};
 };
 

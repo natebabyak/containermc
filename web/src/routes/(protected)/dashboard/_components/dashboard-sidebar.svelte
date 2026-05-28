@@ -2,44 +2,72 @@
 	import { authClient } from '$lib/auth-client';
 	import * as Avatar from '$lib/components/ui/avatar/index.js';
 	import * as DropdownMenu from '$lib/components/ui/dropdown-menu/index.js';
-	import EllipsisVertical from '@lucide/svelte/icons/ellipsis-vertical';
 	import * as Sidebar from '$lib/components/ui/sidebar/index.js';
-	import LogOut from '@lucide/svelte/icons/log-out';
-	import Monitor from '@lucide/svelte/icons/monitor';
-	import Sun from '@lucide/svelte/icons/sun';
-	import Moon from '@lucide/svelte/icons/moon';
+	import LogOutIcon from '@lucide/svelte/icons/log-out';
+	import MonitorIcon from '@lucide/svelte/icons/monitor';
+	import SunIcon from '@lucide/svelte/icons/sun';
+	import MoonIcon from '@lucide/svelte/icons/moon';
 	import { resetMode, setMode, userPrefersMode } from 'mode-watcher';
-	import Container from '@lucide/svelte/icons/container';
-	import ChevronsUpDown from '@lucide/svelte/icons/chevrons-up-down';
+	import ChevronsUpDownIcon from '@lucide/svelte/icons/chevrons-up-down';
+	import ChevronsDownUpIcon from '@lucide/svelte/icons/chevrons-down-up';
 	import { resolve } from '$app/paths';
-	import CreditCard from '@lucide/svelte/icons/credit-card';
-	import Server from '@lucide/svelte/icons/server';
+	import CreditCardIcon from '@lucide/svelte/icons/credit-card';
+	import ServerIcon from '@lucide/svelte/icons/server';
+	import * as Item from '$lib/components/ui/item/index.js';
+	import type { Server } from '$lib/types';
+	import { blur } from 'svelte/transition';
 
-	interface DashboardSidebarProps {
+	interface Props {
 		balance: string;
+		servers: Server[];
 	}
 
-	let { balance }: DashboardSidebarProps = $props();
+	let { balance, servers }: Props = $props();
 
 	const session = authClient.useSession();
+
+	let serversOpen = $state(false);
+	let accountOpen = $state(false);
 </script>
 
 <Sidebar.Root>
-	<Sidebar.Header>
-		<DropdownMenu.Root>
+	<Sidebar.Header class="border-b">
+		<DropdownMenu.Root bind:open={serversOpen}>
 			<DropdownMenu.Trigger>
 				{#snippet child({ props })}
 					<Sidebar.MenuButton {...props} size="lg">
-						<Container />
-						My Servers
-						<ChevronsUpDown class="ml-auto" />
+						<ServerIcon />
+						Servers
+						<div class="relative ml-auto size-4">
+							{#if serversOpen}
+								<div transition:blur={{ duration: 150 }} class="absolute">
+									<ChevronsDownUpIcon />
+								</div>
+							{:else}
+								<div transition:blur={{ duration: 150 }} class="absolute">
+									<ChevronsUpDownIcon />
+								</div>
+							{/if}
+						</div>
 					</Sidebar.MenuButton>
 				{/snippet}
 			</DropdownMenu.Trigger>
 			<DropdownMenu.Content>
-				<DropdownMenu.Group>
-					<DropdownMenu.Label>My Servers</DropdownMenu.Label>
-				</DropdownMenu.Group>
+				<DropdownMenu.Label>My Servers</DropdownMenu.Label>
+				{#each servers as server (server.id)}
+					<DropdownMenu.Item>
+						<Item.Root>
+							{#snippet child({ props })}
+								<a {...props} href={resolve(`/dashboard/servers/${server.slug}`)}>
+									<Item.Content>
+										<Item.Title>{server.name}</Item.Title>
+										<Item.Description>{server.slug}</Item.Description>
+									</Item.Content>
+								</a>
+							{/snippet}
+						</Item.Root>
+					</DropdownMenu.Item>
+				{/each}
 			</DropdownMenu.Content>
 		</DropdownMenu.Root>
 	</Sidebar.Header>
@@ -54,20 +82,31 @@
 								<a {...props} href={resolve('/dashboard/analytics')}>Analytics</a>
 							{/snippet}
 						</Sidebar.MenuButton>
+					</Sidebar.MenuItem>
+					<Sidebar.MenuItem>
 						<Sidebar.MenuButton>
 							{#snippet child({ props })}
 								<a {...props} href={resolve('/dashboard/billing')}>
-									<CreditCard />
+									<CreditCardIcon />
 									Billing
 								</a>
 							{/snippet}
 						</Sidebar.MenuButton>
+					</Sidebar.MenuItem>
+					<Sidebar.MenuItem>
 						<Sidebar.MenuButton>
 							{#snippet child({ props })}
 								<a {...props} href={resolve('/dashboard/servers')}>
-									<Server />
+									<ServerIcon />
 									Servers
 								</a>
+							{/snippet}
+						</Sidebar.MenuButton>
+					</Sidebar.MenuItem>
+					<Sidebar.MenuItem>
+						<Sidebar.MenuButton>
+							{#snippet child({ props })}
+								<a {...props} href={resolve('/dashboard/settings')}> Settings </a>
 							{/snippet}
 						</Sidebar.MenuButton>
 					</Sidebar.MenuItem>
@@ -88,7 +127,7 @@
 		</Sidebar.Group>
 	</Sidebar.Content>
 	<Sidebar.Footer class="border-t">
-		<DropdownMenu.Root>
+		<DropdownMenu.Root bind:open={accountOpen}>
 			<DropdownMenu.Trigger>
 				{#snippet child({ props })}
 					{#if $session.data}
@@ -106,7 +145,17 @@
 									remaining
 								</span>
 							</div>
-							<EllipsisVertical class="ml-auto" />
+							<div class="relative ml-auto size-4">
+								{#if accountOpen}
+									<div transition:blur={{ duration: 150 }} class="absolute">
+										<ChevronsDownUpIcon />
+									</div>
+								{:else}
+									<div transition:blur={{ duration: 150 }} class="absolute">
+										<ChevronsUpDownIcon />
+									</div>
+								{/if}
+							</div>
 						</Sidebar.MenuButton>
 					{/if}
 				{/snippet}
@@ -124,15 +173,15 @@
 									value === 'system' ? resetMode() : setMode(value as 'light' | 'dark')}
 							>
 								<DropdownMenu.RadioItem value="system">
-									<Monitor />
+									<MonitorIcon />
 									System
 								</DropdownMenu.RadioItem>
 								<DropdownMenu.RadioItem value="light">
-									<Sun />
+									<SunIcon />
 									Light
 								</DropdownMenu.RadioItem>
 								<DropdownMenu.RadioItem value="dark">
-									<Moon />
+									<MoonIcon />
 									Dark
 								</DropdownMenu.RadioItem>
 							</DropdownMenu.RadioGroup>
@@ -143,7 +192,7 @@
 				<DropdownMenu.Group>
 					<DropdownMenu.Label>Account</DropdownMenu.Label>
 					<DropdownMenu.Item>
-						<LogOut />
+						<LogOutIcon />
 						Sign Out
 					</DropdownMenu.Item>
 				</DropdownMenu.Group>

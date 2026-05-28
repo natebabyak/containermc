@@ -3,7 +3,7 @@ export const HARDWARE_OPTIONS = [
 		name: 'X-Small',
 		cpu: 2,
 		memoryGb: 1,
-		rate: 0.015,
+		hourlyRateUsd: 0.02,
 		players: '1–2',
 		tag: null
 	},
@@ -11,7 +11,7 @@ export const HARDWARE_OPTIONS = [
 		name: 'Small',
 		cpu: 2,
 		memoryGb: 2,
-		rate: 0.03,
+		hourlyRateUsd: 0.04,
 		players: '2–5',
 		tag: null
 	},
@@ -19,7 +19,7 @@ export const HARDWARE_OPTIONS = [
 		name: 'Medium',
 		cpu: 2,
 		memoryGb: 4,
-		rate: 0.06,
+		hourlyRateUsd: 0.08,
 		players: '5–10',
 		tag: 'Recommended'
 	},
@@ -27,7 +27,7 @@ export const HARDWARE_OPTIONS = [
 		name: 'Large',
 		cpu: 2,
 		memoryGb: 8,
-		rate: 0.12,
+		hourlyRateUsd: 0.16,
 		players: '10–20',
 		tag: null
 	},
@@ -35,7 +35,7 @@ export const HARDWARE_OPTIONS = [
 		name: 'X-Large',
 		cpu: 4,
 		memoryGb: 16,
-		rate: 0.24,
+		hourlyRateUsd: 0.32,
 		players: '20–50',
 		tag: null
 	},
@@ -43,7 +43,7 @@ export const HARDWARE_OPTIONS = [
 		name: 'XX-Large',
 		cpu: 8,
 		memoryGb: 32,
-		rate: 0.48,
+		hourlyRateUsd: 0.64,
 		players: '50+',
 		tag: null
 	}
@@ -177,9 +177,9 @@ export const MINECRAFT_VERSIONS = [
 ] as const;
 
 export const SERVER_STATUSES = [
-	'running',
-	'starting',
 	'pending',
+	'starting',
+	'running',
 	'stopping',
 	'stopped',
 	'error'
