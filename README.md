@@ -8,6 +8,32 @@ For non-technical users, head to [containermc.com](https://containermc.com) to g
 
 ### For Technical Users
 
+## CDK
+
+### Prerequisites
+
+```sh
+bun install -g aws-cdk
+```
+
+### CDK Commands
+
+```sh
+cdk bootstrap
+```
+
+```sh
+cdk synth
+```
+
+```sh
+cdk deploy
+```
+
+```sh
+cdk destroy
+```
+
 ## Acknowledgements
 
 ContainerMC relies on countless open-source projects. Here are some of the key ones:

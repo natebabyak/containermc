@@ -9,32 +9,26 @@ export class ContainerMCStack extends cdk.Stack {
   constructor(scope: cdk.App, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
 
-    // VPC
     const vpc = new ec2.Vpc(this, "Vpc", {
       maxAzs: 2,
       natGateways: 0,
     });
 
-    // IAM role for EC2 instances
     const instanceRole = new iam.Role(this, "InstanceRole", {
       assumedBy: new iam.ServicePrincipal("ec2.amazonaws.com"),
       managedPolicies: [
-        // ECS agent
         iam.ManagedPolicy.fromAwsManagedPolicyName(
           "service-role/AmazonEC2ContainerServiceforEC2Role",
         ),
-        // SSM for RCON
         iam.ManagedPolicy.fromAwsManagedPolicyName(
           "AmazonSSMManagedInstanceCore",
         ),
-        // CloudWatch logs
         iam.ManagedPolicy.fromAwsManagedPolicyName(
           "CloudWatchAgentServerPolicy",
         ),
       ],
     });
 
-    // Security group for EC2 instances
     const instanceSg = new ec2.SecurityGroup(this, "InstanceSg", {
       vpc,
       description: "Minecraft EC2 instances",
@@ -50,26 +44,50 @@ export class ContainerMCStack extends cdk.Stack {
       "Minecraft Bedrock",
     );
 
-    // ECS cluster
     const cluster = new ecs.Cluster(this, "Cluster", { vpc });
 
-    // Auto Scaling Group with t4g instances
     const asg = new autoscaling.AutoScalingGroup(this, "ASG", {
       vpc,
-      instanceType: ec2.InstanceType.of(
-        ec2.InstanceClass.T4G,
-        ec2.InstanceSize.XLARGE,
-      ),
-      machineImage: ecs.EcsOptimizedImage.amazonLinux2(ecs.AmiHardwareType.ARM),
-      minCapacity: 1,
+      mixedInstancesPolicy: {
+        instancesDistribution: {
+          onDemandPercentageAboveBaseCapacity: 100,
+          onDemandAllocationStrategy:
+            autoscaling.OnDemandAllocationStrategy.LOWEST_PRICE,
+        },
+        launchTemplate: new ec2.LaunchTemplate(this, "LaunchTemplate", {
+          machineImage: ecs.EcsOptimizedImage.amazonLinux2(
+            ecs.AmiHardwareType.ARM,
+          ),
+          role: instanceRole,
+          securityGroup: instanceSg,
+        }),
+        launchTemplateOverrides: [
+          {
+            instanceType: ec2.InstanceType.of(
+              ec2.InstanceClass.T4G,
+              ec2.InstanceSize.MICRO,
+            ),
+          },
+          {
+            instanceType: ec2.InstanceType.of(
+              ec2.InstanceClass.T4G,
+              ec2.InstanceSize.SMALL,
+            ),
+          },
+          {
+            instanceType: ec2.InstanceType.of(
+              ec2.InstanceClass.T4G,
+              ec2.InstanceSize.MEDIUM,
+            ),
+          },
+        ],
+      },
+      minCapacity: 0,
       maxCapacity: 20,
-      role: instanceRole,
-      securityGroup: instanceSg,
       vpcSubnets: { subnetType: ec2.SubnetType.PUBLIC },
       associatePublicIpAddress: true,
     });
 
-    // Attach ASG to ECS cluster
     const capacityProvider = new ecs.AsgCapacityProvider(this, "AsgCp", {
       autoScalingGroup: asg,
       enableManagedScaling: true,
@@ -77,22 +95,18 @@ export class ContainerMCStack extends cdk.Stack {
     });
     cluster.addAsgCapacityProvider(capacityProvider);
 
-    // CloudWatch log group
     const logGroup = new logs.LogGroup(this, "ServerLogs", {
       logGroupName: "/containermc/servers",
       retention: logs.RetentionDays.ONE_MONTH,
       removalPolicy: cdk.RemovalPolicy.DESTROY,
     });
 
-    // IAM role for ECS tasks (what the container can do)
     const taskRole = new iam.Role(this, "TaskRole", {
       assumedBy: new iam.ServicePrincipal("ecs-tasks.amazonaws.com"),
     });
 
-    // allow tasks to write to CloudWatch
     logGroup.grantWrite(taskRole);
 
-    // outputs
     new cdk.CfnOutput(this, "ClusterArn", { value: cluster.clusterArn });
     new cdk.CfnOutput(this, "ClusterName", { value: cluster.clusterName });
     new cdk.CfnOutput(this, "VpcId", { value: vpc.vpcId });

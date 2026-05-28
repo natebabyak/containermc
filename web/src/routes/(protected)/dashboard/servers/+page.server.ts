@@ -2,12 +2,13 @@ import { db } from '$lib/server/db';
 import type { PageServerLoad } from './$types';
 import { DescribeRegionsCommand } from '@aws-sdk/client-ec2';
 import type { Actions } from './$types';
-import { server } from '$lib/server/db/schema';
+import { server, serverSession } from '$lib/server/db/schema';
 import slugify from '@sindresorhus/slugify';
 import { nanoid } from 'nanoid';
 import { HARDWARE_OPTIONS } from '$lib/constants';
 import { ec2 } from '$lib/server/aws/client';
 import { eq } from 'drizzle-orm';
+import { launchServer } from '$lib/server/aws/servers';
 
 export const load: PageServerLoad = async () => {
 	const regions = (await ec2.send(new DescribeRegionsCommand({}))).Regions ?? [];
@@ -51,18 +52,42 @@ export const actions = {
 			return { success: false };
 		}
 	},
-	startServer: async ({ request }) => {
+	startServer: async ({ request, locals }) => {
 		const formData = await request.formData();
 		const serverId = formData.get('serverId')?.toString();
 
-		if (!serverId) {
+		if (!serverId) return { success: false };
+
+		const existingServer = await db.query.server.findFirst({
+			where: (s, { eq, and }) => and(eq(s.id, serverId), eq(s.userId, locals.user.id))
+		});
+
+		if (!existingServer) return { success: false };
+		if (existingServer.status === 'running' || existingServer.status === 'starting') {
 			return { success: false };
 		}
 
 		try {
 			await db.update(server).set({ status: 'starting' }).where(eq(server.id, serverId));
+
+			const { taskArn } = await launchServer(existingServer);
+
+			await db.update(server).set({ arn: taskArn }).where(eq(server.id, serverId));
+
+			await db.insert(serverSession).values({
+				region: existingServer.region,
+				cpu: existingServer.cpu,
+				memoryGb: existingServer.memoryGb,
+				serverId: existingServer.id,
+				userId: locals.user.id
+			});
+
 			return { success: true };
-		} catch {
+		} catch (e) {
+			console.error(e);
+
+			await db.update(server).set({ status: 'stopped' }).where(eq(server.id, serverId));
+
 			return { success: false };
 		}
 	}
