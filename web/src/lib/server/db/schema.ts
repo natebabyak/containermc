@@ -31,9 +31,9 @@ export const userSettings = pgTable('user_settings', {
 		.references(() => user.id, { onDelete: 'cascade' }),
 	currency: text('currency').notNull().default('USD'),
 	mode: text('mode').notNull().default('system'),
-	autodepositEnabled: boolean('autodeposit_enabled').notNull().default(false),
-	autodepositAmountUsd: numeric('autodeposit_amount_usd'),
-	autodepositThresholdUsd: numeric('autodeposit_threshold_usd'),
+	autoRechargeEnabled: boolean('auto_recharge_enabled').notNull().default(false),
+	autoRechargeAmountUsd: numeric('auto_recharge_amount_usd', { precision: 10, scale: 2 }),
+	autoRechargeThresholdUsd: numeric('auto_recharge_threshold_usd', { precision: 10, scale: 2 }),
 	updatedAt: timestamp('updated_at')
 		.defaultNow()
 		.$onUpdate(() => new Date())
@@ -52,6 +52,8 @@ export const server = pgTable('server', {
 	cpu: integer('cpu').notNull(),
 	memoryGb: integer('memory_gb').notNull(),
 	arn: text('arn'),
+	autoStopEnabled: boolean('auto_stop_enabled').notNull().default(true),
+	autoStopTimeoutMinutes: integer('auto_stop_timeout_minutes').notNull().default(15),
 	userId: text('user_id')
 		.notNull()
 		.references(() => user.id, { onDelete: 'cascade' }),
@@ -75,10 +77,13 @@ export const serverMod = pgTable('server_mod', {
 export const serverSession = pgTable('server_session', {
 	id: uuid('id').primaryKey().defaultRandom(),
 	region: text('region').notNull(),
+	hardware: text('hardware').notNull(),
 	cpu: integer('cpu').notNull(),
 	memoryGb: integer('memory_gb').notNull(),
+	hourlyRateUsd: numeric('hourly_rate_usd', { precision: 10, scale: 4 }).notNull(),
 	startedAt: timestamp('started_at').notNull().defaultNow(),
 	stoppedAt: timestamp('stopped_at'),
+	costUsd: numeric('cost_usd', { precision: 10, scale: 4 }),
 	serverId: uuid('server_id')
 		.notNull()
 		.references(() => server.id, { onDelete: 'cascade' }),
@@ -97,16 +102,16 @@ export const backup = pgTable('backup', {
 	createdAt: timestamp('created_at').notNull().defaultNow()
 });
 
-export const userBalanceRelations = relations(user, ({ one }) => ({
+export const userBalanceRelations = relations(userBalance, ({ one }) => ({
 	user: one(user, {
-		fields: [user.id],
+		fields: [userBalance.userId],
 		references: [user.id]
 	})
 }));
 
-export const userSettingsRelations = relations(user, ({ one }) => ({
+export const userSettingsRelations = relations(userSettings, ({ one }) => ({
 	user: one(user, {
-		fields: [user.id],
+		fields: [userSettings.userId],
 		references: [user.id]
 	})
 }));

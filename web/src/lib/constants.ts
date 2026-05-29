@@ -51,7 +51,10 @@ export const HARDWARE_OPTIONS = [
 		cpu: 2,
 		memoryGb: 1,
 		hourlyRateUsd: 0.02,
-		players: '1–2',
+		players: {
+			min: 1,
+			max: 2
+		},
 		tag: null
 	},
 	{
@@ -59,7 +62,10 @@ export const HARDWARE_OPTIONS = [
 		cpu: 2,
 		memoryGb: 2,
 		hourlyRateUsd: 0.04,
-		players: '2–5',
+		players: {
+			min: 2,
+			max: 5
+		},
 		tag: null
 	},
 	{
@@ -67,7 +73,10 @@ export const HARDWARE_OPTIONS = [
 		cpu: 2,
 		memoryGb: 4,
 		hourlyRateUsd: 0.08,
-		players: '5–10',
+		players: {
+			min: 5,
+			max: 10
+		},
 		tag: 'Recommended'
 	},
 	{
@@ -75,7 +84,10 @@ export const HARDWARE_OPTIONS = [
 		cpu: 2,
 		memoryGb: 8,
 		hourlyRateUsd: 0.16,
-		players: '10–20',
+		players: {
+			min: 10,
+			max: 20
+		},
 		tag: null
 	},
 	{
@@ -83,7 +95,10 @@ export const HARDWARE_OPTIONS = [
 		cpu: 4,
 		memoryGb: 16,
 		hourlyRateUsd: 0.32,
-		players: '20–50',
+		players: {
+			min: 20,
+			max: 50
+		},
 		tag: null
 	},
 	{
@@ -91,7 +106,10 @@ export const HARDWARE_OPTIONS = [
 		cpu: 8,
 		memoryGb: 32,
 		hourlyRateUsd: 0.64,
-		players: '50+',
+		players: {
+			min: 50,
+			max: null
+		},
 		tag: null
 	}
 ] as const;
@@ -219,9 +237,7 @@ export const MINECRAFT_VERSION_GROUPS = [
 	}
 ] as const;
 
-export const MINECRAFT_VERSIONS = [
-	...MINECRAFT_VERSION_GROUPS.flatMap((group) => group.versions)
-] as const;
+export const MINECRAFT_VERSIONS = [...MINECRAFT_VERSION_GROUPS.flatMap((g) => g.versions)] as const;
 
 export const SERVER_STATUSES = [
 	'pending',
