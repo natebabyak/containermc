@@ -1,48 +1,15 @@
 export const CURRENCIES = [
-	{
-		code: 'USD',
-		symbol: 'U$'
-	},
-	{
-		code: 'EUR',
-		symbol: '€'
-	},
-	{
-		code: 'JPY',
-		symbol: '¥'
-	},
-	{
-		code: 'GBP',
-		symbol: '£'
-	},
-	{
-		code: 'AUD',
-		symbol: 'A$'
-	},
-	{
-		code: 'CAD',
-		symbol: 'C$'
-	},
-	{
-		code: 'SGD',
-		symbol: 'S$'
-	},
-	{
-		code: 'INR',
-		symbol: '₹'
-	},
-	{
-		code: 'KRW',
-		symbol: '₩'
-	},
-	{
-		code: 'SEK',
-		symbol: 'kr'
-	},
-	{
-		code: 'BRL',
-		symbol: 'R$'
-	}
+	'usd',
+	'eur',
+	'jpy',
+	'gbp',
+	'aud',
+	'cad',
+	'sgd',
+	'inr',
+	'krw',
+	'sek',
+	'brl'
 ] as const;
 
 export const HARDWARE_OPTIONS = [
@@ -238,6 +205,8 @@ export const MINECRAFT_VERSION_GROUPS = [
 ] as const;
 
 export const MINECRAFT_VERSIONS = [...MINECRAFT_VERSION_GROUPS.flatMap((g) => g.versions)] as const;
+
+export const MODES = ['system', 'light', 'dark'] as const;
 
 export const SERVER_STATUSES = [
 	'pending',

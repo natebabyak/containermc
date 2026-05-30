@@ -72,7 +72,7 @@
 		"better-auth": "^1.6.11",
 		"mode-watcher": "^1.1.0",
 		"nanoid": "^5.1.11",
-		"stripe": "^22.1.1",
+		"stripe": "^22.2.0",
 		"zod": "^4.4.3"
 	}
 }

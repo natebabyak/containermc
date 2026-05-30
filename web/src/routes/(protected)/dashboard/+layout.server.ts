@@ -8,12 +8,12 @@ export const load: LayoutServerLoad = async ({ locals }) => {
 
 	if (!userBalance) throw new Error('User balance not found');
 
-	const servers = await db.query.server.findMany({
+	const minecraftServers = await db.query.minecraftServer.findMany({
 		where: (server, { eq }) => eq(server.userId, locals.user.id)
 	});
 
 	return {
-		balance: userBalance.amountUsd,
-		servers
+		balanceCents: userBalance.amountDollars,
+		minecraftServers
 	};
 };

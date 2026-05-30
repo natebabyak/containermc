@@ -7,7 +7,7 @@
 </script>
 
 <Sidebar.Provider>
-	<DashboardSidebar balance={data.balance} servers={data.servers} />
+	<DashboardSidebar balance={data.balanceCents} servers={data.servers} />
 	<main class="size-full space-y-4 p-4">
 		<DashboardBreadcrumb servers={data.servers} />
 		{@render children()}
