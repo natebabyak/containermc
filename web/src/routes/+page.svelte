@@ -3,10 +3,14 @@
 	import { Button } from '$lib/components/ui/button/index.js';
 	import ChevronRight from '@lucide/svelte/icons/chevron-right';
 	import { blur } from 'svelte/transition';
-	import Container from '@lucide/svelte/icons/container';
 	import ArrowRight from '@lucide/svelte/icons/arrow-right';
 	import { sineOut } from 'svelte/easing';
 	import { cn } from '$lib/utils';
+	import * as Item from '$lib/components/ui/item/index.js';
+	import { Separator } from '$lib/components/ui/separator/index.js';
+	import SettingsIcon from '@lucide/svelte/icons/settings';
+	import CloudIcon from '@lucide/svelte/icons/cloud';
+	import Containermc from '$lib/components/icons/containermc.svelte';
 
 	let scrollY = $state(0);
 
@@ -20,10 +24,11 @@
 <svelte:window onscroll={handleScroll} />
 
 <header class="sticky top-0 bg-background">
-	<div class="flex items-center justify-between p-8">
-		<Button href={resolve('/')} size="icon-lg" variant="ghost">
-			<Container />
-		</Button>
+	<div class={cn('flex items-center justify-between transition-all', scrollY > 0 ? 'p-4' : 'p-8')}>
+		<a href={resolve('/')} class="flex items-center gap-2">
+			<Containermc />
+			<span class="font-serif text-2xl font-medium">ContainerMC</span>
+		</a>
 		<div class="flex gap-2">
 			<Button href={resolve('/sign-in')} variant="ghost">Sign in</Button>
 			<Button href={resolve('/sign-up')} variant="outline">Sign up</Button>
@@ -36,41 +41,64 @@
 		)}
 	></div>
 </header>
-<main>
-	<article class="flex flex-col items-center">
-		<section class="flex min-h-[50vh] w-full max-w-xl flex-col justify-center gap-4">
-			<h1 class="text-4xl leading-tight font-medium text-balance md:text-6xl">
-				Deploy in Minutes. Scale in Seconds.
-			</h1>
-			<p class="text-balance">
-				ContainerMC is the easiest way to deploy and manage Minecraft servers of any size. Whether
-				it's just you and your friends or tens of thousands of players, ContainerMC has you covered.
-			</p>
-			<div class="flex gap-2">
-				<Button
-					href={resolve('/sign-up')}
-					onmouseenter={() => (isGetStartedButtonHovered = true)}
-					onmouseleave={() => (isGetStartedButtonHovered = false)}
-					size="lg"
-				>
-					Get Started
-					<div class="relative size-4">
-						{#if isGetStartedButtonHovered}
-							<div transition:blur={{ easing: sineOut }} class="absolute">
-								<ArrowRight />
-							</div>
-						{:else}
-							<div transition:blur={{ easing: sineOut }} class="absolute">
-								<ChevronRight />
-							</div>
-						{/if}
-					</div>
-				</Button>
-				<Button href={resolve('/pricing')} size="lg" variant="outline">See Pricing</Button>
-			</div>
-		</section>
-		<section class="grid w-full grid-cols-3 gap-px bg-border"></section>
-	</article>
+<main class="flex flex-col items-center [&_h2]:text-2xl [&_h2]:font-medium">
+	<section class="flex min-h-[50vh] w-full max-w-xl flex-col justify-center gap-4">
+		<h1 class="font-serif text-4xl leading-tight font-medium text-balance md:text-6xl">
+			Deploy in Minutes. Scale in Seconds.
+		</h1>
+		<p class="text-balance">
+			ContainerMC is the easiest and most cost-efficient way to deploy and manage Minecraft servers
+			in the cloud.
+		</p>
+		<div class="flex gap-2">
+			<Button
+				href={resolve('/sign-up')}
+				onmouseenter={() => (isGetStartedButtonHovered = true)}
+				onmouseleave={() => (isGetStartedButtonHovered = false)}
+				size="lg"
+			>
+				Get Started
+				<div class="relative size-4">
+					{#if isGetStartedButtonHovered}
+						<div transition:blur={{ easing: sineOut }} class="absolute">
+							<ArrowRight />
+						</div>
+					{:else}
+						<div transition:blur={{ easing: sineOut }} class="absolute">
+							<ChevronRight />
+						</div>
+					{/if}
+				</div>
+			</Button>
+			<Button href={resolve('/pricing')} size="lg" variant="outline">See Pricing</Button>
+		</div>
+	</section>
+	<Separator />
+	<section class="p-4 md:p-8">
+		<h2>Why ContainerMC?</h2>
+		<Item.Root variant="muted">
+			<Item.Media variant="icon">
+				<SettingsIcon />
+			</Item.Media>
+			<Item.Content>
+				<Item.Title>Cost-Effective</Item.Title>
+				<Item.Description>
+					Pay only for what you use, with no unexpected costs or hidden fees.
+				</Item.Description>
+			</Item.Content>
+		</Item.Root>
+		<Item.Root variant="muted">
+			<Item.Media variant="icon">
+				<CloudIcon />
+			</Item.Media>
+			<Item.Content>
+				<Item.Title>Reliability</Item.Title>
+				<Item.Description>
+					Powered by AWS, our cloud deployment ensures 99.9% uptime.
+				</Item.Description>
+			</Item.Content>
+		</Item.Root>
+	</section>
 </main>
 <footer class="min-h-[50svh] border-t p-8">
 	<p>&copy; 2026 Nate Babyak</p>
