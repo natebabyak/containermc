@@ -24,7 +24,7 @@
 	class="space-y-8 p-8 [&_h1]:text-4xl [&_h1]:font-bold [&_h2]:text-2xl [&_h2]:font-medium [&>section]:space-y-4"
 >
 	<section>
-		<h1>{formatCurrency(data.balanceCents / 100)} remaining</h1>
+		<h1>{formatCurrency(data.balance)} remaining</h1>
 	</section>
 
 	<section>

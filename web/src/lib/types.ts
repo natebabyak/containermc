@@ -1,3 +1,3 @@
-import type { server } from '$lib/server/db/schema';
+import type { minecraftServer } from '$lib/server/db/schema';
 
-export type Server = typeof server.$inferSelect;
+export type Server = typeof minecraftServer.$inferSelect;

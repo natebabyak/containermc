@@ -20,6 +20,7 @@
 	import { Separator } from '$lib/components/ui/separator/index.js';
 	import { Badge } from '$lib/components/ui/badge/index.js';
 	import { invalidateAll } from '$app/navigation';
+	import BadgeCheckIcon from '@lucide/svelte/icons/badge-check';
 
 	interface RegionGroup {
 		id: string;
@@ -29,11 +30,11 @@
 		})[];
 	}
 
-	interface CreateServerDialogProps {
+	interface Props {
 		regions: Region[];
 	}
 
-	let { regions }: CreateServerDialogProps = $props();
+	let { regions }: Props = $props();
 
 	const schema = z.object({
 		name: z.string().min(1, 'Name is required'),
@@ -87,7 +88,10 @@
 		const url = `https://${region.Endpoint}`;
 		const start = performance.now();
 		try {
-			await fetch(url, { method: 'HEAD', mode: 'no-cors' });
+			await fetch(url, {
+				method: 'HEAD',
+				mode: 'no-cors'
+			});
 			return performance.now() - start;
 		} catch {
 			return -1;
@@ -138,7 +142,36 @@
 	});
 </script>
 
-{#snippet content()}
+{#snippet hardwareOptionItem(hardwareOption: (typeof HARDWARE_OPTIONS)[number])}
+	<Item.Content>
+		<Item.Title>
+			{hardwareOption.name}
+			{#if hardwareOption.tag}
+				<Badge>
+					<BadgeCheckIcon />
+					{hardwareOption.tag}
+				</Badge>
+			{/if}
+		</Item.Title>
+		<Item.Description>
+			{hardwareOption.cpu} vCPU &bull; {hardwareOption.memoryGb} GB
+		</Item.Description>
+	</Item.Content>
+	<Item.Content class="mr-4 *:ml-auto">
+		<Item.Title>
+			${hardwareOption.hourlyRateUsd}/hr
+		</Item.Title>
+		<Item.Description>
+			{#if hardwareOption.players.max}
+				{hardwareOption.players.min}&ndash;{hardwareOption.players.max} players
+			{:else}
+				{hardwareOption.players.min}+ players
+			{/if}
+		</Item.Description>
+	</Item.Content>
+{/snippet}
+
+{#snippet createServerForm()}
 	<form
 		onsubmit={(e) => {
 			e.preventDefault();
@@ -150,13 +183,13 @@
 			<form.Field name="name">
 				{#snippet children(field)}
 					<Field.Field>
-						<Field.Label for={field.name}>Server Name</Field.Label>
+						<Field.Label for={field.name}>Name</Field.Label>
 						<Input
 							aria-invalid={!!field.state.meta.errors[0]}
 							id={field.name}
 							name={field.name}
 							oninput={(e) => field.handleChange((e.target as HTMLInputElement).value)}
-							placeholder="Server Name"
+							placeholder="Server name"
 							type="text"
 							value={field.state.value}
 						/>
@@ -237,7 +270,7 @@
 							onValueChange={(value) => field.handleChange(value)}
 						>
 							<Select.Trigger id={field.name}>
-								{field.state.value || 'Select Region'}
+								{field.state.value || 'Select region'}
 							</Select.Trigger>
 							<Select.Content class="max-h-100">
 								{#each regionGroups as regionGroup, i (i)}
@@ -251,7 +284,10 @@
 															<Item.Title>
 																{region.RegionName}
 																{#if i === 0 && j === 0}
-																	<Badge>Recommended</Badge>
+																	<Badge>
+																		<BadgeCheckIcon />
+																		Recommended
+																	</Badge>
 																{/if}
 															</Item.Title>
 															<Item.Description>
@@ -286,7 +322,7 @@
 							onValueChange={(value) => field.handleChange(value)}
 						>
 							<Select.Trigger id={field.name}>
-								{field.state.value || 'Select Hardware'}
+								{field.state.value || 'Select hardware'}
 							</Select.Trigger>
 							<Select.Content>
 								<Select.Group>
@@ -294,25 +330,7 @@
 										<Item.Root>
 											{#snippet child({ props })}
 												<Select.Item {...props} value={hardwareOption.name}>
-													<Item.Content>
-														<Item.Title>
-															{hardwareOption.name}
-															{#if hardwareOption.tag}
-																<Badge>{hardwareOption.tag}</Badge>
-															{/if}
-														</Item.Title>
-														<Item.Description>
-															{hardwareOption.cpu} vCPU &bull; {hardwareOption.memoryGb} GB
-														</Item.Description>
-													</Item.Content>
-													<Item.Content class="mr-4 *:ml-auto">
-														<Item.Title>
-															${hardwareOption.hourlyRateUsd}/hr
-														</Item.Title>
-														<Item.Description>
-															{hardwareOption.players} players
-														</Item.Description>
-													</Item.Content>
+													{@render hardwareOptionItem(hardwareOption)}
 												</Select.Item>
 											{/snippet}
 										</Item.Root>
@@ -343,7 +361,7 @@
 			{/snippet}
 		</Drawer.Trigger>
 		<Drawer.Content>
-			{@render content()}
+			{@render createServerForm()}
 		</Drawer.Content>
 	</Drawer.Root>
 {:else}
@@ -357,7 +375,7 @@
 			<Dialog.Header>
 				<Dialog.Title>Create Server</Dialog.Title>
 			</Dialog.Header>
-			{@render content()}
+			{@render createServerForm()}
 		</Dialog.Content>
 	</Dialog.Root>
 {/if}

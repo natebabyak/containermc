@@ -5,15 +5,15 @@
 	import * as Item from '$lib/components/ui/item/index.js';
 	import { Spinner } from '$lib/components/ui/spinner/index.js';
 	import type { Server } from '$lib/types';
-	import CopyIcon from '@lucide/svelte/icons/copy';
 	import ExternalLink from '@lucide/svelte/icons/external-link';
 	import BoxIcon from '@lucide/svelte/icons/box';
 	import { SERVER_TYPES } from '$lib/constants';
 	import RotateCcwIcon from '@lucide/svelte/icons/rotate-ccw';
 	import { cn } from '$lib/utils';
 	import SquareIcon from '@lucide/svelte/icons/square';
-	import { scale } from 'svelte/transition';
 	import PlayIcon from '@lucide/svelte/icons/play';
+	import DeleteServerDialog from './delete-server-dialog.svelte';
+	import CopyAddressButton from './copy-address-button.svelte';
 
 	interface Props {
 		server: Server;
@@ -48,9 +48,7 @@
 					)}
 				>
 					{#if server.status.endsWith('ing')}
-						<div transition:scale>
-							<Spinner />
-						</div>
+						<Spinner />
 					{/if}
 					{server.status}
 				</Badge>
@@ -72,26 +70,27 @@
 	</Item.Header>
 	<Item.Footer>
 		<Item.Actions>
-			{#if server.status === 'running'}
-				<Button size="xs" variant="outline">
-					<SquareIcon />
-					Stop
-				</Button>
-				<Button size="xs" variant="outline">
-					<CopyIcon />
-					Copy Address
-				</Button>
-			{:else if server.status === 'stopped'}
-				<Button size="xs" variant="outline">
-					<PlayIcon />
-					Start
-				</Button>
-			{:else if server.status == 'error'}
+			{#if server.status === 'stopped'}
+				<form method="POST" action="?/startServer">
+					<input type="hidden" name="serverId" value={server.id} />
+					<Button size="xs" type="submit" variant="outline">
+						<PlayIcon />
+						Start
+					</Button>
+				</form>
+			{:else if server.status === 'error'}
 				<Button size="xs" variant="outline">
 					<RotateCcwIcon />
 					Restart
 				</Button>
+			{:else}
+				<Button size="xs" variant="outline">
+					<SquareIcon />
+					Stop
+				</Button>
 			{/if}
+			<CopyAddressButton address={`${server.slug}.containermc.com`} />
+			<DeleteServerDialog {server} />
 		</Item.Actions>
 	</Item.Footer>
 </Item.Root>

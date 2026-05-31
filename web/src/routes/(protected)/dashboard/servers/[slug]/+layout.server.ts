@@ -5,7 +5,7 @@ import type { LayoutServerLoad } from './$types';
 export const load: LayoutServerLoad = async ({ locals, params }) => {
 	const { slug } = params;
 
-	const server = await db.query.server.findFirst({
+	const server = await db.query.minecraftServer.findFirst({
 		where: (server, { eq }) => eq(server.slug, slug)
 	});
 
