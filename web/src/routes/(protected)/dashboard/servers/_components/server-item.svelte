@@ -84,10 +84,13 @@
 					Restart
 				</Button>
 			{:else}
-				<Button size="xs" variant="outline">
-					<SquareIcon />
-					Stop
-				</Button>
+				<form method="POST" action="?/stopServer">
+					<input type="hidden" name="serverId" value={server.id} />
+					<Button size="xs" type="submit" variant="outline">
+						<SquareIcon />
+						Stop
+					</Button>
+				</form>
 			{/if}
 			<CopyAddressButton address={`${server.slug}.containermc.com`} />
 			<DeleteServerDialog {server} />

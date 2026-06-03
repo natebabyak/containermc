@@ -1,6 +1,6 @@
 import { db } from '$lib/server/db';
 import type { PageServerLoad } from './$types';
-import { DescribeRegionsCommand } from '@aws-sdk/client-ec2';
+import { DescribeRegionsCommand, RunInstancesCommand } from '@aws-sdk/client-ec2';
 import type { Actions } from './$types';
 import { minecraftServer } from '$lib/server/db/schema';
 import slugify from '@sindresorhus/slugify';
@@ -27,9 +27,7 @@ export const actions = {
 		const hardware = formData.get('hardware')?.toString();
 
 		if (!name || !minecraftVersion || !type || !region || !hardware) {
-			return {
-				success: false
-			};
+			return { success: false };
 		}
 
 		const slug = `${slugify(name)}-${nanoid(8)}`;
@@ -51,16 +49,77 @@ export const actions = {
 				userId: event.locals.user.id
 			});
 
-			return {
-				success: true
-			};
+			return { success: true };
 		} catch {
-			return {
-				success: false
-			};
+			return { success: false };
 		}
 	},
 	startServer: async (event) => {
+		const formData = await event.request.formData();
+		const serverId = formData.get('serverId')?.toString();
+
+		if (!serverId) {
+			return { success: false };
+		}
+
+		const server = await db.query.minecraftServer.findFirst({
+			where: eq(minecraftServer.id, serverId)
+		});
+
+		if (!server) {
+			return { success: false };
+		}
+
+		await db
+			.update(minecraftServer)
+			.set({ status: 'starting' })
+			.where(eq(minecraftServer.id, serverId));
+
+		const script = `#!/bin/bash
+sudo yum update -y
+sudo yum install docker -y
+sudo service docker start
+cat > docker-compose.yml <<EOF
+services:
+	mc:
+		image: itzg/minecraft-server:latest
+		tty: true
+		stdin_open: true
+		ports:
+			- "25565:25565"
+		environment:
+			EULA: "TRUE"
+			TYPE: "${server.type}"
+			VERSION: "${server.minecraftVersion}"
+			MEMORY: "${server.memoryGb * 1024}M"
+		volumes:
+			- "./data:/data"
+EOF
+docker-compose up -d`;
+
+		const userData = Buffer.from(script).toString('base64');
+
+		const ec2Result = await ec2.send(
+			new RunInstancesCommand({
+				ImageId: '',
+				InstanceType: 't4g.nano',
+				MinCount: 1,
+				MaxCount: 1,
+				UserData: userData
+			})
+		);
+
+		const instanceId = ec2Result.Instances?.[0].InstanceId;
+
+		if (!instanceId) {
+			return { success: false };
+		}
+
+		return {
+			success: true
+		};
+	},
+	stopServer: async (event) => {
 		const formData = await event.request.formData();
 		const serverId = formData.get('serverId')?.toString();
 
@@ -73,7 +132,7 @@ export const actions = {
 		try {
 			await db
 				.update(minecraftServer)
-				.set({ status: 'starting' })
+				.set({ status: 'stopping' })
 				.where(eq(minecraftServer.id, serverId));
 
 			return {
