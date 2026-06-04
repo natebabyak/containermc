@@ -58,7 +58,7 @@ export const minecraftServer = pgTable('minecraft_server', {
 	region: text('region').notNull(),
 	cpu: integer('cpu').notNull(),
 	memoryGb: integer('memory_gb').notNull(),
-	arn: text('arn'),
+	instanceId: text('instance_id'),
 	autoStopEnabled: boolean('auto_stop_enabled').notNull().default(true),
 	autoStopTimeoutMinutes: integer('auto_stop_timeout_minutes').notNull().default(15),
 	userId: text('user_id')
