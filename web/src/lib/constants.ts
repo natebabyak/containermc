@@ -14,6 +14,7 @@ export const CURRENCIES = [
 
 export const HARDWARE_OPTIONS = [
 	{
+		instanceType: 't4g.micro',
 		name: 'X-Small',
 		cpu: 2,
 		memoryGb: 1,
@@ -25,6 +26,7 @@ export const HARDWARE_OPTIONS = [
 		tag: null
 	},
 	{
+		instanceType: 't4g.small',
 		name: 'Small',
 		cpu: 2,
 		memoryGb: 2,
@@ -36,6 +38,7 @@ export const HARDWARE_OPTIONS = [
 		tag: null
 	},
 	{
+		instanceType: 't4g.medium',
 		name: 'Medium',
 		cpu: 2,
 		memoryGb: 4,
@@ -47,6 +50,7 @@ export const HARDWARE_OPTIONS = [
 		tag: 'Recommended'
 	},
 	{
+		instanceType: 't4g.large',
 		name: 'Large',
 		cpu: 2,
 		memoryGb: 8,
@@ -58,6 +62,7 @@ export const HARDWARE_OPTIONS = [
 		tag: null
 	},
 	{
+		instanceType: 't4g.xlarge',
 		name: 'X-Large',
 		cpu: 4,
 		memoryGb: 16,
@@ -69,6 +74,7 @@ export const HARDWARE_OPTIONS = [
 		tag: null
 	},
 	{
+		instanceType: 't4g.2xlarge',
 		name: 'XX-Large',
 		cpu: 8,
 		memoryGb: 32,

@@ -14,6 +14,8 @@
 	import PlayIcon from '@lucide/svelte/icons/play';
 	import DeleteServerDialog from './delete-server-dialog.svelte';
 	import CopyAddressButton from './copy-address-button.svelte';
+	import { enhance } from '$app/forms';
+	import { invalidateAll } from '$app/navigation';
 
 	interface Props {
 		server: Server;
@@ -71,7 +73,16 @@
 	<Item.Footer>
 		<Item.Actions>
 			{#if server.status === 'stopped'}
-				<form method="POST" action="?/startServer">
+				<form
+					method="POST"
+					action="?/startServer"
+					use:enhance={() => {
+						return async ({ update }) => {
+							await update();
+							await invalidateAll();
+						};
+					}}
+				>
 					<input type="hidden" name="serverId" value={server.id} />
 					<Button size="xs" type="submit" variant="outline">
 						<PlayIcon />
@@ -84,9 +95,18 @@
 					Restart
 				</Button>
 			{:else}
-				<form method="POST" action="?/stopServer">
+				<form
+					method="POST"
+					action="?/stopServer"
+					use:enhance={() => {
+						return async ({ update }) => {
+							await update();
+							await invalidateAll();
+						};
+					}}
+				>
 					<input type="hidden" name="serverId" value={server.id} />
-					<Button size="xs" type="submit" variant="outline">
+					<Button disabled={server.status !== 'running'} size="xs" type="submit" variant="outline">
 						<SquareIcon />
 						Stop
 					</Button>
