@@ -8,6 +8,7 @@ import { nanoid } from 'nanoid';
 import { HARDWARE_OPTIONS } from '$lib/constants';
 import { ec2 } from '$lib/server/aws/client';
 import { startServer, stopServer } from '$lib/server/aws/minecraft-servers';
+import { eq } from 'drizzle-orm';
 
 export const load: PageServerLoad = async () => {
 	const regions = (await ec2.send(new DescribeRegionsCommand({}))).Regions ?? [];
@@ -81,6 +82,22 @@ export const actions = {
 		}
 
 		await stopServer(serverId);
+
+		return {
+			success: true
+		};
+	},
+	deleteServer: async (event) => {
+		const formData = await event.request.formData();
+		const serverId = formData.get('serverId')?.toString();
+
+		if (!serverId) {
+			return {
+				success: false
+			};
+		}
+
+		await db.delete(minecraftServer).where(eq(minecraftServer.id, serverId));
 
 		return {
 			success: true
