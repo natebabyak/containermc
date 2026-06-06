@@ -170,7 +170,7 @@ cd /srv/minecraft && docker-compose up -d`;
 						{
 							Action: 'UPSERT',
 							ResourceRecordSet: {
-								Name: `${server.slug}.containermc.com`,
+								Name: `${server.slug}.mc.containermc.com`,
 								Type: 'A',
 								TTL: 60,
 								ResourceRecords: [{ Value: publicIp }]
@@ -254,7 +254,7 @@ export async function stopServer(serverId: string): Promise<void> {
 						{
 							Action: 'DELETE',
 							ResourceRecordSet: {
-								Name: `${server.slug}.containermc.com`,
+								Name: `${server.slug}.mc.containermc.com`,
 								Type: 'A',
 								TTL: 60,
 								ResourceRecords: [{ Value: server.ipAddress }]

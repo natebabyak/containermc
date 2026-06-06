@@ -116,7 +116,7 @@
 					</Button>
 				</form>
 			{/if}
-			<CopyAddressButton address={`${server.slug}.containermc.com`} />
+			<CopyAddressButton address={`${server.slug}.mc.containermc.com`} />
 			<DeleteServerDialog {server} />
 		</Item.Actions>
 	</Item.Footer>

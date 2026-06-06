@@ -59,7 +59,7 @@ export class ContainerMCStack extends cdk.Stack {
       "HostedZone",
       {
         hostedZoneId,
-        zoneName: "containermc.com",
+        zoneName: "mc.containermc.com",
       },
     );
 
