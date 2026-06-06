@@ -26,7 +26,6 @@
 	<section>
 		<h1>{formatCurrency(data.balance)} remaining</h1>
 	</section>
-
 	<section>
 		<Card.Root>
 			<Card.Header>
@@ -39,7 +38,7 @@
 							{#snippet child({ props })}
 								<Label {...props} for={amountCents.toString()}>
 									<RadioGroup.Item id={amountCents.toString()} value={amountCents.toString()} />
-									<Item.Title>{formatCurrency(parseInt(amountCents))}</Item.Title>
+									<Item.Title>{formatCurrency(parseInt(amountCents) / 100)}</Item.Title>
 								</Label>
 							{/snippet}
 						</Item.Root>
@@ -50,7 +49,7 @@
 				<form method="POST" action="?/addFunds" use:enhance class="w-full">
 					<input type="hidden" name="amountCents" value={selectedAmountCents} />
 					<Button type="submit" class="w-full">
-						Add {formatCurrency(parseInt(selectedAmountCents))} to balance
+						Add {formatCurrency(parseInt(selectedAmountCents) / 100)} to balance
 					</Button>
 				</form>
 			</Card.Footer>

@@ -35,6 +35,10 @@ export const actions = {
 
 		const session = await stripe.checkout.sessions.create({
 			customer: locals.user.stripeCustomerId,
+			metadata: {
+				userId: locals.user.id,
+				amountCents: amountCents
+			},
 			line_items: [
 				{
 					price_data: {

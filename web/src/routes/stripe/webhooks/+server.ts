@@ -26,15 +26,32 @@ export const POST: RequestHandler = async ({ request }) => {
 		const session = event.data.object as Stripe.Checkout.Session;
 
 		if (session.payment_status === 'paid') {
-			const stripeCustomerId = session.customer as string;
-			const amountCents = session.amount_total as number;
+			const userId = session.metadata?.userId;
+			const amountCents = session.amount_total;
+
+			if (!userId || !amountCents) throw error(400);
+
+			const addedDollars = amountCents / 100;
 
 			try {
+				const currentBalance = await db
+					.select({ amountDollars: userBalance.amountDollars })
+					.from(userBalance)
+					.where(eq(userBalance.userId, userId))
+					.limit(1);
+
+				const newBalance = currentBalance[0]?.amountDollars
+					? parseFloat(currentBalance[0].amountDollars) + addedDollars
+					: addedDollars;
+
 				await db
 					.update(userBalance)
-					.set({ amountDollars: (amountCents / 100).toString() })
-					.where(eq(userBalance.userId, stripeCustomerId));
-			} catch {
+					.set({
+						amountDollars: newBalance.toString()
+					})
+					.where(eq(userBalance.userId, userId));
+			} catch (err) {
+				console.error('Database Update Failed: ', err);
 				throw error(500);
 			}
 		}
