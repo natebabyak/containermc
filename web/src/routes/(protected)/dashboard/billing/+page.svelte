@@ -56,9 +56,7 @@
 			</Card.Footer>
 		</Card.Root>
 	</section>
-
 	<Separator />
-
 	<section>
 		<h2>Auto-Recharge</h2>
 		<Card.Root>

@@ -80,7 +80,7 @@ export async function startServer(serverId: string): Promise<void> {
       EULA: "TRUE"
       TYPE: "${server.type}"
       VERSION: "${server.minecraftVersion}"
-      MEMORY: "${server.memoryGb * 1024}M"
+      MEMORY: "${Math.max(512, server.memoryGb * 1024 - 1024)}M"
       ENABLE_RCON: "true"
       RCON_PORT: "25575"
       RCON_PASSWORD: "mcpaas"

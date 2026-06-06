@@ -16,6 +16,7 @@
 	import CopyAddressButton from './copy-address-button.svelte';
 	import { enhance } from '$app/forms';
 	import { invalidateAll } from '$app/navigation';
+	import Circle from '@lucide/svelte/icons/circle';
 
 	interface Props {
 		server: Server;
@@ -46,11 +47,14 @@
 							: 'secondary'}
 					class={cn(
 						'capitalize',
-						server.status.endsWith('ing') && 'dark:bg:amber-600 bg-amber-500 text-white'
+						(server.status === 'starting' || server.status === 'stopping') &&
+							'dark:bg:amber-600 bg-amber-500 text-white'
 					)}
 				>
-					{#if server.status.endsWith('ing')}
+					{#if server.status === 'starting' || server.status === 'stopping'}
 						<Spinner />
+					{:else if server.status === 'running'}
+						<Circle />
 					{/if}
 					{server.status}
 				</Badge>
