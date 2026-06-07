@@ -214,7 +214,7 @@ export const MINECRAFT_VERSIONS = [...MINECRAFT_VERSION_GROUPS.flatMap((g) => g.
 
 export const MODES = ['system', 'light', 'dark'] as const;
 
-export const SERVER_STATUSES = ['starting', 'running', 'stopping', 'stopped', 'error'] as const;
+export const SERVER_STATUSES = ['stopped', 'starting', 'running', 'stopping', 'error'] as const;
 
 export const SERVER_TYPES = [
 	{

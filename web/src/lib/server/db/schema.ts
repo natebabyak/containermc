@@ -91,16 +91,15 @@ export const serverSession = pgTable(
 	'server_session',
 	{
 		id: uuid('id').primaryKey().defaultRandom(),
-		region: text('region').notNull(),
-		cpu: integer('cpu').notNull(),
-		memoryGb: integer('memory_gb').notNull(),
-		startedAt: timestamp('started_at').notNull().defaultNow(),
-		stoppedAt: timestamp('stopped_at'),
-		minecraftServerId: uuid('minecraft_server_id')
+		serverId: uuid('server_id')
 			.notNull()
-			.references(() => minecraftServer.id, { onDelete: 'cascade' })
+			.references(() => minecraftServer.id, { onDelete: 'cascade' }),
+		instanceType: text('instance_type').notNull(),
+		startedAt: timestamp('started_at').notNull().defaultNow(),
+		endedAt: timestamp('ended_at'),
+		costDollars: numeric('cost_dollars', { precision: 10, scale: 4 })
 	},
-	(table) => [index('server_session_minecraft_server_id_idx').on(table.minecraftServerId)]
+	(table) => [index('server_session_server_id_idx').on(table.serverId)]
 );
 
 export const serverBackup = pgTable(
@@ -167,7 +166,7 @@ export const serverModRelations = relations(serverMod, ({ one }) => ({
 
 export const serverSessionRelations = relations(serverSession, ({ one }) => ({
 	server: one(minecraftServer, {
-		fields: [serverSession.minecraftServerId],
+		fields: [serverSession.serverId],
 		references: [minecraftServer.id]
 	})
 }));
