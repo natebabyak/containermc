@@ -1,9 +1,8 @@
 import { env } from '$env/dynamic/private';
 import { ec2, route53, ssm } from '$lib/server/aws/client';
 import { db } from '$lib/server/db';
-import { minecraftServer } from '$lib/server/db/schema';
+import { minecraftServer, serverSession } from '$lib/server/db/schema';
 import { HARDWARE_OPTIONS } from '$lib/constants';
-import type { Server } from '$lib/types';
 import { eq } from 'drizzle-orm';
 import {
 	GetParameterCommand,
@@ -11,37 +10,32 @@ import {
 	GetCommandInvocationCommand
 } from '@aws-sdk/client-ssm';
 import {
+	_InstanceType,
 	DescribeInstancesCommand,
 	RunInstancesCommand,
 	TerminateInstancesCommand,
 	waitUntilInstanceRunning
 } from '@aws-sdk/client-ec2';
 import { ChangeResourceRecordSetsCommand } from '@aws-sdk/client-route-53';
+import { error } from '@sveltejs/kit';
 
-function getInstanceType(server: Server) {
-	for (const o of HARDWARE_OPTIONS) {
-		if (o.cpu === server.cpu && o.memoryGb === server.memoryGb) {
-			return o.instanceType;
-		}
-	}
-
-	throw new Error('Invalid server configuration');
-}
-
-async function setStatus(
-	serverId: string,
-	status: typeof minecraftServer.$inferSelect.status
-): Promise<void> {
-	await db.update(minecraftServer).set({ status }).where(eq(minecraftServer.id, serverId));
-}
-
-export async function startServer(serverId: string): Promise<void> {
+/**
+ * Starts a Minecraft server by running an EC2 instance and updating its status in the database.
+ * @param serverId The ID of the server to start.
+ */
+export async function startServer(serverId: string) {
 	const server = await db.query.minecraftServer.findFirst({
 		where: eq(minecraftServer.id, serverId)
 	});
-	if (!server) throw new Error(`Server ${serverId} not found`);
 
-	await setStatus(serverId, 'starting');
+	if (!server) {
+		throw new Error(`Server ${serverId} not found`);
+	}
+
+	await db
+		.update(minecraftServer)
+		.set({ status: 'starting' })
+		.where(eq(minecraftServer.id, serverId));
 
 	try {
 		const [sgParam, subnetParam, profileParam, amiParam, hostedZoneParam] = await Promise.all([
@@ -68,6 +62,12 @@ export async function startServer(serverId: string): Promise<void> {
 
 		const r2Endpoint = `https://${env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`;
 
+		const memoryGb = HARDWARE_OPTIONS.find((o) => o.instanceType === server.instanceType)?.memoryGb;
+
+		if (!memoryGb) {
+			throw new Error('Invalid instance type');
+		}
+
 		const dockerCompose = `services:
   mc:
     container_name: mc
@@ -80,7 +80,7 @@ export async function startServer(serverId: string): Promise<void> {
       EULA: "TRUE"
       TYPE: "${server.type}"
       VERSION: "${server.minecraftVersion}"
-      MEMORY: "${Math.max(512, server.memoryGb * 1024 - 1024)}M"
+      MEMORY: "${Math.max(512, memoryGb * 1024 - 1024)}M"
       ENABLE_RCON: "true"
       RCON_PORT: "25575"
       RCON_PASSWORD: "mcpaas"
@@ -128,13 +128,15 @@ cd /srv/minecraft && docker-compose up -d`;
 		const ec2Result = await ec2.send(
 			new RunInstancesCommand({
 				ImageId: imageId,
-				InstanceType: getInstanceType(server),
+				InstanceType: server.instanceType as _InstanceType,
 				MinCount: 1,
 				MaxCount: 1,
 				UserData: Buffer.from(userDataScript).toString('base64'),
 				SecurityGroupIds: [securityGroupId],
 				SubnetId: subnetId,
-				IamInstanceProfile: { Arn: instanceProfileArn },
+				IamInstanceProfile: {
+					Arn: instanceProfileArn
+				},
 				TagSpecifications: [
 					{
 						ResourceType: 'instance',
@@ -148,19 +150,38 @@ cd /srv/minecraft && docker-compose up -d`;
 			})
 		);
 
-		const instanceId = ec2Result.Instances?.[0].InstanceId;
-		if (!instanceId) throw new Error('EC2 did not return an instance ID');
+		const ec2InstanceId = ec2Result.Instances?.[0].InstanceId;
 
-		await db.update(minecraftServer).set({ instanceId }).where(eq(minecraftServer.id, serverId));
+		if (!ec2InstanceId) {
+			throw error(500, 'EC2 Instance ID not found');
+		}
+
+		await db
+			.update(minecraftServer)
+			.set({ instanceId: ec2InstanceId })
+			.where(eq(minecraftServer.id, serverId));
 
 		await waitUntilInstanceRunning(
-			{ client: ec2, maxWaitTime: 120 },
-			{ InstanceIds: [instanceId] }
+			{
+				client: ec2,
+				maxWaitTime: 120
+			},
+			{
+				InstanceIds: [ec2InstanceId]
+			}
 		);
 
-		const described = await ec2.send(new DescribeInstancesCommand({ InstanceIds: [instanceId] }));
-		const publicIp = described.Reservations?.[0].Instances?.[0].PublicIpAddress;
-		if (!publicIp) throw new Error(`Instance ${instanceId} has no public IP`);
+		const ec2PublicIpAddress = (
+			await ec2.send(
+				new DescribeInstancesCommand({
+					InstanceIds: [ec2InstanceId]
+				})
+			)
+		).Reservations?.[0].Instances?.[0].PublicIpAddress;
+
+		if (!ec2PublicIpAddress) {
+			throw error(500, 'EC2 Public IP address not found');
+		}
 
 		await route53.send(
 			new ChangeResourceRecordSetsCommand({
@@ -173,7 +194,11 @@ cd /srv/minecraft && docker-compose up -d`;
 								Name: `${server.slug}.mc.containermc.com`,
 								Type: 'A',
 								TTL: 60,
-								ResourceRecords: [{ Value: publicIp }]
+								ResourceRecords: [
+									{
+										Value: ec2PublicIpAddress
+									}
+								]
 							}
 						}
 					]
@@ -183,15 +208,30 @@ cd /srv/minecraft && docker-compose up -d`;
 
 		await db
 			.update(minecraftServer)
-			.set({ status: 'running', ipAddress: publicIp })
+			.set({ status: 'running', ipAddress: ec2PublicIpAddress })
 			.where(eq(minecraftServer.id, serverId));
+
+		await db.insert(serverSession).values({
+			region: server.region,
+			instanceType: server.instanceType,
+			serverId: server.id,
+			userId: server.userId
+		});
 	} catch (err) {
-		await setStatus(serverId, 'error');
+		await db
+			.update(minecraftServer)
+			.set({ status: 'error' })
+			.where(eq(minecraftServer.id, serverId));
+
 		throw err;
 	}
 }
 
-export async function stopServer(serverId: string): Promise<void> {
+/**
+ * Stops a Minecraft server by terminating its EC2 instance and updating its status in the database.
+ * @param serverId The ID of the server to stop.
+ */
+export async function stopServer(serverId: string) {
 	const server = await db.query.minecraftServer.findFirst({
 		where: eq(minecraftServer.id, serverId)
 	});
@@ -199,7 +239,10 @@ export async function stopServer(serverId: string): Promise<void> {
 	if (!server.instanceId) throw new Error(`Server ${serverId} has no running instance`);
 	if (!server.ipAddress) throw new Error(`Server ${serverId} has no IP address on record`);
 
-	await setStatus(serverId, 'stopping');
+	await db
+		.update(minecraftServer)
+		.set({ status: 'stopping' })
+		.where(eq(minecraftServer.id, serverId));
 
 	const r2Endpoint = `https://${env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`;
 
@@ -270,7 +313,11 @@ export async function stopServer(serverId: string): Promise<void> {
 			.set({ status: 'stopped', instanceId: null, ipAddress: null })
 			.where(eq(minecraftServer.id, serverId));
 	} catch (err) {
-		await setStatus(serverId, 'error');
+		await db
+			.update(minecraftServer)
+			.set({ status: 'error' })
+			.where(eq(minecraftServer.id, serverId));
+
 		throw err;
 	}
 }

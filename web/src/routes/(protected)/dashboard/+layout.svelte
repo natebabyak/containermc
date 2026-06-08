@@ -8,7 +8,7 @@
 
 <Sidebar.Provider>
 	<DashboardSidebar balance={data.balance} servers={data.servers} />
-	<div class="flex size-full flex-col">
+	<div class="flex h-screen w-full flex-col">
 		<header class="p-4">
 			<DashboardBreadcrumb servers={data.servers} />
 		</header>

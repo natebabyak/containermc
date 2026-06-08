@@ -3,12 +3,12 @@ import type { PageServerLoad } from './$types';
 import { DescribeRegionsCommand } from '@aws-sdk/client-ec2';
 import type { Actions } from './$types';
 import { minecraftServer } from '$lib/server/db/schema';
+import { HARDWARE_OPTIONS, MINECRAFT_SERVER_TYPES, MINECRAFT_VERSION_GROUPS } from '$lib/constants';
+import { ec2 } from '$lib/server/aws/client';
+import { eq } from 'drizzle-orm';
+import { startServer, stopServer } from '$lib/server/minecraft-servers';
 import slugify from '@sindresorhus/slugify';
 import { nanoid } from 'nanoid';
-import { HARDWARE_OPTIONS } from '$lib/constants';
-import { ec2 } from '$lib/server/aws/client';
-import { startServer, stopServer } from '$lib/server/aws/minecraft-servers';
-import { eq } from 'drizzle-orm';
 
 export const load: PageServerLoad = async () => {
 	const regions = (await ec2.send(new DescribeRegionsCommand({}))).Regions ?? [];
@@ -22,37 +22,58 @@ export const actions = {
 	createServer: async (event) => {
 		const formData = await event.request.formData();
 		const name = formData.get('name')?.toString();
-		const minecraftVersion = formData.get('minecraftVersion')?.toString();
 		const type = formData.get('type')?.toString();
+		const minecraftVersion = formData.get('minecraftVersion')?.toString();
 		const region = formData.get('region')?.toString();
 		const hardware = formData.get('hardware')?.toString();
 
-		if (!name || !minecraftVersion || !type || !region || !hardware) {
-			return { success: false };
+		if (!name || !type || !minecraftVersion || !region || !hardware) {
+			return {
+				success: false
+			};
 		}
 
-		const slug = `${slugify(name)}-${nanoid(8)}`;
+		if (!MINECRAFT_SERVER_TYPES.find((t) => t.value === type)) {
+			return {
+				success: false
+			};
+		}
 
-		const { cpu, memoryGb } = HARDWARE_OPTIONS.find(
-			(hardwareOption) => hardwareOption.name === hardware
-		)!;
+		if (!MINECRAFT_VERSION_GROUPS.find((g) => g.versions.find((v) => v === minecraftVersion))) {
+			return {
+				success: false
+			};
+		}
+
+		const slug = `${slugify(name)}-${nanoid(8).toLowerCase()}`;
+
+		const instanceType = HARDWARE_OPTIONS.find((o) => o.name === hardware)?.instanceType;
+		if (!instanceType) {
+			return { success: false };
+		}
 
 		try {
 			await db.insert(minecraftServer).values({
 				name,
 				slug,
-				iconUrl: null,
-				minecraftVersion,
 				type,
+				minecraftVersion,
 				region,
-				cpu,
-				memoryGb,
+				instanceType,
+				iconUrl: null,
+				motd: null,
+				instanceId: null,
+				ipAddress: null,
 				userId: event.locals.user.id
 			});
 
-			return { success: true };
+			return {
+				success: true
+			};
 		} catch {
-			return { success: false };
+			return {
+				success: false
+			};
 		}
 	},
 	startServer: async (event) => {
@@ -65,11 +86,17 @@ export const actions = {
 			};
 		}
 
-		await startServer(serverId);
+		try {
+			await startServer(serverId);
 
-		return {
-			success: true
-		};
+			return {
+				success: true
+			};
+		} catch {
+			return {
+				success: false
+			};
+		}
 	},
 	stopServer: async (event) => {
 		const formData = await event.request.formData();
@@ -81,11 +108,17 @@ export const actions = {
 			};
 		}
 
-		await stopServer(serverId);
+		try {
+			await stopServer(serverId);
 
-		return {
-			success: true
-		};
+			return {
+				success: true
+			};
+		} catch {
+			return {
+				success: false
+			};
+		}
 	},
 	deleteServer: async (event) => {
 		const formData = await event.request.formData();
@@ -97,10 +130,16 @@ export const actions = {
 			};
 		}
 
-		await db.delete(minecraftServer).where(eq(minecraftServer.id, serverId));
+		try {
+			await db.delete(minecraftServer).where(eq(minecraftServer.id, serverId));
 
-		return {
-			success: true
-		};
+			return {
+				success: true
+			};
+		} catch {
+			return {
+				success: false
+			};
+		}
 	}
 } satisfies Actions;

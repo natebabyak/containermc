@@ -8,9 +8,7 @@ export const load: LayoutServerLoad = async ({ locals }) => {
 	});
 
 	if (!userBalance) {
-		error(404, {
-			message: 'User balance not found'
-		});
+		throw error(404, { message: 'User balance not found' });
 	}
 
 	const servers = await db.query.minecraftServer.findMany({

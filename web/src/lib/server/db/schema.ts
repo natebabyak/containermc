@@ -8,15 +8,15 @@ import {
 	numeric,
 	boolean,
 	index,
-	bigint
+	bigint,
+	jsonb
 } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
-import { CURRENCIES, MODES, SERVER_STATUSES } from '$lib/constants';
+import { CURRENCIES, MODES } from '$lib/constants';
 import { user } from './auth.schema';
 
 export const currencyEnum = pgEnum('currency', CURRENCIES);
 export const modeEnum = pgEnum('mode', MODES);
-export const serverStatusEnum = pgEnum('server_status', SERVER_STATUSES);
 
 export const userBalance = pgTable('user_balance', {
 	userId: text('user_id')
@@ -38,8 +38,8 @@ export const userSettings = pgTable('user_settings', {
 	autoRechargeEnabled: boolean('auto_recharge_enabled').notNull().default(false),
 	autoRechargeAmountDollars: numeric('auto_recharge_amount_dollars', { precision: 10, scale: 4 }),
 	autoRechargeThresholdDollars: numeric('auto_recharge_threshold_dollars', {
-		precision: 10,
-		scale: 4
+		precision: 12,
+		scale: 6
 	}),
 	updatedAt: timestamp('updated_at')
 		.defaultNow()
@@ -51,17 +51,18 @@ export const minecraftServer = pgTable('minecraft_server', {
 	id: uuid('id').primaryKey().defaultRandom(),
 	name: text('name').notNull(),
 	slug: text('slug').notNull().unique(),
-	iconUrl: text('icon_url'),
-	status: serverStatusEnum('status').notNull().default('stopped'),
-	minecraftVersion: text('minecraft_version').notNull(),
+	status: text('status').notNull().default('stopped'),
 	type: text('type').notNull(),
+	minecraftVersion: text('minecraft_version').notNull(),
 	region: text('region').notNull(),
-	cpu: integer('cpu').notNull(),
-	memoryGb: integer('memory_gb').notNull(),
+	instanceType: text('instance_type').notNull(),
+	iconUrl: text('icon_url'),
+	motd: text('motd'),
 	instanceId: text('instance_id'),
 	ipAddress: text('ip_address'),
-	autoStopEnabled: boolean('auto_stop_enabled').notNull().default(true),
-	autoStopTimeoutMinutes: integer('auto_stop_timeout_minutes').notNull().default(15),
+	dashboardConfig: jsonb('dashboard_config').notNull().default({}),
+	autoStartConfig: jsonb('auto_start_config').notNull().default({}),
+	autoStopConfig: jsonb('auto_stop_config').notNull().default({}),
 	userId: text('user_id')
 		.notNull()
 		.references(() => user.id, { onDelete: 'cascade' }),
@@ -91,13 +92,17 @@ export const serverSession = pgTable(
 	'server_session',
 	{
 		id: uuid('id').primaryKey().defaultRandom(),
-		serverId: uuid('server_id')
-			.notNull()
-			.references(() => minecraftServer.id, { onDelete: 'cascade' }),
+		region: text('region').notNull(),
 		instanceType: text('instance_type').notNull(),
 		startedAt: timestamp('started_at').notNull().defaultNow(),
 		endedAt: timestamp('ended_at'),
-		costDollars: numeric('cost_dollars', { precision: 10, scale: 4 })
+		costDollars: numeric('cost_dollars', { precision: 12, scale: 6 }),
+		serverId: uuid('server_id')
+			.notNull()
+			.references(() => minecraftServer.id, { onDelete: 'cascade' }),
+		userId: text('user_id')
+			.notNull()
+			.references(() => user.id, { onDelete: 'cascade' })
 	},
 	(table) => [index('server_session_server_id_idx').on(table.serverId)]
 );

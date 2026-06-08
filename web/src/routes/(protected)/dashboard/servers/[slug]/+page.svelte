@@ -7,6 +7,8 @@
 	import { move } from '@dnd-kit/helpers';
 	import SortableItem from './_components/sortable-item.svelte';
 	import type { DragEndEvent, DragOverEvent } from '@dnd-kit/abstract';
+	import { Button } from '$lib/components/ui/button/index.js';
+	import Play from '@lucide/svelte/icons/play';
 
 	let { data }: LayoutProps = $props();
 
@@ -41,10 +43,19 @@
 	<DragDropProvider {onDragEnd}>
 		<Item.Root>
 			<Item.Header>
-				<Item.Title>
-					{data.server.name}
-				</Item.Title>
+				<Item.Media class="row-span-2">
+					<img src={data.server.iconUrl} alt="server icon" class="size-16" />
+				</Item.Media>
+				<Item.Title>{data.server.name}</Item.Title>
+				<Item.Description>server motd goes here</Item.Description>
+				<span>Player count</span>
 			</Item.Header>
+			<Item.Content>
+				<Button>
+					<Play />
+					Start
+				</Button>
+			</Item.Content>
 		</Item.Root>
 		<Item.Root variant="outline">
 			<Item.Header>

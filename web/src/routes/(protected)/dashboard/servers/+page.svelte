@@ -25,43 +25,47 @@
 	<title>Dashboard | ContainerMC</title>
 	<meta name="description" content="" />
 </svelte:head>
+
 <svelte:window on:keydown={handleKeyDown} />
-{#if data.servers.length > 0}
-	<div class="flex flex-col gap-4 px-4">
-		<div class="flex justify-between">
-			<InputGroup.Root class="w-full max-w-xs">
-				<InputGroup.Input bind:ref={inputRef} placeholder="Search servers..." />
-				<InputGroup.Addon>
-					<Search />
-				</InputGroup.Addon>
-				<InputGroup.Addon align="inline-end">
-					<Kbd.Group>
-						<Kbd.Root>⌘</Kbd.Root>
-						<Kbd.Root>K</Kbd.Root>
-					</Kbd.Group>
-				</InputGroup.Addon>
-			</InputGroup.Root>
-			<CreateServerDialog regions={data.regions} />
+
+<div class="flex size-full items-center justify-center">
+	{#if data.servers.length > 0}
+		<div class="flex flex-col gap-4 px-4">
+			<div class="flex justify-between">
+				<InputGroup.Root class="w-full max-w-xs">
+					<InputGroup.Input bind:ref={inputRef} placeholder="Search servers..." />
+					<InputGroup.Addon>
+						<Search />
+					</InputGroup.Addon>
+					<InputGroup.Addon align="inline-end">
+						<Kbd.Group>
+							<Kbd.Root>⌘</Kbd.Root>
+							<Kbd.Root>K</Kbd.Root>
+						</Kbd.Group>
+					</InputGroup.Addon>
+				</InputGroup.Root>
+				<CreateServerDialog regions={data.regions} />
+			</div>
+			<Item.Group>
+				{#each data.servers as server (server.id)}
+					<ServerItem {server} />
+				{/each}
+			</Item.Group>
 		</div>
-		<Item.Group>
-			{#each data.servers as server (server.id)}
-				<ServerItem {server} />
-			{/each}
-		</Item.Group>
-	</div>
-{:else}
-	<Empty.Root>
-		<Empty.Header>
-			<Empty.Media>
-				<Containermc class="size-8" />
-			</Empty.Media>
-			<Empty.Title>Welcome to ContainerMC</Empty.Title>
-			<Empty.Description>
-				You haven't created any servers yet. Get started by creating your first server.
-			</Empty.Description>
-		</Empty.Header>
-		<Empty.Content>
-			<CreateServerDialog regions={data.regions} />
-		</Empty.Content>
-	</Empty.Root>
-{/if}
+	{:else}
+		<Empty.Root>
+			<Empty.Header>
+				<Empty.Media>
+					<Containermc class="size-8" />
+				</Empty.Media>
+				<Empty.Title>Welcome to ContainerMC</Empty.Title>
+				<Empty.Description>
+					You haven't created any servers yet. Get started by creating your first server.
+				</Empty.Description>
+			</Empty.Header>
+			<Empty.Content>
+				<CreateServerDialog regions={data.regions} />
+			</Empty.Content>
+		</Empty.Root>
+	{/if}
+</div>

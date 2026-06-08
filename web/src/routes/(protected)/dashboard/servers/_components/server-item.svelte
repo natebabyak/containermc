@@ -7,7 +7,6 @@
 	import type { Server } from '$lib/types';
 	import ExternalLink from '@lucide/svelte/icons/external-link';
 	import BoxIcon from '@lucide/svelte/icons/box';
-	import { SERVER_TYPES } from '$lib/constants';
 	import RotateCcwIcon from '@lucide/svelte/icons/rotate-ccw';
 	import { cn } from '$lib/utils';
 	import SquareIcon from '@lucide/svelte/icons/square';
@@ -17,6 +16,7 @@
 	import { enhance } from '$app/forms';
 	import { invalidateAll } from '$app/navigation';
 	import Circle from '@lucide/svelte/icons/circle';
+	import { MINECRAFT_SERVER_TYPES } from '$lib/constants';
 
 	interface Props {
 		server: Server;
@@ -64,7 +64,7 @@
 					{server.minecraftVersion.toLowerCase()}
 				</span>
 				&bull;
-				{SERVER_TYPES.find((t) => t.value === server.type)?.label}
+				{MINECRAFT_SERVER_TYPES.find((t) => t.value === server.type)?.label}
 			</Item.Description>
 		</div>
 		<Item.Actions class="ml-auto">

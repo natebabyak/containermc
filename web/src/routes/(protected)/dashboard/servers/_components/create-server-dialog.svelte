@@ -10,9 +10,8 @@
 	import * as Item from '$lib/components/ui/item/index.js';
 	import {
 		HARDWARE_OPTIONS,
-		MINECRAFT_VERSION_GROUPS,
-		MINECRAFT_VERSIONS,
-		SERVER_TYPES
+		MINECRAFT_SERVER_TYPES,
+		MINECRAFT_VERSION_GROUPS
 	} from '$lib/constants';
 	import z from 'zod';
 	import * as Drawer from '$lib/components/ui/drawer/index.js';
@@ -21,6 +20,7 @@
 	import { Badge } from '$lib/components/ui/badge/index.js';
 	import { invalidateAll } from '$app/navigation';
 	import BadgeCheckIcon from '@lucide/svelte/icons/badge-check';
+	import { applyAction, deserialize } from '$app/forms';
 
 	interface RegionGroup {
 		id: string;
@@ -38,20 +38,17 @@
 
 	const schema = z.object({
 		name: z.string().min(1, 'Name is required'),
-		minecraftVersion: z.enum(MINECRAFT_VERSIONS),
-		type: z.enum(SERVER_TYPES.map((serverType) => serverType.value)),
+		type: z.string().min(1, 'Type is required'),
+		minecraftVersion: z.string().min(1, 'Minecraft version is required'),
 		region: z.string().min(1, 'Region is required'),
-		hardware: z.enum(
-			HARDWARE_OPTIONS.map((hardwareOption) => hardwareOption.name),
-			'Hardware is required'
-		)
+		hardware: z.string().min(1, 'Hardware is required')
 	});
 
 	const form = createForm(() => ({
 		defaultValues: {
 			name: '',
-			minecraftVersion: 'LATEST',
 			type: 'VANILLA',
+			minecraftVersion: 'LATEST',
 			region: '',
 			hardware: ''
 		},
@@ -61,8 +58,8 @@
 		onSubmit: async ({ value }) => {
 			const formData = new FormData();
 			formData.append('name', value.name);
-			formData.append('minecraftVersion', value.minecraftVersion);
 			formData.append('type', value.type);
+			formData.append('minecraftVersion', value.minecraftVersion);
 			formData.append('region', value.region);
 			formData.append('hardware', value.hardware);
 
@@ -71,11 +68,15 @@
 				body: formData
 			});
 
-			if (response.ok) {
+			const result = deserialize(await response.text());
+
+			if (result.type === 'success') {
 				open = false;
 				form.reset();
-				invalidateAll();
+				await invalidateAll();
 			}
+
+			applyAction(result);
 		}
 	}));
 
@@ -102,7 +103,7 @@
 		return (
 			await Promise.all(
 				regions
-					.filter((r) => r.RegionName?.startsWith(regionGroupId))
+					?.filter((r) => r.RegionName?.startsWith(regionGroupId))
 					.map(async (r) => ({
 						...r,
 						ping: await measurePing(r)
@@ -154,18 +155,18 @@
 			{/if}
 		</Item.Title>
 		<Item.Description>
-			{hardwareOption.cpu} vCPU &bull; {hardwareOption.memoryGb} GB
+			{hardwareOption.numCpus} vCPU &bull; {hardwareOption.memoryGb} GB
 		</Item.Description>
 	</Item.Content>
 	<Item.Content class="mr-4 *:ml-auto">
 		<Item.Title>
-			${hardwareOption.hourlyRateUsd}/hr
+			${hardwareOption.costPerHourDollars}/hr
 		</Item.Title>
 		<Item.Description>
-			{#if hardwareOption.players.max}
-				{hardwareOption.players.min}&ndash;{hardwareOption.players.max} players
+			{#if hardwareOption.recommendedNumPlayers.max}
+				{hardwareOption.recommendedNumPlayers.min}&ndash;{hardwareOption.recommendedNumPlayers.max} players
 			{:else}
-				{hardwareOption.players.min}+ players
+				{hardwareOption.recommendedNumPlayers.min}+ players
 			{/if}
 		</Item.Description>
 	</Item.Content>
@@ -202,6 +203,34 @@
 				{/snippet}
 			</form.Field>
 			<div class="grid grid-cols-2 gap-4">
+				<form.Field name="type">
+					{#snippet children(field)}
+						<Field.Field>
+							<Field.Label for={field.name}>Server Type</Field.Label>
+							<Select.Root
+								name={field.name}
+								type="single"
+								value={field.state.value}
+								onValueChange={(value) => field.handleChange(value)}
+							>
+								<Select.Trigger id={field.name}>
+									{MINECRAFT_SERVER_TYPES.find(
+										(minecraftServerType) => minecraftServerType.value === field.state.value
+									)?.label}
+								</Select.Trigger>
+								<Select.Content class="max-h-100">
+									<Select.Group>
+										{#each MINECRAFT_SERVER_TYPES as minecraftServerType (minecraftServerType.value)}
+											<Select.Item value={minecraftServerType.value}>
+												{minecraftServerType.label}
+											</Select.Item>
+										{/each}
+									</Select.Group>
+								</Select.Content>
+							</Select.Root>
+						</Field.Field>
+					{/snippet}
+				</form.Field>
 				<form.Field name="minecraftVersion">
 					{#snippet children(field)}
 						<Field.Field>
@@ -226,32 +255,6 @@
 											{/each}
 										</Select.Group>
 									{/each}
-								</Select.Content>
-							</Select.Root>
-						</Field.Field>
-					{/snippet}
-				</form.Field>
-				<form.Field name="type">
-					{#snippet children(field)}
-						<Field.Field>
-							<Field.Label for={field.name}>Server Type</Field.Label>
-							<Select.Root
-								name={field.name}
-								type="single"
-								value={field.state.value}
-								onValueChange={(value) => field.handleChange(value)}
-							>
-								<Select.Trigger id={field.name}>
-									{SERVER_TYPES.find((serverType) => serverType.value === field.state.value)?.label}
-								</Select.Trigger>
-								<Select.Content class="max-h-100">
-									<Select.Group>
-										{#each SERVER_TYPES as serverType, i (i)}
-											<Select.Item value={serverType.value}>
-												{serverType.label}
-											</Select.Item>
-										{/each}
-									</Select.Group>
 								</Select.Content>
 							</Select.Root>
 						</Field.Field>

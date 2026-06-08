@@ -16,10 +16,10 @@ export const HARDWARE_OPTIONS = [
 	{
 		instanceType: 't4g.micro',
 		name: 'X-Small',
-		cpu: 2,
+		numCpus: 2,
 		memoryGb: 1,
-		hourlyRateUsd: 0.02,
-		players: {
+		costPerHourDollars: 0.02,
+		recommendedNumPlayers: {
 			min: 1,
 			max: 2
 		},
@@ -28,10 +28,10 @@ export const HARDWARE_OPTIONS = [
 	{
 		instanceType: 't4g.small',
 		name: 'Small',
-		cpu: 2,
+		numCpus: 2,
 		memoryGb: 2,
-		hourlyRateUsd: 0.04,
-		players: {
+		costPerHourDollars: 0.04,
+		recommendedNumPlayers: {
 			min: 2,
 			max: 5
 		},
@@ -40,10 +40,10 @@ export const HARDWARE_OPTIONS = [
 	{
 		instanceType: 't4g.medium',
 		name: 'Medium',
-		cpu: 2,
+		numCpus: 2,
 		memoryGb: 4,
-		hourlyRateUsd: 0.08,
-		players: {
+		costPerHourDollars: 0.08,
+		recommendedNumPlayers: {
 			min: 5,
 			max: 10
 		},
@@ -52,10 +52,10 @@ export const HARDWARE_OPTIONS = [
 	{
 		instanceType: 't4g.large',
 		name: 'Large',
-		cpu: 2,
+		numCpus: 2,
 		memoryGb: 8,
-		hourlyRateUsd: 0.16,
-		players: {
+		costPerHourDollars: 0.16,
+		recommendedNumPlayers: {
 			min: 10,
 			max: 20
 		},
@@ -64,10 +64,10 @@ export const HARDWARE_OPTIONS = [
 	{
 		instanceType: 't4g.xlarge',
 		name: 'X-Large',
-		cpu: 4,
+		numCpus: 4,
 		memoryGb: 16,
-		hourlyRateUsd: 0.32,
-		players: {
+		costPerHourDollars: 0.32,
+		recommendedNumPlayers: {
 			min: 20,
 			max: 50
 		},
@@ -76,15 +76,24 @@ export const HARDWARE_OPTIONS = [
 	{
 		instanceType: 't4g.2xlarge',
 		name: 'XX-Large',
-		cpu: 8,
+		numCpus: 8,
 		memoryGb: 32,
-		hourlyRateUsd: 0.64,
-		players: {
+		costPerHourDollars: 0.64,
+		recommendedNumPlayers: {
 			min: 50,
 			max: null
 		},
 		tag: null
 	}
+] as const;
+
+export const INSTANCE_TYPES = [
+	't4g.micro',
+	't4g.small',
+	't4g.medium',
+	't4g.large',
+	't4g.xlarge',
+	't4g.2xlarge'
 ] as const;
 
 export const MINECRAFT_VERSION_GROUPS = [
@@ -94,7 +103,7 @@ export const MINECRAFT_VERSION_GROUPS = [
 	},
 	{
 		name: '26',
-		versions: ['26.1']
+		versions: ['26.2', '26.1.2', '26.1.1', '26.1']
 	},
 	{
 		name: '1.21',
@@ -210,13 +219,7 @@ export const MINECRAFT_VERSION_GROUPS = [
 	}
 ] as const;
 
-export const MINECRAFT_VERSIONS = [...MINECRAFT_VERSION_GROUPS.flatMap((g) => g.versions)] as const;
-
-export const MODES = ['system', 'light', 'dark'] as const;
-
-export const SERVER_STATUSES = ['stopped', 'starting', 'running', 'stopping', 'error'] as const;
-
-export const SERVER_TYPES = [
+export const MINECRAFT_SERVER_TYPES = [
 	{
 		value: 'AUTO_CURSEFORGE',
 		label: 'CurseForge'
@@ -282,3 +285,7 @@ export const SERVER_TYPES = [
 		label: 'Vanilla'
 	}
 ] as const;
+
+export const MODES = ['system', 'light', 'dark'] as const;
+
+export const SERVER_STATUSES = ['stopped', 'starting', 'running', 'stopping', 'error'] as const;
