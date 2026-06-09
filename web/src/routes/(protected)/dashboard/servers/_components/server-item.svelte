@@ -4,7 +4,7 @@
 	import { Button } from '$lib/components/ui/button/index.js';
 	import * as Item from '$lib/components/ui/item/index.js';
 	import { Spinner } from '$lib/components/ui/spinner/index.js';
-	import type { Server } from '$lib/types';
+	import type { MinecraftServer, MinecraftServerStatus } from '$lib/types';
 	import ExternalLink from '@lucide/svelte/icons/external-link';
 	import BoxIcon from '@lucide/svelte/icons/box';
 	import RotateCcwIcon from '@lucide/svelte/icons/rotate-ccw';
@@ -14,15 +14,63 @@
 	import DeleteServerDialog from './delete-server-dialog.svelte';
 	import CopyAddressButton from './copy-address-button.svelte';
 	import { enhance } from '$app/forms';
-	import { invalidateAll } from '$app/navigation';
-	import Circle from '@lucide/svelte/icons/circle';
 	import { MINECRAFT_SERVER_TYPES } from '$lib/constants';
+	import { onDestroy, onMount } from 'svelte';
+	import TriangleAlert from '@lucide/svelte/icons/triangle-alert';
 
 	interface Props {
-		server: Server;
+		server: MinecraftServer;
 	}
 
 	let { server }: Props = $props();
+
+	let currentStatus = $derived<MinecraftServerStatus>(server.status);
+	let pollInterval: NodeJS.Timeout | null = null;
+
+	function stopPolling() {
+		if (pollInterval) {
+			clearInterval(pollInterval);
+			pollInterval = null;
+		}
+	}
+
+	function startPolling() {
+		if (pollInterval) return;
+
+		pollInterval = setInterval(async () => {
+			const url = `/api/mc-server/${server.id}/status`;
+			try {
+				const response = await fetch(url);
+
+				if (!response.ok) {
+					throw new Error('Minecraft server status fetch failed');
+				}
+
+				const data = await response.json();
+				currentStatus = data.status;
+
+				if (
+					currentStatus === 'running' ||
+					currentStatus === 'stopped' ||
+					currentStatus === 'error'
+				) {
+					stopPolling();
+				}
+			} catch (err) {
+				console.error((err as Error).message);
+			}
+		}, 3000);
+	}
+
+	onMount(() => {
+		if (currentStatus === 'starting' || currentStatus === 'stopping') {
+			startPolling();
+		}
+	});
+
+	onDestroy(() => {
+		stopPolling();
+	});
 </script>
 
 <Item.Root variant="outline">
@@ -40,23 +88,23 @@
 					{server.name}
 				</Item.Title>
 				<Badge
-					variant={server.status === 'running'
+					variant={currentStatus === 'running'
 						? 'default'
-						: server.status === 'error'
+						: currentStatus === 'error'
 							? 'destructive'
 							: 'secondary'}
 					class={cn(
 						'capitalize',
-						(server.status === 'starting' || server.status === 'stopping') &&
+						(currentStatus === 'starting' || currentStatus === 'stopping') &&
 							'dark:bg:amber-600 bg-amber-500 text-white'
 					)}
 				>
-					{#if server.status === 'starting' || server.status === 'stopping'}
+					{#if currentStatus === 'starting' || currentStatus === 'stopping'}
 						<Spinner />
-					{:else if server.status === 'running'}
-						<Circle />
+					{:else if currentStatus === 'error'}
+						<TriangleAlert />
 					{/if}
-					{server.status}
+					{currentStatus}
 				</Badge>
 			</div>
 			<Item.Description>
@@ -76,15 +124,13 @@
 	</Item.Header>
 	<Item.Footer>
 		<Item.Actions>
-			{#if server.status === 'stopped'}
+			{#if currentStatus === 'stopped'}
 				<form
 					method="POST"
 					action="?/startServer"
 					use:enhance={() => {
-						return async ({ update }) => {
-							await update();
-							await invalidateAll();
-						};
+						currentStatus = 'starting';
+						startPolling();
 					}}
 				>
 					<input type="hidden" name="serverId" value={server.id} />
@@ -93,24 +139,32 @@
 						Start
 					</Button>
 				</form>
-			{:else if server.status === 'error'}
-				<Button size="xs" variant="outline">
-					<RotateCcwIcon />
-					Restart
-				</Button>
-			{:else}
+			{:else if currentStatus === 'error'}
+				<form
+					method="POST"
+					action="?/startServer"
+					use:enhance={() => {
+						currentStatus = 'starting';
+						startPolling();
+					}}
+				>
+					<input type="hidden" name="serverId" value={server.id} />
+					<Button size="xs" type="submit" variant="outline">
+						<RotateCcwIcon />
+						Restart
+					</Button>
+				</form>
+			{:else if server}
 				<form
 					method="POST"
 					action="?/stopServer"
 					use:enhance={() => {
-						return async ({ update }) => {
-							await update();
-							await invalidateAll();
-						};
+						currentStatus = 'stopping';
+						startPolling();
 					}}
 				>
 					<input type="hidden" name="serverId" value={server.id} />
-					<Button disabled={server.status !== 'running'} size="xs" type="submit" variant="outline">
+					<Button disabled={currentStatus === 'stopping'} size="xs" type="submit" variant="outline">
 						<SquareIcon />
 						Stop
 					</Button>

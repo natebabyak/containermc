@@ -6,7 +6,7 @@ import { minecraftServer } from '$lib/server/db/schema';
 import { HARDWARE_OPTIONS, MINECRAFT_SERVER_TYPES, MINECRAFT_VERSION_GROUPS } from '$lib/constants';
 import { ec2 } from '$lib/server/aws/client';
 import { eq } from 'drizzle-orm';
-import { startServer, stopServer } from '$lib/server/minecraft-servers';
+import { getServerStatus, startServer, stopServer } from '$lib/server/minecraft-servers';
 import slugify from '@sindresorhus/slugify';
 import { nanoid } from 'nanoid';
 
@@ -140,6 +140,18 @@ export const actions = {
 			return {
 				success: false
 			};
+		}
+	},
+	getServerStatus: async (event) => {
+		const formData = await event.request.formData();
+		const serverId = formData.get('serverId')?.toString();
+		if (!serverId) return { success: false };
+
+		try {
+			const status = await getServerStatus(serverId);
+			return { success: true, status };
+		} catch {
+			return { success: false };
 		}
 	}
 } satisfies Actions;

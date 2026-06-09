@@ -12,11 +12,12 @@ import {
 	jsonb
 } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
-import { CURRENCIES, MODES } from '$lib/constants';
+import { CURRENCIES, MODES, SERVER_STATUSES } from '$lib/constants';
 import { user } from './auth.schema';
 
 export const currencyEnum = pgEnum('currency', CURRENCIES);
 export const modeEnum = pgEnum('mode', MODES);
+export const serverStatusEnum = pgEnum('server_status', SERVER_STATUSES);
 
 export const userBalance = pgTable('user_balance', {
 	userId: text('user_id')
@@ -51,7 +52,7 @@ export const minecraftServer = pgTable('minecraft_server', {
 	id: uuid('id').primaryKey().defaultRandom(),
 	name: text('name').notNull(),
 	slug: text('slug').notNull().unique(),
-	status: text('status').notNull().default('stopped'),
+	status: serverStatusEnum('status').notNull().default('stopped'),
 	type: text('type').notNull(),
 	minecraftVersion: text('minecraft_version').notNull(),
 	region: text('region').notNull(),

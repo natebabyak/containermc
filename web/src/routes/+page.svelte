@@ -2,9 +2,9 @@
 	import { resolve } from '$app/paths';
 	import { Button } from '$lib/components/ui/button/index.js';
 	import ChevronRight from '@lucide/svelte/icons/chevron-right';
-	import { blur } from 'svelte/transition';
+	import { fly, scale } from 'svelte/transition';
 	import ArrowRight from '@lucide/svelte/icons/arrow-right';
-	import { sineOut } from 'svelte/easing';
+	import { cubicInOut } from 'svelte/easing';
 	import { cn } from '$lib/utils';
 	import * as Item from '$lib/components/ui/item/index.js';
 	import { Separator } from '$lib/components/ui/separator/index.js';
@@ -41,7 +41,7 @@
 		)}
 	></div>
 </header>
-<main class="flex flex-col items-center [&_h2]:text-2xl [&_h2]:font-medium">
+<main class="flex flex-col items-center [&_h2]:font-serif [&_h2]:text-2xl [&_h2]:font-medium">
 	<section class="flex min-h-[50vh] w-full max-w-xl flex-col justify-center gap-4">
 		<h1 class="font-serif text-4xl leading-tight font-medium text-balance md:text-6xl">
 			Deploy in Minutes. Scale in Seconds.
@@ -60,11 +60,11 @@
 				Get Started
 				<div class="relative size-4">
 					{#if isGetStartedButtonHovered}
-						<div transition:blur={{ easing: sineOut }} class="absolute">
+						<div transition:fly={{ x: -4, easing: cubicInOut }} class="absolute">
 							<ArrowRight />
 						</div>
 					{:else}
-						<div transition:blur={{ easing: sineOut }} class="absolute">
+						<div transition:scale={{ easing: cubicInOut }} class="absolute">
 							<ChevronRight />
 						</div>
 					{/if}
