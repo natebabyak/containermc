@@ -7,6 +7,7 @@ import { db } from '$lib/server/db';
 import { stripe } from '@better-auth/stripe';
 import Stripe from 'stripe';
 import { userBalance, userSettings } from './db/schema';
+import { organization } from 'better-auth/plugins';
 
 const stripeClient = new Stripe(env.STRIPE_SECRET_KEY, {
 	apiVersion: '2026-05-27.dahlia'
@@ -32,10 +33,15 @@ export const auth = betterAuth({
 		}
 	},
 	plugins: [
+		organization(),
 		stripe({
 			stripeClient,
 			stripeWebhookSecret: env.STRIPE_WEBHOOK_SECRET,
-			createCustomerOnSignUp: true
+			createCustomerOnSignUp: true,
+			subscription: {
+				enabled: true,
+				plans: []
+			}
 		}),
 		sveltekitCookies(getRequestEvent)
 	],
