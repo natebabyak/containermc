@@ -12,6 +12,10 @@
 	import { getSidebarContext } from '$lib/context/sidebar-context';
 	import CreditCard from '@lucide/svelte/icons/credit-card';
 	import { resolve } from '$app/paths';
+	import UsersRound from '@lucide/svelte/icons/users-round';
+	import Settings from '@lucide/svelte/icons/settings';
+	import Server from '@lucide/svelte/icons/server';
+	import ChevronsUpDown from '@lucide/svelte/icons/chevrons-up-down';
 
 	let session = authClient.useSession();
 
@@ -27,7 +31,7 @@
 		authClient.signOut();
 	}
 
-	const ctx = getSidebarContext();
+	const sidebar = getSidebarContext();
 </script>
 
 <Sidebar.Root>
@@ -35,35 +39,49 @@
 		<DropdownMenu.Root>
 			<DropdownMenu.Trigger>
 				{#snippet child({ props })}
-					<Sidebar.MenuButton {...props} size="lg">active org</Sidebar.MenuButton>
+					<Sidebar.MenuButton {...props} size="lg">
+						{sidebar.activeOrganization?.name ?? 'Select org'}
+						<ChevronsUpDown class="ml-auto" />
+					</Sidebar.MenuButton>
 				{/snippet}
 			</DropdownMenu.Trigger>
 			<DropdownMenu.Content>
-				{#each ctx.organizations as organization (organization.id)}
-					<DropdownMenu.Item>
-						<Item.Root>
-							<Item.Media></Item.Media>
-							<Item.Content>
-								<Item.Title>{organization.name}</Item.Title>
-							</Item.Content>
-						</Item.Root>
-					</DropdownMenu.Item>
-				{/each}
+				<DropdownMenu.Label>My Orgs</DropdownMenu.Label>
+				<DropdownMenu.Group>
+					{#each sidebar.organizations as organization (organization.id)}
+						<DropdownMenu.Item>
+							<Item.Root size="xs">
+								{#snippet child({ props })}
+									<a
+										{...props}
+										href={resolve('/(protected)/org/[organizationSlug]', {
+											organizationSlug: organization.slug
+										})}
+									>
+										<Item.Content>
+											<Item.Title>{organization.name}</Item.Title>
+										</Item.Content>
+									</a>
+								{/snippet}
+							</Item.Root>
+						</DropdownMenu.Item>
+					{/each}
+				</DropdownMenu.Group>
 			</DropdownMenu.Content>
 		</DropdownMenu.Root>
 	</Sidebar.Header>
 	<Sidebar.Content>
-		{#if ctx.activeMinecraftServer}
-			{@const { activeMinecraftServer } = ctx}
+		{#if sidebar.activeMinecraftServer}
+			{@const { activeMinecraftServer } = sidebar}
 			<Sidebar.Group>
 				<Sidebar.GroupLabel>{activeMinecraftServer.name}</Sidebar.GroupLabel>
 				<Sidebar.GroupContent></Sidebar.GroupContent>
 			</Sidebar.Group>
 		{/if}
-		{#if ctx.activeOrganization}
-			{@const { activeOrganization } = ctx}
+		{#if sidebar.activeOrganization}
+			{@const { activeOrganization } = sidebar}
 			<Sidebar.Group>
-				<Sidebar.GroupLabel>{activeOrganization.name}</Sidebar.GroupLabel>
+				<Sidebar.GroupLabel>Org</Sidebar.GroupLabel>
 				<Sidebar.GroupContent>
 					<Sidebar.Menu>
 						<Sidebar.MenuItem>
@@ -77,6 +95,51 @@
 									>
 										<CreditCard />
 										Billing
+									</a>
+								{/snippet}
+							</Sidebar.MenuButton>
+						</Sidebar.MenuItem>
+						<Sidebar.MenuItem>
+							<Sidebar.MenuButton>
+								{#snippet child({ props })}
+									<a
+										{...props}
+										href={resolve('/(protected)/org/[organizationSlug]/members', {
+											organizationSlug: activeOrganization.slug
+										})}
+									>
+										<UsersRound />
+										Members
+									</a>
+								{/snippet}
+							</Sidebar.MenuButton>
+						</Sidebar.MenuItem>
+						<Sidebar.MenuItem>
+							<Sidebar.MenuButton>
+								{#snippet child({ props })}
+									<a
+										{...props}
+										href={resolve('/(protected)/org/[organizationSlug]/servers', {
+											organizationSlug: activeOrganization.slug
+										})}
+									>
+										<Server />
+										Servers
+									</a>
+								{/snippet}
+							</Sidebar.MenuButton>
+						</Sidebar.MenuItem>
+						<Sidebar.MenuItem>
+							<Sidebar.MenuButton>
+								{#snippet child({ props })}
+									<a
+										{...props}
+										href={resolve('/(protected)/org/[organizationSlug]/settings', {
+											organizationSlug: activeOrganization.slug
+										})}
+									>
+										<Settings />
+										Settings
 									</a>
 								{/snippet}
 							</Sidebar.MenuButton>

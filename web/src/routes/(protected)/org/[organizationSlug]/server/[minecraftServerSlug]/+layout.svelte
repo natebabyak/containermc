@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { getSidebarContext } from '$lib/context/sidebar-context';
+	import { onDestroy, onMount } from 'svelte';
 	import type { LayoutProps } from './$types';
-	import { onMount } from 'svelte';
 
 	let { children, data }: LayoutProps = $props();
 
@@ -9,6 +9,10 @@
 
 	onMount(() => {
 		sidebar.activeMinecraftServer = data.activeMinecraftServer;
+	});
+
+	onDestroy(() => {
+		sidebar.activeMinecraftServer = undefined;
 	});
 </script>
 

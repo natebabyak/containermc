@@ -2,7 +2,7 @@ import type { MinecraftServerSelect } from '$lib/types';
 import type { Organization } from 'better-auth/plugins';
 import { createContext } from 'svelte';
 
-interface SidebarContext {
+export interface SidebarContext {
 	organizations: Organization[];
 	activeOrganization?: Organization;
 	minecraftServers?: MinecraftServerSelect[];

@@ -2,11 +2,11 @@
 	import AppSidebar from './_components/app-sidebar.svelte';
 	import type { LayoutProps } from './$types';
 	import * as Sidebar from '$lib/components/ui/sidebar/index.js';
-	import { setSidebarContext } from '$lib/context/sidebar-context';
+	import { setSidebarContext, type SidebarContext } from '$lib/context/sidebar-context';
 
 	let { children, data }: LayoutProps = $props();
 
-	const sidebar = $state({
+	const sidebar = $state<SidebarContext>({
 		get organizations() {
 			return data.organizations;
 		}
