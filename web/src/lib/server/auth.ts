@@ -7,7 +7,6 @@ import { db } from '$lib/server/db';
 import { stripe } from '@better-auth/stripe';
 import Stripe from 'stripe';
 import { organization } from 'better-auth/plugins';
-import { authClient } from '$lib/auth-client';
 import slugify from '@sindresorhus/slugify';
 import { nanoid } from 'nanoid';
 import { organizationBalance, userSettings } from './db/schema';
@@ -52,23 +51,20 @@ export const auth = betterAuth({
 		user: {
 			create: {
 				after: async (user) => {
-					await db.transaction(async (tx) => {
-						await tx.insert(userSettings).values({ userId: user.id });
+					const organizationName = `${user.name}'s Org`;
+					const organizationSlug = slugify(`${organizationName}-${nanoid(8)}`);
 
-						const orgName = `${user.name}'s Org`;
+					await db.insert(userSettings).values({ userId: user.id });
 
-						const { data: org } = await authClient.organization.create({
-							name: orgName,
-							slug: slugify(`${orgName}-${nanoid(8)}`)
-						});
-
-						if (!org) {
-							tx.rollback();
-							return;
+					const organization = await auth.api.createOrganization({
+						body: {
+							name: organizationName,
+							slug: organizationSlug,
+							userId: user.id
 						}
-
-						await tx.insert(organizationBalance).values({ organizationId: org.id });
 					});
+
+					await db.insert(organizationBalance).values({ organizationId: organization.id });
 				}
 			}
 		}

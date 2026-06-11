@@ -33,7 +33,7 @@
 			authClient.signIn.email({
 				email: value.email,
 				password: value.password,
-				callbackURL: '/dashboard',
+				callbackURL: '/orgs',
 				rememberMe: value.rememberMe
 			});
 		}

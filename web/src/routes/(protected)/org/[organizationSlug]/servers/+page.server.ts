@@ -1,14 +1,13 @@
 import { db } from '$lib/server/db';
-import type { PageServerLoad } from './$types';
 import { DescribeRegionsCommand } from '@aws-sdk/client-ec2';
-import type { Actions } from './$types';
 import { minecraftServer } from '$lib/server/db/schema';
 import { HARDWARE_OPTIONS, MINECRAFT_SERVER_TYPES, MINECRAFT_VERSION_GROUPS } from '$lib/constants';
 import { ec2 } from '$lib/server/aws/client';
 import { eq } from 'drizzle-orm';
-import { getServerStatus, startServer, stopServer } from '$lib/server/minecraft-servers';
+import { startServer, stopServer } from '$lib/server/minecraft-servers';
 import slugify from '@sindresorhus/slugify';
 import { nanoid } from 'nanoid';
+import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async () => {
 	const regions = (await ec2.send(new DescribeRegionsCommand({}))).Regions ?? [];
@@ -67,13 +66,9 @@ export const actions = {
 				userId: event.locals.user.id
 			});
 
-			return {
-				success: true
-			};
+			return { success: true };
 		} catch {
-			return {
-				success: false
-			};
+			return { success: false };
 		}
 	},
 	startServer: async (event) => {

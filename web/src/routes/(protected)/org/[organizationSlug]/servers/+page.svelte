@@ -28,7 +28,7 @@
 
 <svelte:window on:keydown={handleKeyDown} />
 
-{#if data.servers.length > 0}
+{#if data.minecraftServers.length > 0}
 	<div class="flex flex-col gap-4 px-4">
 		<div class="flex justify-between">
 			<InputGroup.Root class="w-full max-w-xs">
@@ -46,7 +46,7 @@
 			<CreateServerDialog regions={data.regions} />
 		</div>
 		<Item.Group>
-			{#each data.servers as server (server.id)}
+			{#each data.minecraftServers as server (server.id)}
 				<ServerItem {server} />
 			{/each}
 		</Item.Group>

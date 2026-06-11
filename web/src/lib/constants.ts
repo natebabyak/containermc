@@ -1,3 +1,17 @@
+export const CURRENCIES = [
+	'usd',
+	'eur',
+	'jpy',
+	'gbp',
+	'aud',
+	'cad',
+	'sgd',
+	'inr',
+	'krw',
+	'sek',
+	'brl'
+] as const;
+
 export const HARDWARE_OPTIONS = [
 	{
 		instanceType: 't4g.micro',

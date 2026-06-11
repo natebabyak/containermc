@@ -1,5 +1,4 @@
 <script lang="ts">
-	import type { PageProps } from './$types';
 	import { Separator } from '$lib/components/ui/separator/index.js';
 	import * as Item from '$lib/components/ui/item/index.js';
 	import * as Card from '$lib/components/ui/card/index.js';
@@ -9,8 +8,6 @@
 
 	import { formatCurrency } from '$lib/formatters';
 	import { enhance } from '$app/forms';
-
-	let { data }: PageProps = $props();
 
 	const AMOUNTS_CENTS = ['500', '1000', '2500', '5000', '10000'] as const;
 	let selectedAmountCents = $state<(typeof AMOUNTS_CENTS)[number]>('2500');
@@ -24,7 +21,7 @@
 	class="space-y-8 p-8 [&_h1]:text-4xl [&_h1]:font-bold [&_h2]:text-2xl [&_h2]:font-medium [&>section]:space-y-4"
 >
 	<section>
-		<h1>{formatCurrency(data.balance)} remaining</h1>
+		<h1>remaining</h1>
 	</section>
 	<section>
 		<Card.Root>

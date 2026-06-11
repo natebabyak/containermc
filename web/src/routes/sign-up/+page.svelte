@@ -42,7 +42,7 @@
 				name: value.name,
 				email: value.email,
 				password: value.password,
-				callbackURL: '/dashboard'
+				callbackURL: '/orgs'
 			});
 		}
 	}));

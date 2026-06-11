@@ -1,8 +1,8 @@
 import Stripe from 'stripe';
-import type { Actions, PageServerLoad } from './$types';
 import { env } from '$env/dynamic/private';
 import { formatCurrency } from '$lib/formatters';
 import { fail, redirect } from '@sveltejs/kit';
+import type { Actions, PageServerLoad } from './$types';
 
 const stripe = new Stripe(env.STRIPE_SECRET_KEY);
 
