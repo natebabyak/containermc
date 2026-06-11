@@ -9,6 +9,7 @@
 	import { onMount } from 'svelte';
 	import * as Item from '$lib/components/ui/item/index.js';
 	import {
+		AWS_REGIONS,
 		HARDWARE_OPTIONS,
 		MINECRAFT_SERVER_TYPES,
 		MINECRAFT_VERSION_GROUPS
@@ -38,10 +39,10 @@
 
 	const schema = z.object({
 		name: z.string().min(1, 'Name is required'),
-		type: z.string().min(1, 'Type is required'),
-		minecraftVersion: z.string().min(1, 'Minecraft version is required'),
-		region: z.string().min(1, 'Region is required'),
-		hardware: z.string().min(1, 'Hardware is required')
+		type: z.enum(MINECRAFT_SERVER_TYPES.map((t) => t.value)),
+		minecraftVersion: z.enum(MINECRAFT_VERSION_GROUPS.flatMap((g) => g.versions)),
+		region: z.enum(AWS_REGIONS.map((r) => r.code)),
+		instanceType: z.enum(HARDWARE_OPTIONS.map((o) => o.instanceTypes[0]))
 	});
 
 	const form = createForm(() => ({
@@ -50,7 +51,7 @@
 			type: 'VANILLA',
 			minecraftVersion: 'LATEST',
 			region: '',
-			hardware: ''
+			instanceType: ''
 		},
 		validators: {
 			onSubmit: schema
@@ -61,7 +62,7 @@
 			formData.append('type', value.type);
 			formData.append('minecraftVersion', value.minecraftVersion);
 			formData.append('region', value.region);
-			formData.append('hardware', value.hardware);
+			formData.append('instanceType', value.instanceType);
 
 			const response = await fetch('?/createServer', {
 				method: 'POST',
@@ -155,12 +156,12 @@
 			{/if}
 		</Item.Title>
 		<Item.Description>
-			{hardwareOption.numCpus} vCPU &bull; {hardwareOption.memoryGb} GB
+			{hardwareOption.vcpu} vCPU &bull; {hardwareOption.memory} GB
 		</Item.Description>
 	</Item.Content>
 	<Item.Content class="mr-4 *:ml-auto">
 		<Item.Title>
-			${hardwareOption.costPerHourDollars}/hr
+			${hardwareOption.hourlyRate}/hr
 		</Item.Title>
 		<Item.Description>
 			{#if hardwareOption.recommendedNumPlayers.max}
@@ -314,7 +315,7 @@
 					</Field.Field>
 				{/snippet}
 			</form.Field>
-			<form.Field name="hardware">
+			<form.Field name="instanceType">
 				{#snippet children(field)}
 					<Field.Field>
 						<Field.Label for={field.name}>Hardware</Field.Label>

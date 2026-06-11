@@ -1,3 +1,91 @@
+export const AWS_REGIONS = [
+	{
+		code: 'us-east-1',
+		name: 'US East (N. Virginia)',
+		geography: 'United States of America'
+	},
+	{
+		code: 'us-east-2',
+		name: 'US East (Ohio)',
+		geography: 'United States of America'
+	},
+	{
+		code: 'us-west-1',
+		name: 'US West (N. California)',
+		geography: 'United States of America'
+	},
+	{
+		code: 'us-west-2',
+		name: 'US West (Oregon)',
+		geography: 'United States of America'
+	},
+	{
+		code: 'ap-southeast-1',
+		name: 'Asia Pacific (Mumbai)',
+		geography: 'India'
+	},
+	{
+		code: 'ap-southeast-2',
+		name: 'Asia Pacific (Osaka)',
+		geography: 'Japan'
+	},
+	{
+		code: 'ap-southeast-3',
+		name: 'Asia Pacific (Seoul)',
+		geography: 'South Korea'
+	},
+	{
+		code: 'ap-southeast-4',
+		name: 'Asia Pacific (Singapore)',
+		geography: 'Singapore'
+	},
+	{
+		code: 'ap-south-1',
+		name: 'Asia Pacific (Sydney)',
+		geography: 'Australia'
+	},
+	{
+		code: 'ap-northeast-1',
+		name: 'Asia Pacific (Tokyo)',
+		geography: 'Japan'
+	},
+	{
+		code: 'ca-central-1',
+		name: 'Canada (Central)',
+		geography: 'Canada'
+	},
+	{
+		code: 'eu-central-1',
+		name: 'Europe (Frankfurt)',
+		geography: 'Germany'
+	},
+	{
+		code: 'eu-west-1',
+		name: 'Europe (Ireland)',
+		geography: 'Ireland'
+	},
+	{
+		code: 'eu-west-2',
+		name: 'Europe (London)',
+		geography: 'United Kingdom'
+	},
+	{
+		code: 'eu-west-3',
+		name: 'Europe (Paris)',
+		geography: 'France'
+	},
+	{
+		code: 'eu-north-1',
+		name: 'Europe (Stockholm)',
+		geography: 'Sweden'
+	},
+	{
+		code: 'sa-east-1',
+		name: 'South America (São Paulo)',
+		geography: 'Brazil'
+	}
+];
+
 export const CURRENCIES = [
 	'usd',
 	'eur',
@@ -14,59 +102,35 @@ export const CURRENCIES = [
 
 export const HARDWARE_OPTIONS = [
 	{
-		instanceType: 't4g.micro',
-		name: 'X-Small',
-		numCpus: 2,
-		memoryGb: 1,
-		costPerHourDollars: 0.02,
+		name: 'Small',
+		instanceTypes: ['c8g.medium', 'c7g.medium', 'c6g.medium'],
+		hourlyRate: 0.05,
+		vcpu: 1,
+		memory: 2,
 		recommendedNumPlayers: {
 			min: 1,
-			max: 2
-		},
-		tag: null
-	},
-	{
-		instanceType: 't4g.small',
-		name: 'Small',
-		numCpus: 2,
-		memoryGb: 2,
-		costPerHourDollars: 0.04,
-		recommendedNumPlayers: {
-			min: 2,
-			max: 5
-		},
-		tag: null
-	},
-	{
-		instanceType: 't4g.medium',
-		name: 'Medium',
-		numCpus: 2,
-		memoryGb: 4,
-		costPerHourDollars: 0.08,
-		recommendedNumPlayers: {
-			min: 5,
 			max: 10
 		},
-		tag: 'Recommended'
+		tag: null
 	},
 	{
-		instanceType: 't4g.large',
-		name: 'Large',
-		numCpus: 2,
-		memoryGb: 8,
-		costPerHourDollars: 0.16,
+		name: 'Medium',
+		instanceTypes: ['c8g.large', 'c7g.large', 'c6g.large'],
+		hourlyRate: 0.1,
+		vcpu: 2,
+		memory: 4,
 		recommendedNumPlayers: {
 			min: 10,
 			max: 20
 		},
-		tag: null
+		tag: 'Recommended'
 	},
 	{
-		instanceType: 't4g.xlarge',
-		name: 'X-Large',
-		numCpus: 4,
-		memoryGb: 16,
-		costPerHourDollars: 0.32,
+		name: 'Large',
+		instanceTypes: ['c8g.xlarge', 'c7g.xlarge', 'c6g.xlarge'],
+		hourlyRate: 0.2,
+		vcpu: 4,
+		memory: 8,
 		recommendedNumPlayers: {
 			min: 20,
 			max: 50
@@ -74,26 +138,29 @@ export const HARDWARE_OPTIONS = [
 		tag: null
 	},
 	{
-		instanceType: 't4g.2xlarge',
-		name: 'XX-Large',
-		numCpus: 8,
-		memoryGb: 32,
-		costPerHourDollars: 0.64,
+		name: 'X-Large',
+		instanceTypes: ['c8g.2xlarge', 'c7g.2xlarge', 'c6g.2xlarge'],
+		hourlyRate: 0.4,
+		vcpu: 8,
+		memory: 16,
 		recommendedNumPlayers: {
 			min: 50,
+			max: 100
+		},
+		tag: null
+	},
+	{
+		name: 'XX-Large',
+		instanceTypes: ['c8g.4xlarge', 'c7g.4xlarge', 'c6g.4xlarge'],
+		hourlyRate: 0.8,
+		vcpu: 16,
+		memory: 32,
+		recommendedNumPlayers: {
+			min: 100,
 			max: null
 		},
 		tag: null
 	}
-] as const;
-
-export const INSTANCE_TYPES = [
-	't4g.micro',
-	't4g.small',
-	't4g.medium',
-	't4g.large',
-	't4g.xlarge',
-	't4g.2xlarge'
 ] as const;
 
 export const MINECRAFT_VERSION_GROUPS = [

@@ -31,7 +31,7 @@
 </script>
 
 <svelte:head>
-	<title>{data.server.name} - ContainerMC</title>
+	<title>{data.activeMinecraftServer.name} - ContainerMC</title>
 </svelte:head>
 <div class="space-y-4 p-4">
 	<InputGroup.Root>
@@ -44,9 +44,9 @@
 		<Item.Root>
 			<Item.Header>
 				<Item.Media class="row-span-2">
-					<img src={data.server.iconUrl} alt="server icon" class="size-16" />
+					<img src={data.activeMinecraftServer.iconUrl} alt="server icon" class="size-16" />
 				</Item.Media>
-				<Item.Title>{data.server.name}</Item.Title>
+				<Item.Title>{data.activeMinecraftServer.name}</Item.Title>
 				<Item.Description>server motd goes here</Item.Description>
 				<span>Player count</span>
 			</Item.Header>

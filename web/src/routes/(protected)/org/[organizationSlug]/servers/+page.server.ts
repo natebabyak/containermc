@@ -1,13 +1,13 @@
 import { db } from '$lib/server/db';
 import { DescribeRegionsCommand } from '@aws-sdk/client-ec2';
 import { minecraftServer } from '$lib/server/db/schema';
-import { HARDWARE_OPTIONS, MINECRAFT_SERVER_TYPES, MINECRAFT_VERSION_GROUPS } from '$lib/constants';
 import { ec2 } from '$lib/server/aws/client';
 import { eq } from 'drizzle-orm';
 import { startServer, stopServer } from '$lib/server/minecraft-servers';
 import slugify from '@sindresorhus/slugify';
 import { nanoid } from 'nanoid';
 import type { Actions, PageServerLoad } from './$types';
+import { auth } from '$lib/server/auth';
 
 export const load: PageServerLoad = async () => {
 	const regions = (await ec2.send(new DescribeRegionsCommand({}))).Regions ?? [];
@@ -24,37 +24,29 @@ export const actions = {
 		const type = formData.get('type')?.toString();
 		const minecraftVersion = formData.get('minecraftVersion')?.toString();
 		const region = formData.get('region')?.toString();
-		const hardware = formData.get('hardware')?.toString();
+		const instanceType = formData.get('instanceType')?.toString();
 
-		if (!name || !type || !minecraftVersion || !region || !hardware) {
+		if (!name || !type || !minecraftVersion || !region || !instanceType) {
 			return {
 				success: false
 			};
 		}
 
-		if (!MINECRAFT_SERVER_TYPES.find((t) => t.value === type)) {
-			return {
-				success: false
-			};
-		}
+		const organization = await auth.api.getFullOrganization({
+			query: {
+				organizationSlug: event.params.organizationSlug
+			},
+			headers: event.request.headers
+		});
 
-		if (!MINECRAFT_VERSION_GROUPS.find((g) => g.versions.find((v) => v === minecraftVersion))) {
-			return {
-				success: false
-			};
-		}
-
-		const slug = `${slugify(name)}-${nanoid(8).toLowerCase()}`;
-
-		const instanceType = HARDWARE_OPTIONS.find((o) => o.name === hardware)?.instanceType;
-		if (!instanceType) {
+		if (!organization) {
 			return { success: false };
 		}
 
 		try {
 			await db.insert(minecraftServer).values({
 				name,
-				slug,
+				slug: `${slugify(`${name}-${nanoid(8)}`)}`,
 				type,
 				minecraftVersion,
 				region,
@@ -63,7 +55,7 @@ export const actions = {
 				motd: null,
 				instanceId: null,
 				ipAddress: null,
-				userId: event.locals.user.id
+				organizationId: organization.id
 			});
 
 			return { success: true };
