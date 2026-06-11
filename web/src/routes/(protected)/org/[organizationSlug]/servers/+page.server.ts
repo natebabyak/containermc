@@ -1,21 +1,11 @@
 import { db } from '$lib/server/db';
-import { DescribeRegionsCommand } from '@aws-sdk/client-ec2';
 import { minecraftServer } from '$lib/server/db/schema';
-import { ec2 } from '$lib/server/aws/client';
 import { eq } from 'drizzle-orm';
 import { startServer, stopServer } from '$lib/server/minecraft-servers';
 import slugify from '@sindresorhus/slugify';
 import { nanoid } from 'nanoid';
-import type { Actions, PageServerLoad } from './$types';
+import type { Actions } from './$types';
 import { auth } from '$lib/server/auth';
-
-export const load: PageServerLoad = async () => {
-	const regions = (await ec2.send(new DescribeRegionsCommand({}))).Regions ?? [];
-
-	return {
-		regions
-	};
-};
 
 export const actions = {
 	createServer: async (event) => {

@@ -1,91 +1,3 @@
-export const AWS_REGIONS = [
-	{
-		code: 'us-east-1',
-		name: 'US East (N. Virginia)',
-		geography: 'United States of America'
-	},
-	{
-		code: 'us-east-2',
-		name: 'US East (Ohio)',
-		geography: 'United States of America'
-	},
-	{
-		code: 'us-west-1',
-		name: 'US West (N. California)',
-		geography: 'United States of America'
-	},
-	{
-		code: 'us-west-2',
-		name: 'US West (Oregon)',
-		geography: 'United States of America'
-	},
-	{
-		code: 'ap-southeast-1',
-		name: 'Asia Pacific (Mumbai)',
-		geography: 'India'
-	},
-	{
-		code: 'ap-southeast-2',
-		name: 'Asia Pacific (Osaka)',
-		geography: 'Japan'
-	},
-	{
-		code: 'ap-southeast-3',
-		name: 'Asia Pacific (Seoul)',
-		geography: 'South Korea'
-	},
-	{
-		code: 'ap-southeast-4',
-		name: 'Asia Pacific (Singapore)',
-		geography: 'Singapore'
-	},
-	{
-		code: 'ap-south-1',
-		name: 'Asia Pacific (Sydney)',
-		geography: 'Australia'
-	},
-	{
-		code: 'ap-northeast-1',
-		name: 'Asia Pacific (Tokyo)',
-		geography: 'Japan'
-	},
-	{
-		code: 'ca-central-1',
-		name: 'Canada (Central)',
-		geography: 'Canada'
-	},
-	{
-		code: 'eu-central-1',
-		name: 'Europe (Frankfurt)',
-		geography: 'Germany'
-	},
-	{
-		code: 'eu-west-1',
-		name: 'Europe (Ireland)',
-		geography: 'Ireland'
-	},
-	{
-		code: 'eu-west-2',
-		name: 'Europe (London)',
-		geography: 'United Kingdom'
-	},
-	{
-		code: 'eu-west-3',
-		name: 'Europe (Paris)',
-		geography: 'France'
-	},
-	{
-		code: 'eu-north-1',
-		name: 'Europe (Stockholm)',
-		geography: 'Sweden'
-	},
-	{
-		code: 'sa-east-1',
-		name: 'South America (São Paulo)',
-		geography: 'Brazil'
-	}
-];
-
 export const CURRENCIES = [
 	'usd',
 	'eur',
@@ -107,10 +19,6 @@ export const HARDWARE_OPTIONS = [
 		hourlyRate: 0.05,
 		vcpu: 1,
 		memory: 2,
-		recommendedNumPlayers: {
-			min: 1,
-			max: 10
-		},
 		tag: null
 	},
 	{
@@ -119,10 +27,6 @@ export const HARDWARE_OPTIONS = [
 		hourlyRate: 0.1,
 		vcpu: 2,
 		memory: 4,
-		recommendedNumPlayers: {
-			min: 10,
-			max: 20
-		},
 		tag: 'Recommended'
 	},
 	{
@@ -131,10 +35,6 @@ export const HARDWARE_OPTIONS = [
 		hourlyRate: 0.2,
 		vcpu: 4,
 		memory: 8,
-		recommendedNumPlayers: {
-			min: 20,
-			max: 50
-		},
 		tag: null
 	},
 	{
@@ -143,10 +43,6 @@ export const HARDWARE_OPTIONS = [
 		hourlyRate: 0.4,
 		vcpu: 8,
 		memory: 16,
-		recommendedNumPlayers: {
-			min: 50,
-			max: 100
-		},
 		tag: null
 	},
 	{
@@ -155,10 +51,6 @@ export const HARDWARE_OPTIONS = [
 		hourlyRate: 0.8,
 		vcpu: 16,
 		memory: 32,
-		recommendedNumPlayers: {
-			min: 100,
-			max: null
-		},
 		tag: null
 	}
 ] as const;
@@ -360,3 +252,91 @@ export const MINECRAFT_SERVER_TYPES = [
 		label: 'Vanilla'
 	}
 ] as const;
+
+export const REGIONS = [
+	{
+		code: 'us-east-1',
+		name: 'US East (N. Virginia)',
+		geography: 'United States of America'
+	},
+	{
+		code: 'us-east-2',
+		name: 'US East (Ohio)',
+		geography: 'United States of America'
+	},
+	{
+		code: 'us-west-1',
+		name: 'US West (N. California)',
+		geography: 'United States of America'
+	},
+	{
+		code: 'us-west-2',
+		name: 'US West (Oregon)',
+		geography: 'United States of America'
+	},
+	{
+		code: 'ap-southeast-1',
+		name: 'Asia Pacific (Mumbai)',
+		geography: 'India'
+	},
+	{
+		code: 'ap-southeast-2',
+		name: 'Asia Pacific (Osaka)',
+		geography: 'Japan'
+	},
+	{
+		code: 'ap-southeast-3',
+		name: 'Asia Pacific (Seoul)',
+		geography: 'South Korea'
+	},
+	{
+		code: 'ap-southeast-4',
+		name: 'Asia Pacific (Singapore)',
+		geography: 'Singapore'
+	},
+	{
+		code: 'ap-south-1',
+		name: 'Asia Pacific (Sydney)',
+		geography: 'Australia'
+	},
+	{
+		code: 'ap-northeast-1',
+		name: 'Asia Pacific (Tokyo)',
+		geography: 'Japan'
+	},
+	{
+		code: 'ca-central-1',
+		name: 'Canada (Central)',
+		geography: 'Canada'
+	},
+	{
+		code: 'eu-central-1',
+		name: 'Europe (Frankfurt)',
+		geography: 'Germany'
+	},
+	{
+		code: 'eu-west-1',
+		name: 'Europe (Ireland)',
+		geography: 'Ireland'
+	},
+	{
+		code: 'eu-west-2',
+		name: 'Europe (London)',
+		geography: 'United Kingdom'
+	},
+	{
+		code: 'eu-west-3',
+		name: 'Europe (Paris)',
+		geography: 'France'
+	},
+	{
+		code: 'eu-north-1',
+		name: 'Europe (Stockholm)',
+		geography: 'Sweden'
+	},
+	{
+		code: 'sa-east-1',
+		name: 'South America (São Paulo)',
+		geography: 'Brazil'
+	}
+];

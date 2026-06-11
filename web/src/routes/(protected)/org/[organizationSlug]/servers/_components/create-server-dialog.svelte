@@ -4,54 +4,42 @@
 	import { Input } from '$lib/components/ui/input/index.js';
 	import * as Field from '$lib/components/ui/field/index.js';
 	import { createForm } from '@tanstack/svelte-form';
-	import type { Region } from '@aws-sdk/client-ec2';
 	import * as Select from '$lib/components/ui/select/index.js';
 	import { onMount } from 'svelte';
 	import * as Item from '$lib/components/ui/item/index.js';
-	import {
-		AWS_REGIONS,
-		HARDWARE_OPTIONS,
-		MINECRAFT_SERVER_TYPES,
-		MINECRAFT_VERSION_GROUPS
-	} from '$lib/constants';
+	import { HARDWARE_OPTIONS, REGIONS } from '$lib/constants';
 	import z from 'zod';
 	import * as Drawer from '$lib/components/ui/drawer/index.js';
 	import { IsMobile } from '$lib/hooks/is-mobile.svelte';
-	import { Separator } from '$lib/components/ui/separator/index.js';
 	import { Badge } from '$lib/components/ui/badge/index.js';
 	import { invalidateAll } from '$app/navigation';
 	import BadgeCheckIcon from '@lucide/svelte/icons/badge-check';
 	import { applyAction, deserialize } from '$app/forms';
-
-	interface RegionGroup {
-		id: string;
-		name: string;
-		regions: (Region & {
-			ping: number;
-		})[];
-	}
-
-	interface Props {
-		regions: Region[];
-	}
-
-	let { regions }: Props = $props();
+	import RotateCcw from '@lucide/svelte/icons/rotate-ccw';
+	import LoaderCircle from '@lucide/svelte/icons/loader-circle';
+	import { scale } from 'svelte/transition';
+	import * as RadioGroup from '$lib/components/ui/radio-group/index.js';
+	import Label from '$lib/components/ui/label/label.svelte';
+	import { cn } from '$lib/utils';
+	import { ScrollArea } from '$lib/components/ui/scroll-area/index.js';
 
 	const schema = z.object({
 		name: z.string().min(1, 'Name is required'),
-		type: z.enum(MINECRAFT_SERVER_TYPES.map((t) => t.value)),
-		minecraftVersion: z.enum(MINECRAFT_VERSION_GROUPS.flatMap((g) => g.versions)),
-		region: z.enum(AWS_REGIONS.map((r) => r.code)),
-		instanceType: z.enum(HARDWARE_OPTIONS.map((o) => o.instanceTypes[0]))
+		regionCode: z.enum(
+			REGIONS.map((r) => r.code),
+			'Region is required'
+		),
+		hardwareName: z.enum(
+			HARDWARE_OPTIONS.map((o) => o.name),
+			'Hardware is required'
+		)
 	});
 
 	const form = createForm(() => ({
 		defaultValues: {
 			name: '',
-			type: 'VANILLA',
-			minecraftVersion: 'LATEST',
-			region: '',
-			instanceType: ''
+			regionCode: '',
+			hardwareName: ''
 		},
 		validators: {
 			onSubmit: schema
@@ -59,10 +47,8 @@
 		onSubmit: async ({ value }) => {
 			const formData = new FormData();
 			formData.append('name', value.name);
-			formData.append('type', value.type);
-			formData.append('minecraftVersion', value.minecraftVersion);
-			formData.append('region', value.region);
-			formData.append('instanceType', value.instanceType);
+			formData.append('regionCode', value.regionCode);
+			formData.append('hardwareName', value.hardwareName);
 
 			const response = await fetch('?/createServer', {
 				method: 'POST',
@@ -84,97 +70,58 @@
 	const isMobile = new IsMobile();
 
 	let open = $state(false);
-	let regionGroups = $state<RegionGroup[]>([]);
 
-	export async function measurePing(region: Region) {
-		const url = `https://${region.Endpoint}`;
+	export async function measurePing(region: (typeof REGIONS)[number]) {
+		const url = `https://ec2.${region.code}.amazonaws.com/ping`;
 		const start = performance.now();
+
 		try {
 			await fetch(url, {
-				method: 'HEAD',
-				mode: 'no-cors'
+				method: 'GET',
+				mode: 'no-cors',
+				cache: 'no-store',
+				credentials: 'omit'
 			});
-			return performance.now() - start;
+
+			return Math.round(performance.now() - start);
 		} catch {
 			return -1;
 		}
 	}
 
-	export async function mapRegions(regions: Region[], regionGroupId: string) {
-		return (
-			await Promise.all(
-				regions
-					?.filter((r) => r.RegionName?.startsWith(regionGroupId))
-					.map(async (r) => ({
-						...r,
-						ping: await measurePing(r)
-					}))
-			)
-		).toSorted((a, b) => a.ping - b.ping);
+	let measuringPings = $state(false);
+
+	let regions = $state<((typeof REGIONS)[number] & { ping: number })[]>([]);
+
+	async function measurePings() {
+		if (measuringPings) return;
+
+		measuringPings = true;
+
+		try {
+			const measuredRegions = await Promise.all(
+				REGIONS.map(async (region) => ({
+					...region,
+					ping: await measurePing(region)
+				}))
+			);
+
+			regions = measuredRegions.toSorted((a, b) => a.ping - b.ping);
+
+			form.setFieldValue('regionCode', regions[0].code);
+		} finally {
+			measuringPings = false;
+		}
 	}
 
-	onMount(async () => {
-		regionGroups = [
-			{
-				id: 'ap',
-				name: 'Asia Pacific',
-				regions: await mapRegions(regions, 'ap')
-			},
-			{
-				id: 'ca',
-				name: 'Canada',
-				regions: await mapRegions(regions, 'ca')
-			},
-			{
-				id: 'eu',
-				name: 'Europe',
-				regions: await mapRegions(regions, 'eu')
-			},
-			{
-				id: 'sa',
-				name: 'South America',
-				regions: await mapRegions(regions, 'sa')
-			},
-			{
-				id: 'us',
-				name: 'United States',
-				regions: await mapRegions(regions, 'us')
-			}
-		].toSorted((a, b) => a.regions[0].ping - b.regions[0].ping);
+	onMount(() => {
+		measurePings();
 	});
 </script>
 
-{#snippet hardwareOptionItem(hardwareOption: (typeof HARDWARE_OPTIONS)[number])}
-	<Item.Content>
-		<Item.Title>
-			{hardwareOption.name}
-			{#if hardwareOption.tag}
-				<Badge>
-					<BadgeCheckIcon />
-					{hardwareOption.tag}
-				</Badge>
-			{/if}
-		</Item.Title>
-		<Item.Description>
-			{hardwareOption.vcpu} vCPU &bull; {hardwareOption.memory} GB
-		</Item.Description>
-	</Item.Content>
-	<Item.Content class="mr-4 *:ml-auto">
-		<Item.Title>
-			${hardwareOption.hourlyRate}/hr
-		</Item.Title>
-		<Item.Description>
-			{#if hardwareOption.recommendedNumPlayers.max}
-				{hardwareOption.recommendedNumPlayers.min}&ndash;{hardwareOption.recommendedNumPlayers.max} players
-			{:else}
-				{hardwareOption.recommendedNumPlayers.min}+ players
-			{/if}
-		</Item.Description>
-	</Item.Content>
-{/snippet}
-
-{#snippet createServerForm()}
+{#snippet formSnippet()}
 	<form
+		id="create-server-form"
 		onsubmit={(e) => {
 			e.preventDefault();
 			e.stopPropagation();
@@ -191,7 +138,7 @@
 							id={field.name}
 							name={field.name}
 							oninput={(e) => field.handleChange((e.target as HTMLInputElement).value)}
-							placeholder="Server name"
+							placeholder="Server Name"
 							type="text"
 							value={field.state.value}
 						/>
@@ -203,138 +150,56 @@
 					</Field.Field>
 				{/snippet}
 			</form.Field>
-			<div class="grid grid-cols-2 gap-4">
-				<form.Field name="type">
-					{#snippet children(field)}
-						<Field.Field>
-							<Field.Label for={field.name}>Server Type</Field.Label>
-							<Select.Root
-								name={field.name}
-								type="single"
-								value={field.state.value}
-								onValueChange={(value) => field.handleChange(value)}
-							>
-								<Select.Trigger id={field.name}>
-									{MINECRAFT_SERVER_TYPES.find(
-										(minecraftServerType) => minecraftServerType.value === field.state.value
-									)?.label}
-								</Select.Trigger>
-								<Select.Content class="max-h-100">
-									<Select.Group>
-										{#each MINECRAFT_SERVER_TYPES as minecraftServerType (minecraftServerType.value)}
-											<Select.Item value={minecraftServerType.value}>
-												{minecraftServerType.label}
-											</Select.Item>
-										{/each}
-									</Select.Group>
-								</Select.Content>
-							</Select.Root>
-						</Field.Field>
-					{/snippet}
-				</form.Field>
-				<form.Field name="minecraftVersion">
-					{#snippet children(field)}
-						<Field.Field>
-							<Field.Label for={field.name}>Minecraft Version</Field.Label>
-							<Select.Root
-								name={field.name}
-								type="single"
-								value={field.state.value}
-								onValueChange={(value) => field.handleChange(value)}
-							>
-								<Select.Trigger id={field.name} class="capitalize">
-									{field.state.value.toLowerCase()}
-								</Select.Trigger>
-								<Select.Content class="max-h-100">
-									{#each MINECRAFT_VERSION_GROUPS as minecraftVersionGroup, i (i)}
-										<Select.Group>
-											<Select.Label>{minecraftVersionGroup.name}</Select.Label>
-											{#each minecraftVersionGroup.versions as version, j (j)}
-												<Select.Item value={version} class="capitalize">
-													{version.toLowerCase()}
-												</Select.Item>
-											{/each}
-										</Select.Group>
-									{/each}
-								</Select.Content>
-							</Select.Root>
-						</Field.Field>
-					{/snippet}
-				</form.Field>
-			</div>
-			<Separator />
-			<form.Field name="region">
+			<form.Field name="regionCode">
 				{#snippet children(field)}
 					<Field.Field>
-						<Field.Label for={field.name}>Region</Field.Label>
+						<div class="flex items-center justify-between">
+							<Field.Label for={field.name}>Region</Field.Label>
+							<Button disabled={measuringPings} onclick={measurePings} size="xs" variant="outline">
+								<div class="relative size-3">
+									{#if measuringPings}
+										<div transition:scale={{ start: 0.9 }} class="absolute">
+											<LoaderCircle class="animate-spin" />
+										</div>
+									{:else}
+										<div transition:scale={{ start: 0.9 }} class="absolute">
+											<RotateCcw />
+										</div>
+									{/if}
+								</div>
+								Remeasure Pings
+							</Button>
+						</div>
 						<Select.Root
 							name={field.name}
 							type="single"
 							value={field.state.value}
 							onValueChange={(value) => field.handleChange(value)}
 						>
-							<Select.Trigger id={field.name}>
-								{field.state.value || 'Select region'}
+							<Select.Trigger disabled={measuringPings} id={field.name}>
+								{REGIONS.find((r) => r.code === field.state.value)?.name || 'Select Region'}
 							</Select.Trigger>
 							<Select.Content class="max-h-100">
-								{#each regionGroups as regionGroup, i (i)}
-									<Select.Group>
-										<Select.Label>{regionGroup.name}</Select.Label>
-										{#each regionGroup.regions as region, j (j)}
-											<Item.Root>
-												{#snippet child({ props })}
-													<Select.Item {...props} value={region.RegionName!}>
-														<Item.Content>
-															<Item.Title>
-																{region.RegionName}
-																{#if i === 0 && j === 0}
-																	<Badge>
-																		<BadgeCheckIcon />
-																		Recommended
-																	</Badge>
-																{/if}
-															</Item.Title>
-															<Item.Description>
-																{region.Geography?.[0].Name}
-															</Item.Description>
-														</Item.Content>
-														<p class="mr-4">{region.ping} ms</p>
-													</Select.Item>
-												{/snippet}
-											</Item.Root>
-										{/each}
-									</Select.Group>
-								{/each}
-							</Select.Content>
-						</Select.Root>
-						{#if field.state.meta.errors[0]}
-							<Field.Error>
-								{field.state.meta.errors[0].message}
-							</Field.Error>
-						{/if}
-					</Field.Field>
-				{/snippet}
-			</form.Field>
-			<form.Field name="instanceType">
-				{#snippet children(field)}
-					<Field.Field>
-						<Field.Label for={field.name}>Hardware</Field.Label>
-						<Select.Root
-							name={field.name}
-							type="single"
-							value={field.state.value}
-							onValueChange={(value) => field.handleChange(value)}
-						>
-							<Select.Trigger id={field.name}>
-								{field.state.value || 'Select hardware'}
-							</Select.Trigger>
-							<Select.Content>
 								<Select.Group>
-									{#each HARDWARE_OPTIONS as hardwareOption (hardwareOption.name)}
+									{#each regions as region, i (i)}
 										<Item.Root>
 											{#snippet child({ props })}
-												<Select.Item {...props} value={hardwareOption.name}>
-													{@render hardwareOptionItem(hardwareOption)}
+												<Select.Item {...props} value={region.code!}>
+													<Item.Content>
+														<Item.Title>
+															{region.name}
+															{#if i === 0}
+																<Badge>
+																	<BadgeCheckIcon />
+																	Recommended
+																</Badge>
+															{/if}
+														</Item.Title>
+														<Item.Description>
+															{region.geography}
+														</Item.Description>
+													</Item.Content>
+													<p class="mr-4">{region.ping} ms</p>
 												</Select.Item>
 											{/snippet}
 										</Item.Root>
@@ -350,11 +215,66 @@
 					</Field.Field>
 				{/snippet}
 			</form.Field>
-			<Field.Field>
-				<Button type="submit">Create Server</Button>
-			</Field.Field>
+			<form.Field name="hardwareName">
+				{#snippet children(field)}
+					<Field.Field>
+						<Field.Label for={field.name}>Hardware</Field.Label>
+						<RadioGroup.Root
+							name={field.name}
+							value={field.state.value}
+							onValueChange={(value) => field.handleChange(value)}
+						>
+							{#each HARDWARE_OPTIONS as hardwareOption (hardwareOption.name)}
+								<Item.Root
+									size="xs"
+									variant="outline"
+									class={cn(
+										field.state.value === hardwareOption.name && 'border-primary bg-primary/5'
+									)}
+								>
+									{#snippet child({ props })}
+										<Label {...props} for={hardwareOption.name}>
+											<RadioGroup.Item id={hardwareOption.name} value={hardwareOption.name} />
+											<Item.Content>
+												<Item.Title>
+													{hardwareOption.name}
+													{#if hardwareOption.tag}
+														<Badge>
+															<BadgeCheckIcon />
+															{hardwareOption.tag}
+														</Badge>
+													{/if}
+												</Item.Title>
+												<Item.Description>
+													{hardwareOption.vcpu} vCPU &bull; {hardwareOption.memory} GB
+												</Item.Description>
+											</Item.Content>
+											<Item.Content class="*:ml-auto">
+												<Item.Title>
+													${hardwareOption.hourlyRate}/hr
+												</Item.Title>
+											</Item.Content>
+										</Label>
+									{/snippet}
+								</Item.Root>
+							{/each}
+						</RadioGroup.Root>
+						{#if field.state.meta.errors[0]}
+							<Field.Error>
+								{field.state.meta.errors[0].message}
+							</Field.Error>
+						{/if}
+					</Field.Field>
+				{/snippet}
+			</form.Field>
 		</Field.Group>
 	</form>
+{/snippet}
+
+{#snippet submitButton()}
+	<Field.Field>
+		<Button form="create-server-form" type="submit">Create Server</Button>
+	</Field.Field>
 {/snippet}
 
 {#if isMobile.current}
@@ -364,8 +284,18 @@
 				<Button {...props}>Create Server</Button>
 			{/snippet}
 		</Drawer.Trigger>
-		<Drawer.Content>
-			{@render createServerForm()}
+		<Drawer.Content class="flex h-full flex-col">
+			<Drawer.Header class="border-b">
+				<Drawer.Title>Create Server</Drawer.Title>
+			</Drawer.Header>
+			<ScrollArea class="flex-1 overflow-y-auto">
+				<div class="p-4">
+					{@render formSnippet()}
+				</div>
+			</ScrollArea>
+			<Drawer.Footer class="border-t">
+				{@render submitButton()}
+			</Drawer.Footer>
 		</Drawer.Content>
 	</Drawer.Root>
 {:else}
@@ -379,7 +309,8 @@
 			<Dialog.Header>
 				<Dialog.Title>Create Server</Dialog.Title>
 			</Dialog.Header>
-			{@render createServerForm()}
+			{@render formSnippet()}
+			{@render submitButton()}
 		</Dialog.Content>
 	</Dialog.Root>
 {/if}
