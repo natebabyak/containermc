@@ -1,17 +1,3 @@
-export const CURRENCIES = [
-	'usd',
-	'eur',
-	'jpy',
-	'gbp',
-	'aud',
-	'cad',
-	'sgd',
-	'inr',
-	'krw',
-	'sek',
-	'brl'
-] as const;
-
 export const HARDWARE_OPTIONS = [
 	{
 		instanceType: 't4g.micro',
@@ -219,6 +205,14 @@ export const MINECRAFT_VERSION_GROUPS = [
 	}
 ] as const;
 
+export const MINECRAFT_SERVER_STATUSES = [
+	'stopped',
+	'starting',
+	'running',
+	'stopping',
+	'error'
+] as const;
+
 export const MINECRAFT_SERVER_TYPES = [
 	{
 		value: 'AUTO_CURSEFORGE',
@@ -285,7 +279,3 @@ export const MINECRAFT_SERVER_TYPES = [
 		label: 'Vanilla'
 	}
 ] as const;
-
-export const MODES = ['system', 'light', 'dark'] as const;
-
-export const SERVER_STATUSES = ['stopped', 'starting', 'running', 'stopping', 'error'] as const;

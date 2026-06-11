@@ -6,77 +6,90 @@ import {
 	pgEnum,
 	integer,
 	numeric,
-	boolean,
 	index,
 	bigint,
-	jsonb
+	jsonb,
+	boolean
 } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
-import { CURRENCIES, MODES, SERVER_STATUSES } from '$lib/constants';
-import { user } from './auth.schema';
+import { organization, user } from './auth.schema';
+import { MINECRAFT_SERVER_STATUSES } from '$lib/constants';
 
-export const currencyEnum = pgEnum('currency', CURRENCIES);
-export const modeEnum = pgEnum('mode', MODES);
-export const serverStatusEnum = pgEnum('server_status', SERVER_STATUSES);
-
-export const userBalance = pgTable('user_balance', {
-	userId: text('user_id')
-		.primaryKey()
-		.references(() => user.id, { onDelete: 'cascade' }),
-	amountDollars: numeric('amount_dollars', { precision: 10, scale: 4 }).notNull().default('0'),
-	updatedAt: timestamp('updated_at')
-		.defaultNow()
-		.$onUpdate(() => new Date())
-		.notNull()
-});
+export const minecraftServerStatusEnum = pgEnum('server_status', MINECRAFT_SERVER_STATUSES);
 
 export const userSettings = pgTable('user_settings', {
 	userId: text('user_id')
 		.primaryKey()
 		.references(() => user.id, { onDelete: 'cascade' }),
-	currency: currencyEnum('currency').notNull().default('usd'),
-	mode: modeEnum('mode').notNull().default('system'),
-	autoRechargeEnabled: boolean('auto_recharge_enabled').notNull().default(false),
-	autoRechargeAmountDollars: numeric('auto_recharge_amount_dollars', { precision: 10, scale: 4 }),
-	autoRechargeThresholdDollars: numeric('auto_recharge_threshold_dollars', {
-		precision: 12,
-		scale: 6
-	}),
+	currency: text('currency').notNull().default('usd'),
+	mode: text('mode').notNull().default('system'),
 	updatedAt: timestamp('updated_at')
 		.defaultNow()
 		.$onUpdate(() => new Date())
 		.notNull()
 });
 
-export const minecraftServer = pgTable('minecraft_server', {
-	id: uuid('id').primaryKey().defaultRandom(),
-	name: text('name').notNull(),
-	slug: text('slug').notNull().unique(),
-	status: serverStatusEnum('status').notNull().default('stopped'),
-	type: text('type').notNull(),
-	minecraftVersion: text('minecraft_version').notNull(),
-	region: text('region').notNull(),
-	instanceType: text('instance_type').notNull(),
-	iconUrl: text('icon_url'),
-	motd: text('motd'),
-	instanceId: text('instance_id'),
-	ipAddress: text('ip_address'),
-	dashboardConfig: jsonb('dashboard_config').notNull().default({}),
-	autoStartConfig: jsonb('auto_start_config').notNull().default({}),
-	autoStopConfig: jsonb('auto_stop_config').notNull().default({}),
-	userId: text('user_id')
-		.notNull()
-		.references(() => user.id, { onDelete: 'cascade' }),
-	createdAt: timestamp('created_at').notNull().defaultNow(),
+export const organizationBalance = pgTable('organization_balance', {
+	organizationId: text('organization_id')
+		.primaryKey()
+		.references(() => organization.id, { onDelete: 'cascade' }),
+	amountDollars: numeric('amount_dollars', { precision: 12, scale: 6 }).notNull().default('0'),
 	updatedAt: timestamp('updated_at')
-		.notNull()
 		.defaultNow()
-		.$onUpdate(() => new Date()),
-	deletedAt: timestamp('deleted_at')
+		.$onUpdate(() => new Date())
+		.notNull()
 });
 
-export const serverMod = pgTable(
-	'server_mod',
+export const organizationSettings = pgTable('organization_settings', {
+	organizationId: text('organization_id')
+		.primaryKey()
+		.references(() => organization.id, { onDelete: 'cascade' }),
+	autoRechargeEnabled: boolean('auto_recharge_enabled').notNull().default(false),
+	autoRechargeAmount: numeric('auto_recharge_amount', { precision: 12, scale: 6 })
+		.notNull()
+		.default('5'),
+	autoRechargeThreshold: numeric('auto_recharge_threshold', { precision: 12, scale: 6 })
+		.notNull()
+		.default('0'),
+	updatedAt: timestamp('updated_at')
+		.defaultNow()
+		.$onUpdate(() => new Date())
+		.notNull()
+});
+
+export const minecraftServer = pgTable(
+	'minecraft_server',
+	{
+		id: uuid('id').primaryKey().defaultRandom(),
+		name: text('name').notNull(),
+		slug: text('slug').notNull().unique(),
+		status: minecraftServerStatusEnum('status').notNull().default('stopped'),
+		type: text('type').notNull(),
+		minecraftVersion: text('minecraft_version').notNull(),
+		region: text('region').notNull(),
+		instanceType: text('instance_type').notNull(),
+		iconUrl: text('icon_url'),
+		motd: text('motd'),
+		instanceId: text('instance_id'),
+		ipAddress: text('ip_address'),
+		dashboardConfig: jsonb('dashboard_config').notNull().default({}),
+		autoStartConfig: jsonb('auto_start_config').notNull().default({}),
+		autoStopConfig: jsonb('auto_stop_config').notNull().default({}),
+		organizationId: text('organization_id')
+			.notNull()
+			.references(() => organization.id, { onDelete: 'cascade' }),
+		createdAt: timestamp('created_at').notNull().defaultNow(),
+		updatedAt: timestamp('updated_at')
+			.notNull()
+			.defaultNow()
+			.$onUpdate(() => new Date()),
+		deletedAt: timestamp('deleted_at')
+	},
+	(table) => [index('minecraft_server_organization_id_idx').on(table.organizationId)]
+);
+
+export const minecraftServerMod = pgTable(
+	'minecraft_server_mod',
 	{
 		id: uuid('id').primaryKey().defaultRandom(),
 		modrinthProjectId: text('modrinth_project_id').notNull(),
@@ -86,11 +99,11 @@ export const serverMod = pgTable(
 			.references(() => minecraftServer.id, { onDelete: 'cascade' }),
 		createdAt: timestamp('created_at').notNull().defaultNow()
 	},
-	(table) => [index('server_mod_minecraft_server_id_idx').on(table.minecraftServerId)]
+	(table) => [index('minecraft_server_mod_minecraft_server_id_idx').on(table.minecraftServerId)]
 );
 
-export const serverSession = pgTable(
-	'server_session',
+export const minecraftServerSession = pgTable(
+	'minecraft_server_session',
 	{
 		id: uuid('id').primaryKey().defaultRandom(),
 		region: text('region').notNull(),
@@ -98,18 +111,15 @@ export const serverSession = pgTable(
 		startedAt: timestamp('started_at').notNull().defaultNow(),
 		endedAt: timestamp('ended_at'),
 		costDollars: numeric('cost_dollars', { precision: 12, scale: 6 }),
-		serverId: uuid('server_id')
+		minecraftServerId: uuid('minecraft_server_id')
 			.notNull()
-			.references(() => minecraftServer.id, { onDelete: 'cascade' }),
-		userId: text('user_id')
-			.notNull()
-			.references(() => user.id, { onDelete: 'cascade' })
+			.references(() => minecraftServer.id, { onDelete: 'cascade' })
 	},
-	(table) => [index('server_session_server_id_idx').on(table.serverId)]
+	(table) => [index('minecraft_server_session_minecraft_server_id_idx').on(table.minecraftServerId)]
 );
 
-export const serverBackup = pgTable(
-	'server_backup',
+export const minecraftServerBackup = pgTable(
+	'minecraft_server_backup',
 	{
 		id: uuid('id').primaryKey().defaultRandom(),
 		s3ObjectKey: text('s3_object_key').notNull(),
@@ -119,11 +129,11 @@ export const serverBackup = pgTable(
 			.references(() => minecraftServer.id, { onDelete: 'cascade' }),
 		createdAt: timestamp('created_at').notNull().defaultNow()
 	},
-	(table) => [index('server_backup_minecraft_server_id_idx').on(table.minecraftServerId)]
+	(table) => [index('minecraft_server_backup_minecraft_server_id_idx').on(table.minecraftServerId)]
 );
 
-export const serverSnapshot = pgTable(
-	'server_snapshot',
+export const minecraftServerSnapshot = pgTable(
+	'minecraft_server_snapshot',
 	{
 		id: uuid('id').primaryKey().defaultRandom(),
 		cpuUsagePct: numeric('cpu_usage_pct', { precision: 5, scale: 2 }).notNull(),
@@ -135,15 +145,10 @@ export const serverSnapshot = pgTable(
 			.references(() => minecraftServer.id, { onDelete: 'cascade' }),
 		createdAt: timestamp('created_at').notNull().defaultNow()
 	},
-	(table) => [index('server_snapshot_minecraft_server_id_idx').on(table.minecraftServerId)]
+	(table) => [
+		index('minecraft_server_snapshot_minecraft_server_id_idx').on(table.minecraftServerId)
+	]
 );
-
-export const userBalanceRelations = relations(userBalance, ({ one }) => ({
-	user: one(user, {
-		fields: [userBalance.userId],
-		references: [user.id]
-	})
-}));
 
 export const userSettingsRelations = relations(userSettings, ({ one }) => ({
 	user: one(user, {
@@ -152,41 +157,55 @@ export const userSettingsRelations = relations(userSettings, ({ one }) => ({
 	})
 }));
 
-export const minecraftServerRelations = relations(minecraftServer, ({ one, many }) => ({
+export const organizationBalanceRelations = relations(organizationBalance, ({ one }) => ({
 	user: one(user, {
-		fields: [minecraftServer.userId],
+		fields: [organizationBalance.organizationId],
 		references: [user.id]
+	})
+}));
+
+export const organizationSettingsRelations = relations(organizationSettings, ({ one }) => ({
+	organization: one(organization, {
+		fields: [organizationSettings.organizationId],
+		references: [organization.id]
+	})
+}));
+
+export const minecraftServerRelations = relations(minecraftServer, ({ one, many }) => ({
+	organization: one(organization, {
+		fields: [minecraftServer.organizationId],
+		references: [organization.id]
 	}),
-	mods: many(serverMod),
-	sessions: many(serverSession),
-	backups: many(serverBackup),
-	snapshots: many(serverSnapshot)
+	mods: many(minecraftServerMod),
+	sessions: many(minecraftServerSession),
+	backups: many(minecraftServerBackup),
+	snapshots: many(minecraftServerSnapshot)
 }));
 
-export const serverModRelations = relations(serverMod, ({ one }) => ({
+export const minecraftServerModRelations = relations(minecraftServerMod, ({ one }) => ({
 	server: one(minecraftServer, {
-		fields: [serverMod.minecraftServerId],
+		fields: [minecraftServerMod.minecraftServerId],
 		references: [minecraftServer.id]
 	})
 }));
 
-export const serverSessionRelations = relations(serverSession, ({ one }) => ({
+export const minecraftServerSessionRelations = relations(minecraftServerSession, ({ one }) => ({
 	server: one(minecraftServer, {
-		fields: [serverSession.serverId],
+		fields: [minecraftServerSession.minecraftServerId],
 		references: [minecraftServer.id]
 	})
 }));
 
-export const serverBackupRelations = relations(serverBackup, ({ one }) => ({
+export const minecraftServerBackupRelations = relations(minecraftServerBackup, ({ one }) => ({
 	server: one(minecraftServer, {
-		fields: [serverBackup.minecraftServerId],
+		fields: [minecraftServerBackup.minecraftServerId],
 		references: [minecraftServer.id]
 	})
 }));
 
-export const serverSnapshotRelations = relations(serverSnapshot, ({ one }) => ({
+export const minecraftServerSnapshotRelations = relations(minecraftServerSnapshot, ({ one }) => ({
 	server: one(minecraftServer, {
-		fields: [serverSnapshot.minecraftServerId],
+		fields: [minecraftServerSnapshot.minecraftServerId],
 		references: [minecraftServer.id]
 	})
 }));

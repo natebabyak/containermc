@@ -6,8 +6,11 @@ import { getRequestEvent } from '$app/server';
 import { db } from '$lib/server/db';
 import { stripe } from '@better-auth/stripe';
 import Stripe from 'stripe';
-import { userBalance, userSettings } from './db/schema';
 import { organization } from 'better-auth/plugins';
+import { authClient } from '$lib/auth-client';
+import slugify from '@sindresorhus/slugify';
+import { nanoid } from 'nanoid';
+import { organizationBalance, userSettings } from './db/schema';
 
 const stripeClient = new Stripe(env.STRIPE_SECRET_KEY, {
 	apiVersion: '2026-05-27.dahlia'
@@ -49,8 +52,23 @@ export const auth = betterAuth({
 		user: {
 			create: {
 				after: async (user) => {
-					await db.insert(userBalance).values({ userId: user.id });
-					await db.insert(userSettings).values({ userId: user.id });
+					await db.transaction(async (tx) => {
+						await tx.insert(userSettings).values({ userId: user.id });
+
+						const orgName = `${user.name}'s Org`;
+
+						const { data: org } = await authClient.organization.create({
+							name: orgName,
+							slug: slugify(`${orgName}-${nanoid(8)}`)
+						});
+
+						if (!org) {
+							tx.rollback();
+							return;
+						}
+
+						await tx.insert(organizationBalance).values({ organizationId: org.id });
+					});
 				}
 			}
 		}

@@ -3,8 +3,8 @@ import { error } from '@sveltejs/kit';
 import type { LayoutServerLoad } from './$types';
 
 export const load: LayoutServerLoad = async ({ locals }) => {
-	const userBalance = await db.query.userBalance.findFirst({
-		where: (userBalance, { eq }) => eq(userBalance.userId, locals.user.id)
+	const userBalance = await db.query.organizationBalance.findFirst({
+		where: (orgBalance, { eq }) => eq(orgBalance.organizationId, locals.user.id)
 	});
 
 	if (!userBalance) {
