@@ -6,20 +6,17 @@ import slugify from '@sindresorhus/slugify';
 import { nanoid } from 'nanoid';
 import type { Actions } from './$types';
 import { auth } from '$lib/server/auth';
+import { fail } from '@sveltejs/kit';
 
 export const actions = {
-	createServer: async (event) => {
+	createMinecraftServer: async (event) => {
 		const formData = await event.request.formData();
 		const name = formData.get('name')?.toString();
-		const type = formData.get('type')?.toString();
-		const minecraftVersion = formData.get('minecraftVersion')?.toString();
-		const region = formData.get('region')?.toString();
-		const instanceType = formData.get('instanceType')?.toString();
+		const regionCode = formData.get('regionCode')?.toString();
+		const hardwareName = formData.get('hardwareName')?.toString();
 
-		if (!name || !type || !minecraftVersion || !region || !instanceType) {
-			return {
-				success: false
-			};
+		if (!name || !regionCode || !hardwareName) {
+			return fail(400, 'Invalid form data');
 		}
 
 		const organization = await auth.api.getFullOrganization({
@@ -30,17 +27,17 @@ export const actions = {
 		});
 
 		if (!organization) {
-			return { success: false };
+			return fail(404, 'Organization not found');
 		}
 
 		try {
 			await db.insert(minecraftServer).values({
 				name,
 				slug: `${slugify(`${name}-${nanoid(8)}`)}`,
-				type,
-				minecraftVersion,
-				region,
-				instanceType,
+				type: 'VANILLA',
+				minecraftVersion: 'LATEST',
+				regionCode,
+				hardwareName,
 				iconUrl: null,
 				motd: null,
 				instanceId: null,
@@ -50,85 +47,105 @@ export const actions = {
 
 			return { success: true };
 		} catch {
+			return fail(500, 'Failed to create Minecraft server');
+		}
+	},
+	startMinecraftServer: async (event) => {
+		const formData = await event.request.formData();
+		const minecraftServerId = formData.get('minecraftServerId')?.toString();
+
+		if (!minecraftServerId) {
+			return fail(400, 'Minecraft server ID is missing');
+		}
+
+		const existingMinecraftServer = await db.query.minecraftServer.findFirst({
+			where: eq(minecraftServer.id, minecraftServerId)
+		});
+
+		if (!existingMinecraftServer) {
+			return fail(404, 'Minecraft server not found');
+		}
+
+		const activeOrganization = await auth.api.getFullOrganization({
+			query: {
+				organizationSlug: event.params.organizationSlug
+			},
+			headers: event.request.headers
+		});
+
+		if (
+			!activeOrganization ||
+			existingMinecraftServer.organizationId !== activeOrganization.id ||
+			!activeOrganization.members.some((member) => member.userId === event.locals.user.id)
+		) {
+			return fail(404, 'Minecraft server not found');
+		}
+
+		try {
+			await startServer(existingMinecraftServer.id);
+
+			return { success: true };
+		} catch (err) {
+			console.error(err);
 			return { success: false };
 		}
 	},
-	startServer: async (event) => {
+	stopMinecraftServer: async (event) => {
 		const formData = await event.request.formData();
-		const serverId = formData.get('serverId')?.toString();
+		const minecraftServerId = formData.get('minecraftServerId')?.toString();
 
-		if (!serverId) {
-			return {
-				success: false
-			};
+		if (!minecraftServerId) {
+			return fail(400, 'Minecraft server ID is missing');
+		}
+
+		const existingMinecraftServer = await db.query.minecraftServer.findFirst({
+			where: eq(minecraftServer.id, minecraftServerId)
+		});
+
+		if (!existingMinecraftServer) {
+			return fail(404, 'Minecraft server not found');
+		}
+
+		const activeOrganization = await auth.api.getFullOrganization({
+			query: {
+				organizationSlug: event.params.organizationSlug
+			},
+			headers: event.request.headers
+		});
+
+		if (
+			!activeOrganization ||
+			existingMinecraftServer.organizationId !== activeOrganization.id ||
+			!activeOrganization.members.some((member) => member.userId === event.locals.user.id)
+		) {
+			return fail(404, 'Minecraft server not found');
 		}
 
 		try {
-			await startServer(serverId);
+			await stopServer(minecraftServerId);
 
-			return {
-				success: true
-			};
+			return { success: true };
 		} catch {
-			return {
-				success: false
-			};
+			return fail(500, 'Failed to stop Minecraft server');
 		}
 	},
-	stopServer: async (event) => {
+	deleteMinecraftServer: async (event) => {
 		const formData = await event.request.formData();
-		const serverId = formData.get('serverId')?.toString();
+		const minecraftServerId = formData.get('minecraftServerId')?.toString();
 
-		if (!serverId) {
-			return {
-				success: false
-			};
+		if (!minecraftServerId) {
+			return fail(400, 'Minecraft server ID is missing');
 		}
 
 		try {
-			await stopServer(serverId);
+			await db
+				.update(minecraftServer)
+				.set({ status: 'stopped', deletedAt: new Date() })
+				.where(eq(minecraftServer.id, minecraftServerId));
 
-			return {
-				success: true
-			};
+			return { success: true };
 		} catch {
-			return {
-				success: false
-			};
-		}
-	},
-	deleteServer: async (event) => {
-		const formData = await event.request.formData();
-		const serverId = formData.get('serverId')?.toString();
-
-		if (!serverId) {
-			return {
-				success: false
-			};
-		}
-
-		try {
-			await db.delete(minecraftServer).where(eq(minecraftServer.id, serverId));
-
-			return {
-				success: true
-			};
-		} catch {
-			return {
-				success: false
-			};
-		}
-	},
-	getServerStatus: async (event) => {
-		const formData = await event.request.formData();
-		const serverId = formData.get('serverId')?.toString();
-		if (!serverId) return { success: false };
-
-		try {
-			const status = await getServerStatus(serverId);
-			return { success: true, status };
-		} catch {
-			return { success: false };
+			return fail(500, 'Failed to delete Minecraft server');
 		}
 	}
 } satisfies Actions;

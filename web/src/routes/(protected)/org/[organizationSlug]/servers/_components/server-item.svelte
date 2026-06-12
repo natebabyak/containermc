@@ -4,7 +4,6 @@
 	import { Button } from '$lib/components/ui/button/index.js';
 	import * as Item from '$lib/components/ui/item/index.js';
 	import { Spinner } from '$lib/components/ui/spinner/index.js';
-	import type { MinecraftServer, MinecraftServerStatus } from '$lib/types';
 	import ExternalLink from '@lucide/svelte/icons/external-link';
 	import BoxIcon from '@lucide/svelte/icons/box';
 	import RotateCcwIcon from '@lucide/svelte/icons/rotate-ccw';
@@ -17,14 +16,16 @@
 	import { MINECRAFT_SERVER_TYPES } from '$lib/constants';
 	import { onDestroy, onMount } from 'svelte';
 	import TriangleAlert from '@lucide/svelte/icons/triangle-alert';
+	import { page } from '$app/state';
+	import type { MinecraftServerSelect } from '$lib/types';
 
 	interface Props {
-		server: MinecraftServer;
+		server: MinecraftServerSelect;
 	}
 
 	let { server }: Props = $props();
 
-	let currentStatus = $derived<MinecraftServerStatus>(server.status);
+	let currentStatus = $derived<MinecraftServerSelect['status']>(server.status);
 	let pollInterval: NodeJS.Timeout | null = null;
 
 	function stopPolling() {
@@ -38,7 +39,7 @@
 		if (pollInterval) return;
 
 		pollInterval = setInterval(async () => {
-			const url = `/api/mc-server/${server.id}/status`;
+			const url = `/api/minecraft-server/${server.id}/status`;
 			try {
 				const response = await fetch(url);
 
@@ -116,7 +117,14 @@
 			</Item.Description>
 		</div>
 		<Item.Actions class="ml-auto">
-			<Button href={resolve(`/dashboard/servers/${server.slug}`)} size="xs" variant="outline">
+			<Button
+				href={resolve('/(protected)/org/[organizationSlug]/server/[minecraftServerSlug]', {
+					organizationSlug: page.params.organizationSlug!,
+					minecraftServerSlug: server.slug
+				})}
+				size="xs"
+				variant="outline"
+			>
 				Manage
 				<ExternalLink />
 			</Button>
@@ -127,13 +135,13 @@
 			{#if currentStatus === 'stopped'}
 				<form
 					method="POST"
-					action="?/startServer"
+					action="?/startMinecraftServer"
 					use:enhance={() => {
 						currentStatus = 'starting';
 						startPolling();
 					}}
 				>
-					<input type="hidden" name="serverId" value={server.id} />
+					<input type="hidden" name="minecraftServerId" value={server.id} />
 					<Button size="xs" type="submit" variant="outline">
 						<PlayIcon />
 						Start
@@ -142,13 +150,13 @@
 			{:else if currentStatus === 'error'}
 				<form
 					method="POST"
-					action="?/startServer"
+					action="?/startMinecraftServer"
 					use:enhance={() => {
 						currentStatus = 'starting';
 						startPolling();
 					}}
 				>
-					<input type="hidden" name="serverId" value={server.id} />
+					<input type="hidden" name="minecraftServerId" value={server.id} />
 					<Button size="xs" type="submit" variant="outline">
 						<RotateCcwIcon />
 						Restart
@@ -157,13 +165,13 @@
 			{:else if server}
 				<form
 					method="POST"
-					action="?/stopServer"
+					action="?/stopMinecraftServer"
 					use:enhance={() => {
 						currentStatus = 'stopping';
 						startPolling();
 					}}
 				>
-					<input type="hidden" name="serverId" value={server.id} />
+					<input type="hidden" name="minecraftServerId" value={server.id} />
 					<Button disabled={currentStatus === 'stopping'} size="xs" type="submit" variant="outline">
 						<SquareIcon />
 						Stop

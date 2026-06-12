@@ -1,7 +1,7 @@
 import { env } from '$env/dynamic/private';
 import { ec2, route53, ssm } from '$lib/server/aws/client';
 import { db } from '$lib/server/db';
-import { minecraftServer, serverSession } from '$lib/server/db/schema';
+import { minecraftServer, minecraftServerSession } from '$lib/server/db/schema';
 import { HARDWARE_OPTIONS } from '$lib/constants';
 import { eq } from 'drizzle-orm';
 import {
@@ -62,7 +62,7 @@ export async function startServer(serverId: string) {
 
 		const r2Endpoint = `https://${env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`;
 
-		const memoryGb = HARDWARE_OPTIONS.find((o) => o.instanceType === server.instanceType)?.memoryGb;
+		const memoryGb = HARDWARE_OPTIONS.find((o) => o.name === server.hardwareName)?.memory;
 
 		if (!memoryGb) {
 			throw new Error('Invalid instance type');
@@ -128,7 +128,8 @@ cd /srv/minecraft && docker-compose up -d`;
 		const ec2Result = await ec2.send(
 			new RunInstancesCommand({
 				ImageId: imageId,
-				InstanceType: server.instanceType as _InstanceType,
+				InstanceType: HARDWARE_OPTIONS.find((o) => o.name === server.hardwareName)
+					?.instanceType as _InstanceType,
 				MinCount: 1,
 				MaxCount: 1,
 				UserData: Buffer.from(userDataScript).toString('base64'),
@@ -211,11 +212,16 @@ cd /srv/minecraft && docker-compose up -d`;
 			.set({ status: 'running', ipAddress: ec2PublicIpAddress })
 			.where(eq(minecraftServer.id, serverId));
 
-		await db.insert(serverSession).values({
-			region: server.region,
-			instanceType: server.instanceType,
-			serverId: server.id,
-			userId: server.userId
+		const instanceType = HARDWARE_OPTIONS.find((o) => o.name === server.hardwareName)?.instanceType;
+
+		if (!instanceType) {
+			throw new Error('Instance type not found');
+		}
+
+		await db.insert(minecraftServerSession).values({
+			regionCode: server.regionCode,
+			instanceType,
+			minecraftServerId: server.id
 		});
 	} catch (err) {
 		await db

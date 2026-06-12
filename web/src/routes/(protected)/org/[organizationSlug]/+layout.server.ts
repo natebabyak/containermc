@@ -27,7 +27,7 @@ export const load: LayoutServerLoad = async ({ locals, params, request }) => {
 	});
 
 	const minecraftServers = await db.query.minecraftServer.findMany({
-		where: (minecraftServer, { eq }) => eq(minecraftServer.organizationId, organizationSlug)
+		where: (minecraftServer, { eq }) => eq(minecraftServer.organizationId, activeOrganization.id)
 	});
 
 	return {

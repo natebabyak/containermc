@@ -15,40 +15,40 @@ export const CURRENCIES = [
 export const HARDWARE_OPTIONS = [
 	{
 		name: 'Small',
-		instanceTypes: ['c8g.medium', 'c7g.medium', 'c6g.medium'],
-		hourlyRate: 0.05,
+		instanceType: 'c8g.medium',
+		hourlyRate: 0.1,
 		vcpu: 1,
 		memory: 2,
 		tag: null
 	},
 	{
 		name: 'Medium',
-		instanceTypes: ['c8g.large', 'c7g.large', 'c6g.large'],
-		hourlyRate: 0.1,
+		instanceType: 'c8g.large',
+		hourlyRate: 0.2,
 		vcpu: 2,
 		memory: 4,
 		tag: 'Recommended'
 	},
 	{
 		name: 'Large',
-		instanceTypes: ['c8g.xlarge', 'c7g.xlarge', 'c6g.xlarge'],
-		hourlyRate: 0.2,
+		instanceType: 'c8g.xlarge',
+		hourlyRate: 0.4,
 		vcpu: 4,
 		memory: 8,
 		tag: null
 	},
 	{
 		name: 'X-Large',
-		instanceTypes: ['c8g.2xlarge', 'c7g.2xlarge', 'c6g.2xlarge'],
-		hourlyRate: 0.4,
+		instanceType: 'c8g.2xlarge',
+		hourlyRate: 0.8,
 		vcpu: 8,
 		memory: 16,
 		tag: null
 	},
 	{
 		name: 'XX-Large',
-		instanceTypes: ['c8g.4xlarge', 'c7g.4xlarge', 'c6g.4xlarge'],
-		hourlyRate: 0.8,
+		instanceType: 'c8g.4xlarge',
+		hourlyRate: 1.6,
 		vcpu: 16,
 		memory: 32,
 		tag: null

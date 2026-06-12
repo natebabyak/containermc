@@ -22,6 +22,7 @@
 	import Label from '$lib/components/ui/label/label.svelte';
 	import { cn } from '$lib/utils';
 	import { ScrollArea } from '$lib/components/ui/scroll-area/index.js';
+	import { formatCurrency } from '$lib/formatters';
 
 	const schema = z.object({
 		name: z.string().min(1, 'Name is required'),
@@ -50,7 +51,7 @@
 			formData.append('regionCode', value.regionCode);
 			formData.append('hardwareName', value.hardwareName);
 
-			const response = await fetch('?/createServer', {
+			const response = await fetch('?/createMinecraftServer', {
 				method: 'POST',
 				body: formData
 			});
@@ -85,7 +86,7 @@
 
 			return Math.round(performance.now() - start);
 		} catch {
-			return -1;
+			return Infinity;
 		}
 	}
 
@@ -251,7 +252,7 @@
 											</Item.Content>
 											<Item.Content class="*:ml-auto">
 												<Item.Title>
-													${hardwareOption.hourlyRate}/hr
+													{formatCurrency(hardwareOption.hourlyRate)}/hr
 												</Item.Title>
 											</Item.Content>
 										</Label>

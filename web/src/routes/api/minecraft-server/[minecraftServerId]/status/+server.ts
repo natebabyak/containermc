@@ -5,10 +5,10 @@ import { minecraftServer } from '$lib/server/db/schema';
 import { error, json } from '@sveltejs/kit';
 
 export const GET: RequestHandler = async ({ params }) => {
-	const { id } = params;
+	const { minecraftServerId } = params;
 
 	const result = await db.query.minecraftServer.findFirst({
-		where: eq(minecraftServer.id, id),
+		where: eq(minecraftServer.id, minecraftServerId),
 		columns: {
 			status: true
 		}
