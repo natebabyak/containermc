@@ -128,24 +128,5 @@ export const actions = {
 		} catch {
 			return fail(500, 'Failed to stop Minecraft server');
 		}
-	},
-	deleteMinecraftServer: async (event) => {
-		const formData = await event.request.formData();
-		const minecraftServerId = formData.get('minecraftServerId')?.toString();
-
-		if (!minecraftServerId) {
-			return fail(400, 'Minecraft server ID is missing');
-		}
-
-		try {
-			await db
-				.update(minecraftServer)
-				.set({ status: 'stopped', deletedAt: new Date() })
-				.where(eq(minecraftServer.id, minecraftServerId));
-
-			return { success: true };
-		} catch {
-			return fail(500, 'Failed to delete Minecraft server');
-		}
 	}
 } satisfies Actions;

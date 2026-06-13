@@ -1,9 +1,13 @@
 import { env } from '$env/dynamic/private';
 import { ec2, route53, ssm } from '$lib/server/aws/client';
 import { db } from '$lib/server/db';
-import { minecraftServer, minecraftServerSession } from '$lib/server/db/schema';
+import {
+	minecraftServer,
+	minecraftServerBackup,
+	minecraftServerSession
+} from '$lib/server/db/schema';
 import { HARDWARE_OPTIONS } from '$lib/constants';
-import { eq } from 'drizzle-orm';
+import { and, eq, isNull } from 'drizzle-orm';
 import {
 	GetParameterCommand,
 	SendCommandCommand,
@@ -18,6 +22,21 @@ import {
 } from '@aws-sdk/client-ec2';
 import { ChangeResourceRecordSetsCommand } from '@aws-sdk/client-route-53';
 import { error } from '@sveltejs/kit';
+
+function computeSessionCost(hardwareName: string, startedAt: Date, endedAt: Date) {
+	const hourlyRate = HARDWARE_OPTIONS.find((o) => o.name === hardwareName)?.hourlyRate;
+
+	if (!hourlyRate) {
+		throw new Error('Hourly rate not found');
+	}
+
+	const durationSeconds = Math.max(
+		60,
+		Math.floor((endedAt.getTime() - startedAt.getTime()) / 1000)
+	);
+
+	return hourlyRate * durationSeconds;
+}
 
 /**
  * Starts a Minecraft server by running an EC2 instance and updating its status in the database.
@@ -163,13 +182,8 @@ cd /srv/minecraft && docker-compose up -d`;
 			.where(eq(minecraftServer.id, serverId));
 
 		await waitUntilInstanceRunning(
-			{
-				client: ec2,
-				maxWaitTime: 120
-			},
-			{
-				InstanceIds: [ec2InstanceId]
-			}
+			{ client: ec2, maxWaitTime: 120 },
+			{ InstanceIds: [ec2InstanceId] }
 		);
 
 		const ec2PublicIpAddress = (
@@ -195,11 +209,7 @@ cd /srv/minecraft && docker-compose up -d`;
 								Name: `${server.slug}.mc.containermc.com`,
 								Type: 'A',
 								TTL: 60,
-								ResourceRecords: [
-									{
-										Value: ec2PublicIpAddress
-									}
-								]
+								ResourceRecords: [{ Value: ec2PublicIpAddress }]
 							}
 						}
 					]
@@ -233,10 +243,6 @@ cd /srv/minecraft && docker-compose up -d`;
 	}
 }
 
-/**
- * Stops a Minecraft server by terminating its EC2 instance and updating its status in the database.
- * @param serverId The ID of the server to stop.
- */
 export async function stopServer(serverId: string) {
 	const server = await db.query.minecraftServer.findFirst({
 		where: eq(minecraftServer.id, serverId)
@@ -244,6 +250,13 @@ export async function stopServer(serverId: string) {
 	if (!server) throw new Error(`Server ${serverId} not found`);
 	if (!server.instanceId) throw new Error(`Server ${serverId} has no running instance`);
 	if (!server.ipAddress) throw new Error(`Server ${serverId} has no IP address on record`);
+
+	const activeSession = await db.query.minecraftServerSession.findFirst({
+		where: and(
+			eq(minecraftServerSession.minecraftServerId, serverId),
+			isNull(minecraftServerSession.endedAt)
+		)
+	});
 
 	await db
 		.update(minecraftServer)
@@ -314,10 +327,27 @@ export async function stopServer(serverId: string) {
 			})
 		);
 
+		const endedAt = new Date();
+
 		await db
 			.update(minecraftServer)
 			.set({ status: 'stopped', instanceId: null, ipAddress: null })
 			.where(eq(minecraftServer.id, serverId));
+
+		if (activeSession) {
+			const costDollars = computeSessionCost(server.hardwareName, activeSession.startedAt, endedAt);
+
+			await db
+				.update(minecraftServerSession)
+				.set({ endedAt, costDollars: costDollars.toFixed(6) })
+				.where(eq(minecraftServerSession.id, activeSession.id));
+		}
+
+		await db.insert(minecraftServerBackup).values({
+			s3ObjectKey: `${server.slug}/`,
+			sizeBytes: BigInt(0),
+			minecraftServerId: server.id
+		});
 	} catch (err) {
 		await db
 			.update(minecraftServer)

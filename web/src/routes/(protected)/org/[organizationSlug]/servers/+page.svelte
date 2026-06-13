@@ -43,7 +43,7 @@
 					</Kbd.Group>
 				</InputGroup.Addon>
 			</InputGroup.Root>
-			<CreateServerDialog regions={data.regions} />
+			<CreateServerDialog />
 		</div>
 		<Item.Group>
 			{#each data.minecraftServers as server (server.id)}
@@ -64,7 +64,7 @@
 				</Empty.Description>
 			</Empty.Header>
 			<Empty.Content>
-				<CreateServerDialog regions={data.regions} />
+				<CreateServerDialog />
 			</Empty.Content>
 		</Empty.Root>
 	</div>

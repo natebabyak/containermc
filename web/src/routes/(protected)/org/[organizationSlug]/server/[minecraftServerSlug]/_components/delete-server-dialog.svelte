@@ -4,16 +4,16 @@
 	import { createForm } from '@tanstack/svelte-form';
 	import * as Field from '$lib/components/ui/field/index.js';
 	import { Input } from '$lib/components/ui/input/index.js';
-	import type { Server } from '$lib/types';
 	import TrashIcon from '@lucide/svelte/icons/trash';
 	import z from 'zod';
 	import { invalidateAll } from '$app/navigation';
+	import type { MinecraftServerSelect } from '$lib/types';
 
 	interface Props {
-		server: Server;
+		minecraftServer: MinecraftServerSelect;
 	}
 
-	let { server }: Props = $props();
+	let { minecraftServer }: Props = $props();
 
 	const schema = z
 		.object({

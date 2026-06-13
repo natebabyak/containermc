@@ -8,13 +8,9 @@ export const load: LayoutServerLoad = async ({ locals, request }) => {
 	}
 
 	const organizations = await auth.api.listOrganizations({
-		query: {
-			userId: locals.user.id
-		},
+		query: { userId: locals.user.id },
 		headers: request.headers
 	});
 
-	return {
-		organizations
-	};
+	return { organizations };
 };
