@@ -33,7 +33,7 @@ export const actions = {
 		try {
 			await db.insert(minecraftServer).values({
 				name,
-				slug: `${slugify(`${name}-${nanoid(8)}`)}`,
+				slug: `${slugify(name)}-${nanoid(8).toLowerCase()}`,
 				type: 'VANILLA',
 				minecraftVersion: 'LATEST',
 				regionCode,

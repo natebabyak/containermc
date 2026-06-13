@@ -52,7 +52,7 @@ export const auth = betterAuth({
 			create: {
 				after: async (user) => {
 					const organizationName = `${user.name}'s Org`;
-					const organizationSlug = slugify(`${organizationName}-${nanoid(8)}`);
+					const organizationSlug = `${slugify(organizationName)}-${nanoid(8).toLowerCase()}`;
 
 					await db.insert(userSettings).values({ userId: user.id });
 
