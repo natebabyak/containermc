@@ -1,6 +1,8 @@
 <script lang="ts">
-	import { page } from '$app/state';
+	import { resolve } from '$app/paths';
 </script>
 
-<h1>{page.error?.message}</h1>
-<a href="/">Return to home</a>
+<main class="prose prose-neutral">
+	<h1>Oops!</h1>
+	<a href={resolve('/')}>Return to home</a>
+</main>

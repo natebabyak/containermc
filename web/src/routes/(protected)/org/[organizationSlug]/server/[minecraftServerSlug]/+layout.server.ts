@@ -6,7 +6,13 @@ export const load: LayoutServerLoad = async ({ params }) => {
 	const { minecraftServerSlug } = params;
 
 	const activeMinecraftServer = await db.query.minecraftServer.findFirst({
-		where: (minecraftServer, { eq }) => eq(minecraftServer.slug, minecraftServerSlug)
+		where: (minecraftServer, { eq }) => eq(minecraftServer.slug, minecraftServerSlug),
+		with: {
+			mods: true,
+			sessions: true,
+			backups: true,
+			snapshots: true
+		}
 	});
 
 	if (!activeMinecraftServer) {

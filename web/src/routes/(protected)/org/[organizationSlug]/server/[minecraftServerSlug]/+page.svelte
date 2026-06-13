@@ -9,6 +9,8 @@
 	import type { DragEndEvent, DragOverEvent } from '@dnd-kit/abstract';
 	import { Button } from '$lib/components/ui/button/index.js';
 	import Play from '@lucide/svelte/icons/play';
+	import { Separator } from '$lib/components/ui/separator/index.js';
+	import Trash from '@lucide/svelte/icons/trash';
 
 	let { data }: LayoutProps = $props();
 
@@ -73,4 +75,12 @@
 			{/each}
 		</DragDropProvider>
 	</DragDropProvider>
+	<Separator />
+	<h2>Danger Zone</h2>
+	<section class="rounded-2xl border p-8">
+		<Button variant="destructive">
+			<Trash />
+			Delete "{data.activeMinecraftServer.name}"
+		</Button>
+	</section>
 </div>

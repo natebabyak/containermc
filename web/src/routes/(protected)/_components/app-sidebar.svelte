@@ -9,13 +9,17 @@
 	import Monitor from '@lucide/svelte/icons/monitor';
 	import Moon from '@lucide/svelte/icons/moon';
 	import Sun from '@lucide/svelte/icons/sun';
-	import { getSidebarContext } from '$lib/context/sidebar-context';
 	import CreditCard from '@lucide/svelte/icons/credit-card';
 	import { resolve } from '$app/paths';
 	import UsersRound from '@lucide/svelte/icons/users-round';
 	import Settings from '@lucide/svelte/icons/settings';
 	import Server from '@lucide/svelte/icons/server';
 	import ChevronsUpDown from '@lucide/svelte/icons/chevrons-up-down';
+	import History from '@lucide/svelte/icons/history';
+	import Earth from '@lucide/svelte/icons/earth';
+	import { page } from '$app/state';
+	import Gauge from '@lucide/svelte/icons/gauge';
+	import { getAppContext } from '$lib/context/app-context';
 
 	let session = authClient.useSession();
 
@@ -31,7 +35,7 @@
 		authClient.signOut();
 	}
 
-	const sidebar = getSidebarContext();
+	const app = getAppContext();
 </script>
 
 <Sidebar.Root>
@@ -40,7 +44,7 @@
 			<DropdownMenu.Trigger>
 				{#snippet child({ props })}
 					<Sidebar.MenuButton {...props} size="lg">
-						{sidebar.activeOrganization?.name ?? 'Select org'}
+						{app.activeOrganization?.name ?? 'Select org'}
 						<ChevronsUpDown class="ml-auto" />
 					</Sidebar.MenuButton>
 				{/snippet}
@@ -48,7 +52,7 @@
 			<DropdownMenu.Content>
 				<DropdownMenu.Label>My Orgs</DropdownMenu.Label>
 				<DropdownMenu.Group>
-					{#each sidebar.organizations as organization (organization.id)}
+					{#each app.organizations as organization (organization.id)}
 						<DropdownMenu.Item>
 							<Item.Root size="xs">
 								{#snippet child({ props })}
@@ -71,19 +75,118 @@
 		</DropdownMenu.Root>
 	</Sidebar.Header>
 	<Sidebar.Content>
-		{#if sidebar.activeMinecraftServer}
-			{@const { activeMinecraftServer } = sidebar}
+		{#if app.activeMinecraftServer && app.activeOrganization}
+			{@const { activeMinecraftServer, activeOrganization } = app}
 			<Sidebar.Group>
-				<Sidebar.GroupLabel>{activeMinecraftServer.name}</Sidebar.GroupLabel>
-				<Sidebar.GroupContent></Sidebar.GroupContent>
+				<Sidebar.GroupLabel>Server</Sidebar.GroupLabel>
+				<Sidebar.GroupContent>
+					<Sidebar.Menu>
+						<Sidebar.MenuItem>
+							<Sidebar.MenuButton
+								isActive={page.route.id ===
+									'/(protected)/org/[organizationSlug]/server/[minecraftServerSlug]'}
+							>
+								{#snippet child({ props })}
+									<a
+										{...props}
+										href={resolve(
+											'/(protected)/org/[organizationSlug]/server/[minecraftServerSlug]',
+											{
+												organizationSlug: activeOrganization.slug,
+												minecraftServerSlug: activeMinecraftServer.slug
+											}
+										)}
+									>
+										<Gauge />
+										Dashboard
+									</a>
+								{/snippet}
+							</Sidebar.MenuButton>
+						</Sidebar.MenuItem>
+						<Sidebar.MenuItem>
+							<Sidebar.MenuButton>
+								{#snippet child({ props })}
+									<a
+										{...props}
+										href={resolve(
+											'/(protected)/org/[organizationSlug]/server/[minecraftServerSlug]/backups',
+											{
+												organizationSlug: activeOrganization.slug,
+												minecraftServerSlug: activeMinecraftServer.slug
+											}
+										)}
+									>
+										<Earth />
+										Backups
+									</a>
+								{/snippet}
+							</Sidebar.MenuButton>
+						</Sidebar.MenuItem>
+						<Sidebar.MenuItem>
+							<Sidebar.MenuButton>
+								{#snippet child({ props })}
+									<a
+										{...props}
+										href={resolve(
+											'/(protected)/org/[organizationSlug]/server/[minecraftServerSlug]/sessions',
+											{
+												organizationSlug: activeOrganization.slug,
+												minecraftServerSlug: activeMinecraftServer.slug
+											}
+										)}
+									>
+										<History />
+										Sessions
+									</a>
+								{/snippet}
+							</Sidebar.MenuButton>
+						</Sidebar.MenuItem>
+						<Sidebar.MenuItem>
+							<Sidebar.MenuButton>
+								{#snippet child({ props })}
+									<a
+										{...props}
+										href={resolve(
+											'/(protected)/org/[organizationSlug]/server/[minecraftServerSlug]/settings',
+											{
+												organizationSlug: activeOrganization.slug,
+												minecraftServerSlug: activeMinecraftServer.slug
+											}
+										)}
+									>
+										<Settings />
+										Settings
+									</a>
+								{/snippet}
+							</Sidebar.MenuButton>
+						</Sidebar.MenuItem>
+					</Sidebar.Menu>
+				</Sidebar.GroupContent>
 			</Sidebar.Group>
 		{/if}
-		{#if sidebar.activeOrganization}
-			{@const { activeOrganization } = sidebar}
+		{#if app.activeOrganization}
+			{@const { activeOrganization } = app}
 			<Sidebar.Group>
 				<Sidebar.GroupLabel>Org</Sidebar.GroupLabel>
 				<Sidebar.GroupContent>
 					<Sidebar.Menu>
+						<Sidebar.MenuItem>
+							<Sidebar.MenuButton
+								isActive={page.route.id === '/(protected)/org/[organizationSlug]'}
+							>
+								{#snippet child({ props })}
+									<a
+										{...props}
+										href={resolve('/(protected)/org/[organizationSlug]', {
+											organizationSlug: activeOrganization.slug
+										})}
+									>
+										<Gauge />
+										Dashboard
+									</a>
+								{/snippet}
+							</Sidebar.MenuButton>
+						</Sidebar.MenuItem>
 						<Sidebar.MenuItem>
 							<Sidebar.MenuButton>
 								{#snippet child({ props })}

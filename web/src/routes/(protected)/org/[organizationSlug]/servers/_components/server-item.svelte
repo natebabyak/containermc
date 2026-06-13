@@ -10,10 +10,9 @@
 	import { cn } from '$lib/utils';
 	import SquareIcon from '@lucide/svelte/icons/square';
 	import PlayIcon from '@lucide/svelte/icons/play';
-	import DeleteServerDialog from './delete-server-dialog.svelte';
 	import CopyAddressButton from './copy-address-button.svelte';
 	import { enhance } from '$app/forms';
-	import { MINECRAFT_SERVER_TYPES } from '$lib/constants';
+	import { REGIONS } from '$lib/constants';
 	import { onDestroy, onMount } from 'svelte';
 	import TriangleAlert from '@lucide/svelte/icons/triangle-alert';
 	import { page } from '$app/state';
@@ -109,11 +108,9 @@
 				</Badge>
 			</div>
 			<Item.Description>
-				<span class="capitalize">
-					{server.minecraftVersion.toLowerCase()}
-				</span>
+				{REGIONS.find((r) => r.code === server.regionCode)?.name}
 				&bull;
-				{MINECRAFT_SERVER_TYPES.find((t) => t.value === server.type)?.label}
+				{server.hardwareName}
 			</Item.Description>
 		</div>
 		<Item.Actions class="ml-auto">
@@ -179,7 +176,6 @@
 				</form>
 			{/if}
 			<CopyAddressButton address={`${server.slug}.mc.containermc.com`} />
-			<DeleteServerDialog {server} />
 		</Item.Actions>
 	</Item.Footer>
 </Item.Root>

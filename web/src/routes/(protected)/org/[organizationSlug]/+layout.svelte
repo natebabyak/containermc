@@ -1,20 +1,20 @@
 <script lang="ts">
-	import { getSidebarContext } from '$lib/context/sidebar-context';
+	import { getAppContext } from '$lib/context/app-context';
 	import type { LayoutProps } from './$types';
 	import { onDestroy, onMount } from 'svelte';
 
 	let { children, data }: LayoutProps = $props();
 
-	const sidebar = getSidebarContext();
+	const app = getAppContext();
 
 	onMount(() => {
-		sidebar.activeOrganization = data.activeOrganization;
-		sidebar.minecraftServers = data.minecraftServers;
+		app.activeOrganization = data.activeOrganization;
+		app.minecraftServers = data.minecraftServers;
 	});
 
 	onDestroy(() => {
-		sidebar.activeOrganization = undefined;
-		sidebar.minecraftServers = undefined;
+		app.activeOrganization = undefined;
+		app.minecraftServers = undefined;
 	});
 </script>
 
