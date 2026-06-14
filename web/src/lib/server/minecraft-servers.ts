@@ -30,12 +30,9 @@ function computeSessionCost(hardwareName: string, startedAt: Date, endedAt: Date
 		throw new Error('Hourly rate not found');
 	}
 
-	const durationSeconds = Math.max(
-		60,
-		Math.floor((endedAt.getTime() - startedAt.getTime()) / 1000)
-	);
+	const durationSeconds = Math.max(60, Math.ceil((endedAt.getTime() - startedAt.getTime()) / 1000));
 
-	return hourlyRate * durationSeconds;
+	return (hourlyRate / 3600) * durationSeconds;
 }
 
 /**
