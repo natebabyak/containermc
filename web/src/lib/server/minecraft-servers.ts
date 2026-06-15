@@ -22,18 +22,7 @@ import {
 } from '@aws-sdk/client-ec2';
 import { ChangeResourceRecordSetsCommand } from '@aws-sdk/client-route-53';
 import { error } from '@sveltejs/kit';
-
-function computeSessionCost(hardwareName: string, startedAt: Date, endedAt: Date) {
-	const hourlyRate = HARDWARE_OPTIONS.find((o) => o.name === hardwareName)?.hourlyRate;
-
-	if (!hourlyRate) {
-		throw new Error('Hourly rate not found');
-	}
-
-	const durationSeconds = Math.max(60, Math.ceil((endedAt.getTime() - startedAt.getTime()) / 1000));
-
-	return (hourlyRate / 3600) * durationSeconds;
-}
+import { computeSessionCost } from '$lib/helpers';
 
 /**
  * Starts a Minecraft server by running an EC2 instance and updating its status in the database.
@@ -219,15 +208,9 @@ cd /srv/minecraft && docker-compose up -d`;
 			.set({ status: 'running', ipAddress: ec2PublicIpAddress })
 			.where(eq(minecraftServer.id, serverId));
 
-		const instanceType = HARDWARE_OPTIONS.find((o) => o.name === server.hardwareName)?.instanceType;
-
-		if (!instanceType) {
-			throw new Error('Instance type not found');
-		}
-
 		await db.insert(minecraftServerSession).values({
 			regionCode: server.regionCode,
-			instanceType,
+			hardwareName: server.hardwareName,
 			minecraftServerId: server.id
 		});
 	} catch (err) {

@@ -107,7 +107,7 @@ export const minecraftServerSession = pgTable(
 	{
 		id: uuid('id').primaryKey().defaultRandom(),
 		regionCode: text('region_code').notNull(),
-		instanceType: text('instance_type').notNull(),
+		hardwareName: text('hardware_name').notNull(),
 		startedAt: timestamp('started_at').notNull().defaultNow(),
 		endedAt: timestamp('ended_at'),
 		costDollars: numeric('cost_dollars', { precision: 12, scale: 6 }),
