@@ -1,11 +1,15 @@
 <script lang="ts">
-	import Badge from '$lib/components/ui/badge/badge.svelte';
+	import { resolve } from '$app/paths';
+	import { Badge } from '$lib/components/ui/badge/index.js';
+	import { Button } from '$lib/components/ui/button/index.js';
+	import * as Empty from '$lib/components/ui/empty/index.js';
 	import * as Item from '$lib/components/ui/item/index.js';
 	import { HARDWARE_OPTIONS, REGIONS } from '$lib/constants';
 	import { formatCurrency, formatDuration, formatTime } from '$lib/formatters';
 	import { computeSessionCost } from '$lib/helpers';
 	import type { PageProps } from './$types';
 	import Circle from '@lucide/svelte/icons/circle';
+	import Panda from '@lucide/svelte/icons/panda';
 
 	let { data }: PageProps = $props();
 
@@ -58,6 +62,19 @@
 					</Item.Title>
 				</Item.Footer>
 			</Item.Root>
+		{:else}
+			<Empty.Root>
+				<Empty.Header>
+					<Empty.Media variant="icon">
+						<Panda />
+					</Empty.Media>
+					<Empty.Title>No sessions</Empty.Title>
+					<Empty.Description>Sessions are</Empty.Description>
+				</Empty.Header>
+				<Empty.Content>
+					<Button>Start Server</Button>
+				</Empty.Content>
+			</Empty.Root>
 		{/each}
 	</Item.Group>
 </div>

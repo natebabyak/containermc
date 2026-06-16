@@ -11,6 +11,7 @@
 	import SettingsIcon from '@lucide/svelte/icons/settings';
 	import CloudIcon from '@lucide/svelte/icons/cloud';
 	import Containermc from '$lib/components/icons/containermc.svelte';
+	import { authClient } from '$lib/auth-client';
 
 	let scrollY = $state(0);
 
@@ -19,6 +20,8 @@
 	}
 
 	let isGetStartedButtonHovered = $state(false);
+
+	const session = authClient.useSession();
 </script>
 
 <svelte:window onscroll={handleScroll} />
@@ -29,10 +32,19 @@
 			<Containermc />
 			<span class="font-serif text-2xl font-medium">ContainerMC</span>
 		</a>
-		<div class="flex gap-2">
-			<Button href={resolve('/sign-in')} variant="ghost">Sign in</Button>
-			<Button href={resolve('/sign-up')} variant="outline">Sign up</Button>
-		</div>
+		{#if $session.data}
+			<Button
+				href={resolve('/(protected)/orgs')}
+				class="border-primary bg-linear-to-b from-white/20 via-primary to-black/20"
+			>
+				Dashboard
+			</Button>
+		{:else}
+			<div class="flex gap-2">
+				<Button href={resolve('/sign-in')} variant="ghost">Sign in</Button>
+				<Button href={resolve('/sign-up')} variant="outline">Sign up</Button>
+			</div>
+		{/if}
 	</div>
 	<div
 		class={cn(
