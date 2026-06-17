@@ -104,7 +104,10 @@
 							</Sidebar.MenuButton>
 						</Sidebar.MenuItem>
 						<Sidebar.MenuItem>
-							<Sidebar.MenuButton>
+							<Sidebar.MenuButton
+								isActive={page.route.id ===
+									'/(protected)/org/[organizationSlug]/server/[minecraftServerSlug]/backups'}
+							>
 								{#snippet child({ props })}
 									<a
 										{...props}
@@ -123,7 +126,10 @@
 							</Sidebar.MenuButton>
 						</Sidebar.MenuItem>
 						<Sidebar.MenuItem>
-							<Sidebar.MenuButton>
+							<Sidebar.MenuButton
+								isActive={page.route.id ===
+									'/(protected)/org/[organizationSlug]/server/[minecraftServerSlug]/sessions'}
+							>
 								{#snippet child({ props })}
 									<a
 										{...props}
@@ -142,7 +148,10 @@
 							</Sidebar.MenuButton>
 						</Sidebar.MenuItem>
 						<Sidebar.MenuItem>
-							<Sidebar.MenuButton>
+							<Sidebar.MenuButton
+								isActive={page.route.id ===
+									'/(protected)/org/[organizationSlug]/server/[minecraftServerSlug]/settings'}
+							>
 								{#snippet child({ props })}
 									<a
 										{...props}
@@ -167,7 +176,7 @@
 		{#if app.activeOrganization}
 			{@const { activeOrganization } = app}
 			<Sidebar.Group>
-				<Sidebar.GroupLabel>Org</Sidebar.GroupLabel>
+				<Sidebar.GroupLabel>{activeOrganization.name}</Sidebar.GroupLabel>
 				<Sidebar.GroupContent>
 					<Sidebar.Menu>
 						<Sidebar.MenuItem>
@@ -188,7 +197,9 @@
 							</Sidebar.MenuButton>
 						</Sidebar.MenuItem>
 						<Sidebar.MenuItem>
-							<Sidebar.MenuButton>
+							<Sidebar.MenuButton
+								isActive={page.route.id === '/(protected)/org/[organizationSlug]/billing'}
+							>
 								{#snippet child({ props })}
 									<a
 										{...props}
@@ -203,7 +214,9 @@
 							</Sidebar.MenuButton>
 						</Sidebar.MenuItem>
 						<Sidebar.MenuItem>
-							<Sidebar.MenuButton>
+							<Sidebar.MenuButton
+								isActive={page.route.id === '/(protected)/org/[organizationSlug]/members'}
+							>
 								{#snippet child({ props })}
 									<a
 										{...props}
@@ -218,7 +231,9 @@
 							</Sidebar.MenuButton>
 						</Sidebar.MenuItem>
 						<Sidebar.MenuItem>
-							<Sidebar.MenuButton>
+							<Sidebar.MenuButton
+								isActive={page.route.id === '/(protected)/org/[organizationSlug]/servers'}
+							>
 								{#snippet child({ props })}
 									<a
 										{...props}
@@ -233,7 +248,9 @@
 							</Sidebar.MenuButton>
 						</Sidebar.MenuItem>
 						<Sidebar.MenuItem>
-							<Sidebar.MenuButton>
+							<Sidebar.MenuButton
+								isActive={page.route.id === '/(protected)/org/[organizationSlug]/settings'}
+							>
 								{#snippet child({ props })}
 									<a
 										{...props}
@@ -251,6 +268,9 @@
 				</Sidebar.GroupContent>
 			</Sidebar.Group>
 		{/if}
+		<Sidebar.Group>
+			<Sidebar.GroupLabel>Resources</Sidebar.GroupLabel>
+		</Sidebar.Group>
 	</Sidebar.Content>
 	<Sidebar.Footer class="border-t">
 		<DropdownMenu.Root>

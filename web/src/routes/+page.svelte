@@ -1,10 +1,6 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
 	import { Button } from '$lib/components/ui/button/index.js';
-	import ChevronRight from '@lucide/svelte/icons/chevron-right';
-	import { fly, scale } from 'svelte/transition';
-	import ArrowRight from '@lucide/svelte/icons/arrow-right';
-	import { cubicInOut } from 'svelte/easing';
 	import { cn } from '$lib/utils';
 	import * as Item from '$lib/components/ui/item/index.js';
 	import { Separator } from '$lib/components/ui/separator/index.js';
@@ -18,8 +14,6 @@
 	function handleScroll() {
 		scrollY = window.scrollY;
 	}
-
-	let isGetStartedButtonHovered = $state(false);
 
 	const session = authClient.useSession();
 </script>
@@ -35,7 +29,7 @@
 		{#if $session.data}
 			<Button
 				href={resolve('/(protected)/orgs')}
-				class="border-primary bg-linear-to-b from-white/20 via-primary to-black/20"
+				class="border-primary bg-linear-to-b from-white/20 via-primary to-black/20 duration-300 ease-in-out hover:scale-105"
 			>
 				Dashboard
 			</Button>
@@ -65,22 +59,10 @@
 		<div class="flex gap-2">
 			<Button
 				href={resolve('/sign-up')}
-				onmouseenter={() => (isGetStartedButtonHovered = true)}
-				onmouseleave={() => (isGetStartedButtonHovered = false)}
 				size="lg"
+				class="border-primary bg-linear-to-b from-white/20 via-primary to-black/20"
 			>
 				Get Started
-				<div class="relative size-4">
-					{#if isGetStartedButtonHovered}
-						<div transition:fly={{ x: -4, easing: cubicInOut }} class="absolute">
-							<ArrowRight />
-						</div>
-					{:else}
-						<div transition:scale={{ easing: cubicInOut }} class="absolute">
-							<ChevronRight />
-						</div>
-					{/if}
-				</div>
 			</Button>
 			<Button href={resolve('/pricing')} size="lg" variant="outline">See Pricing</Button>
 		</div>
