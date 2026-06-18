@@ -10,7 +10,7 @@
 			onclick={() =>
 				authClient.signIn.social({
 					provider: 'github',
-					callbackURL: '/orgs'
+					callbackURL: '/dashboard'
 				})}
 			variant="outline"
 		>
@@ -31,7 +31,7 @@
 			onclick={() =>
 				authClient.signIn.social({
 					provider: 'google',
-					callbackURL: '/orgs'
+					callbackURL: '/dashboard'
 				})}
 			variant="outline"
 		>

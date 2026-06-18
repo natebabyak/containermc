@@ -1,13 +1,26 @@
 import { auth } from '$lib/server/auth';
 import { db } from '$lib/server/db';
-import { error } from '@sveltejs/kit';
+import { error, redirect } from '@sveltejs/kit';
 import type { LayoutServerLoad } from './$types';
 
 export const load: LayoutServerLoad = async ({ locals, params, request }) => {
+	if (!locals.user) {
+		redirect(303, '/sign-up');
+	}
+
+	const organizations = await auth.api.listOrganizations({
+		query: {
+			userId: locals.user.id
+		},
+		headers: request.headers
+	});
+
 	const { organizationSlug } = params;
 
 	const activeOrganization = await auth.api.getFullOrganization({
-		query: { organizationSlug },
+		query: {
+			organizationSlug
+		},
 		headers: request.headers
 	});
 
@@ -22,7 +35,9 @@ export const load: LayoutServerLoad = async ({ locals, params, request }) => {
 	}
 
 	await auth.api.setActiveOrganization({
-		body: { organizationId: activeOrganization.id },
+		body: {
+			organizationId: activeOrganization.id
+		},
 		headers: request.headers
 	});
 
@@ -31,6 +46,7 @@ export const load: LayoutServerLoad = async ({ locals, params, request }) => {
 	});
 
 	return {
+		organizations,
 		activeOrganization,
 		minecraftServers
 	};

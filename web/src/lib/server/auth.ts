@@ -10,6 +10,8 @@ import { organization } from 'better-auth/plugins';
 import slugify from '@sindresorhus/slugify';
 import { nanoid } from 'nanoid';
 import { organizationBalance, userSettings } from './db/schema';
+import { eq } from 'drizzle-orm';
+import { user as userTable } from '$lib/server/db/auth.schema';
 
 const stripeClient = new Stripe(env.STRIPE_SECRET_KEY, {
 	apiVersion: '2026-05-27.dahlia'
@@ -102,6 +104,11 @@ export const auth = betterAuth({
 							isPersonal: true
 						}
 					});
+
+					await db
+						.update(userTable)
+						.set({ lastActiveOrganizationId: organization.id })
+						.where(eq(userTable.id, user.id));
 
 					await db.insert(organizationBalance).values({ organizationId: organization.id });
 				}

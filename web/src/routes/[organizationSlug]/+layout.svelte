@@ -1,7 +1,7 @@
 <script lang="ts">
+	import type { LayoutProps } from './$types';
 	import AppBreadcrumb from './_components/app-breadcrumb.svelte';
 	import AppSidebar from './_components/app-sidebar.svelte';
-	import type { LayoutProps } from './$types';
 	import * as Sidebar from '$lib/components/ui/sidebar/index.js';
 	import { resolve } from '$app/paths';
 	import { setAppContext, type AppContext } from '$lib/context/app-context';
@@ -11,6 +11,12 @@
 	const app = $state<AppContext>({
 		get organizations() {
 			return data.organizations;
+		},
+		get activeOrganization() {
+			return data.activeOrganization;
+		},
+		get minecraftServers() {
+			return data.minecraftServers;
 		}
 	});
 
@@ -29,8 +35,8 @@
 		<footer
 			class="border-t p-8 text-center text-xs text-muted-foreground [&>a]:underline [&>a]:underline-offset-4"
 		>
-			&copy; 2026 Nate Babyak &bull; <a href={resolve('/privacy-policy')}>Privacy Policy</a>
-			&bull; <a href={resolve('/terms-of-service')}>Terms of Service</a>
+			&copy; 2026 Nate Babyak &bull; <a href={resolve('/privacy')}>Privacy Policy</a>
+			&bull; <a href={resolve('/terms')}>Terms of Service</a>
 		</footer>
 	</div>
 </Sidebar.Provider>
