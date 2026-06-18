@@ -11,12 +11,6 @@
 	const app = $state<AppContext>({
 		get organizations() {
 			return data.organizations;
-		},
-		get activeOrganization() {
-			return data.activeOrganization;
-		},
-		get minecraftServers() {
-			return data.minecraftServers;
 		}
 	});
 

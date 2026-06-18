@@ -1,20 +1,9 @@
+import { error } from '@sveltejs/kit';
+import type { LayoutServerLoad } from './$types';
 import { auth } from '$lib/server/auth';
 import { db } from '$lib/server/db';
-import { error, redirect } from '@sveltejs/kit';
-import type { LayoutServerLoad } from './$types';
 
 export const load: LayoutServerLoad = async ({ locals, params, request }) => {
-	if (!locals.user) {
-		redirect(303, '/sign-up');
-	}
-
-	const organizations = await auth.api.listOrganizations({
-		query: {
-			userId: locals.user.id
-		},
-		headers: request.headers
-	});
-
 	const { organizationSlug } = params;
 
 	const activeOrganization = await auth.api.getFullOrganization({
@@ -25,7 +14,7 @@ export const load: LayoutServerLoad = async ({ locals, params, request }) => {
 	});
 
 	if (!activeOrganization) {
-		error(404, 'Organization not found');
+		throw error(404, 'Organization not found');
 	}
 
 	const isMember = activeOrganization.members.some((member) => member.userId === locals.user.id);
@@ -46,7 +35,6 @@ export const load: LayoutServerLoad = async ({ locals, params, request }) => {
 	});
 
 	return {
-		organizations,
 		activeOrganization,
 		minecraftServers
 	};

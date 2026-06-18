@@ -1,6 +1,6 @@
+import { auth } from '$lib/server/auth';
 import { error, redirect } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
-import { auth } from '$lib/server/auth';
 
 export const load: PageServerLoad = async ({ locals, request }) => {
 	if (!locals.user) {
@@ -18,5 +18,5 @@ export const load: PageServerLoad = async ({ locals, request }) => {
 		throw error(404, 'Organization not found');
 	}
 
-	redirect(303, `/${activeOrganization.slug}/dashboard`);
+	redirect(303, `/${activeOrganization.slug}`);
 };

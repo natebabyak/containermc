@@ -16,8 +16,6 @@
 	}
 
 	const session = authClient.useSession();
-
-	const activeOrganization = authClient.useActiveOrganization();
 </script>
 
 <svelte:head>
@@ -35,13 +33,7 @@
 			<span class="font-serif text-2xl font-medium">ContainerMC</span>
 		</a>
 		{#if $session.data}
-			<Button
-				href={resolve('/(protected)/[organizationSlug]/dashboard', {
-					organizationSlug: $activeOrganization.data?.slug ?? ''
-				})}
-			>
-				Dashboard
-			</Button>
+			<Button href={resolve('/dashboard')}>Dashboard</Button>
 		{:else}
 			<div class="flex gap-2">
 				<Button href={resolve('/sign-in')} variant="ghost">Sign in</Button>
