@@ -8,6 +8,9 @@
 	import Monitor from '@lucide/svelte/icons/monitor';
 	import Moon from '@lucide/svelte/icons/moon';
 	import Sun from '@lucide/svelte/icons/sun';
+	import ChevronsUpDown from '@lucide/svelte/icons/chevrons-up-down';
+	import { blur } from 'svelte/transition';
+	import X from '@lucide/svelte/icons/x';
 
 	let session = authClient.useSession();
 
@@ -22,9 +25,11 @@
 	function signOut() {
 		authClient.signOut();
 	}
+
+	let open = $state(false);
 </script>
 
-<DropdownMenu.Root>
+<DropdownMenu.Root bind:open>
 	<DropdownMenu.Trigger>
 		{#snippet child({ props })}
 			{#if $session.data}
@@ -35,7 +40,20 @@
 					</Avatar.Root>
 					<div class="flex flex-col">
 						<span>{$session.data.user.name}</span>
-						<span class="text-xs text-muted-foreground"> 10 remaining </span>
+						<span class="text-xs text-muted-foreground">
+							{$session.data.user.email}
+						</span>
+					</div>
+					<div class="ml-auto size-4">
+						{#if open}
+							<div transition:blur class="absolute">
+								<X />
+							</div>
+						{:else}
+							<div transition:blur class="absolute">
+								<ChevronsUpDown />
+							</div>
+						{/if}
 					</div>
 				</Sidebar.MenuButton>
 			{/if}
