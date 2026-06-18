@@ -21,6 +21,14 @@ export const auth = betterAuth({
 	database: drizzleAdapter(db, {
 		provider: 'pg'
 	}),
+	user: {
+		additionalFields: {
+			lastActiveOrganizationId: {
+				type: 'string',
+				required: true
+			}
+		}
+	},
 	emailAndPassword: {
 		enabled: true
 	},
@@ -35,7 +43,18 @@ export const auth = betterAuth({
 		}
 	},
 	plugins: [
-		organization(),
+		organization({
+			schema: {
+				organization: {
+					additionalFields: {
+						isPersonal: {
+							type: 'boolean',
+							required: true
+						}
+					}
+				}
+			}
+		}),
 		stripe({
 			stripeClient,
 			stripeWebhookSecret: env.STRIPE_WEBHOOK_SECRET,
@@ -48,6 +67,25 @@ export const auth = betterAuth({
 		sveltekitCookies(getRequestEvent)
 	],
 	databaseHooks: {
+		session: {
+			create: {
+				before: async (session) => {
+					const user = await db.query.user.findFirst({
+						where: (user, { eq }) => eq(user.id, session.userId),
+						columns: {
+							lastActiveOrganizationId: true
+						}
+					});
+
+					return {
+						data: {
+							...session,
+							activeOrganizationId: user?.lastActiveOrganizationId
+						}
+					};
+				}
+			}
+		},
 		user: {
 			create: {
 				after: async (user) => {
@@ -60,7 +98,8 @@ export const auth = betterAuth({
 						body: {
 							name: organizationName,
 							slug: organizationSlug,
-							userId: user.id
+							userId: user.id,
+							isPersonal: true
 						}
 					});
 

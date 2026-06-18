@@ -20,7 +20,8 @@ export const user = pgTable('user', {
 		.defaultNow()
 		.$onUpdate(() => /* @__PURE__ */ new Date())
 		.notNull(),
-	stripeCustomerId: text('stripe_customer_id')
+	stripeCustomerId: text('stripe_customer_id'),
+	lastActiveOrganizationId: text('last_active_organization_id')
 });
 
 export const session = pgTable(
@@ -91,7 +92,8 @@ export const organization = pgTable(
 		slug: text('slug').notNull().unique(),
 		logo: text('logo'),
 		createdAt: timestamp('created_at').notNull(),
-		metadata: text('metadata')
+		metadata: text('metadata'),
+		isPersonal: boolean('is_personal')
 	},
 	(table) => [uniqueIndex('organization_slug_uidx').on(table.slug)]
 );

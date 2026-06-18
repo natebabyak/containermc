@@ -58,7 +58,7 @@
 								{#snippet child({ props })}
 									<a
 										{...props}
-										href={resolve('/(protected)/org/[organizationSlug]', {
+										href={resolve('/(protected)/[organizationSlug]/dashboard', {
 											organizationSlug: organization.slug
 										})}
 									>
@@ -83,19 +83,15 @@
 					<Sidebar.Menu>
 						<Sidebar.MenuItem>
 							<Sidebar.MenuButton
-								isActive={page.route.id ===
-									'/(protected)/org/[organizationSlug]/server/[minecraftServerSlug]'}
+								isActive={page.route.id === '/(protected)/[organizationSlug]/[minecraftServerSlug]'}
 							>
 								{#snippet child({ props })}
 									<a
 										{...props}
-										href={resolve(
-											'/(protected)/org/[organizationSlug]/server/[minecraftServerSlug]',
-											{
-												organizationSlug: activeOrganization.slug,
-												minecraftServerSlug: activeMinecraftServer.slug
-											}
-										)}
+										href={resolve('/(protected)/[organizationSlug]/[minecraftServerSlug]', {
+											organizationSlug: activeOrganization.slug,
+											minecraftServerSlug: activeMinecraftServer.slug
+										})}
 									>
 										<Gauge />
 										Dashboard
@@ -106,18 +102,15 @@
 						<Sidebar.MenuItem>
 							<Sidebar.MenuButton
 								isActive={page.route.id ===
-									'/(protected)/org/[organizationSlug]/server/[minecraftServerSlug]/backups'}
+									'/(protected)/[organizationSlug]/[minecraftServerSlug]/backups'}
 							>
 								{#snippet child({ props })}
 									<a
 										{...props}
-										href={resolve(
-											'/(protected)/org/[organizationSlug]/server/[minecraftServerSlug]/backups',
-											{
-												organizationSlug: activeOrganization.slug,
-												minecraftServerSlug: activeMinecraftServer.slug
-											}
-										)}
+										href={resolve('/(protected)/[organizationSlug]/[minecraftServerSlug]/backups', {
+											organizationSlug: activeOrganization.slug,
+											minecraftServerSlug: activeMinecraftServer.slug
+										})}
 									>
 										<Earth />
 										Backups
@@ -128,13 +121,13 @@
 						<Sidebar.MenuItem>
 							<Sidebar.MenuButton
 								isActive={page.route.id ===
-									'/(protected)/org/[organizationSlug]/server/[minecraftServerSlug]/sessions'}
+									'/(protected)/[organizationSlug]/[minecraftServerSlug]/sessions'}
 							>
 								{#snippet child({ props })}
 									<a
 										{...props}
 										href={resolve(
-											'/(protected)/org/[organizationSlug]/server/[minecraftServerSlug]/sessions',
+											'/(protected)/[organizationSlug]/[minecraftServerSlug]/sessions',
 											{
 												organizationSlug: activeOrganization.slug,
 												minecraftServerSlug: activeMinecraftServer.slug
@@ -150,13 +143,13 @@
 						<Sidebar.MenuItem>
 							<Sidebar.MenuButton
 								isActive={page.route.id ===
-									'/(protected)/org/[organizationSlug]/server/[minecraftServerSlug]/settings'}
+									'/(protected)/[organizationSlug]/[minecraftServerSlug]/settings'}
 							>
 								{#snippet child({ props })}
 									<a
 										{...props}
 										href={resolve(
-											'/(protected)/org/[organizationSlug]/server/[minecraftServerSlug]/settings',
+											'/(protected)/[organizationSlug]/[minecraftServerSlug]/settings',
 											{
 												organizationSlug: activeOrganization.slug,
 												minecraftServerSlug: activeMinecraftServer.slug
@@ -181,12 +174,12 @@
 					<Sidebar.Menu>
 						<Sidebar.MenuItem>
 							<Sidebar.MenuButton
-								isActive={page.route.id === '/(protected)/org/[organizationSlug]'}
+								isActive={page.route.id === '/(protected)/[organizationSlug]/dashboard'}
 							>
 								{#snippet child({ props })}
 									<a
 										{...props}
-										href={resolve('/(protected)/org/[organizationSlug]', {
+										href={resolve('/(protected)/[organizationSlug]/dashboard', {
 											organizationSlug: activeOrganization.slug
 										})}
 									>
@@ -198,12 +191,12 @@
 						</Sidebar.MenuItem>
 						<Sidebar.MenuItem>
 							<Sidebar.MenuButton
-								isActive={page.route.id === '/(protected)/org/[organizationSlug]/billing'}
+								isActive={page.route.id === '/(protected)/[organizationSlug]/billing'}
 							>
 								{#snippet child({ props })}
 									<a
 										{...props}
-										href={resolve('/(protected)/org/[organizationSlug]/billing', {
+										href={resolve('/(protected)/[organizationSlug]/billing', {
 											organizationSlug: activeOrganization.slug
 										})}
 									>
@@ -215,12 +208,12 @@
 						</Sidebar.MenuItem>
 						<Sidebar.MenuItem>
 							<Sidebar.MenuButton
-								isActive={page.route.id === '/(protected)/org/[organizationSlug]/members'}
+								isActive={page.route.id === '/(protected)/[organizationSlug]/members'}
 							>
 								{#snippet child({ props })}
 									<a
 										{...props}
-										href={resolve('/(protected)/org/[organizationSlug]/members', {
+										href={resolve('/(protected)/[organizationSlug]/members', {
 											organizationSlug: activeOrganization.slug
 										})}
 									>
@@ -232,12 +225,12 @@
 						</Sidebar.MenuItem>
 						<Sidebar.MenuItem>
 							<Sidebar.MenuButton
-								isActive={page.route.id === '/(protected)/org/[organizationSlug]/servers'}
+								isActive={page.route.id === '/(protected)/[organizationSlug]/servers'}
 							>
 								{#snippet child({ props })}
 									<a
 										{...props}
-										href={resolve('/(protected)/org/[organizationSlug]/servers', {
+										href={resolve('/(protected)/[organizationSlug]/servers', {
 											organizationSlug: activeOrganization.slug
 										})}
 									>
@@ -249,12 +242,12 @@
 						</Sidebar.MenuItem>
 						<Sidebar.MenuItem>
 							<Sidebar.MenuButton
-								isActive={page.route.id === '/(protected)/org/[organizationSlug]/settings'}
+								isActive={page.route.id === '/(protected)/[organizationSlug]/settings'}
 							>
 								{#snippet child({ props })}
 									<a
 										{...props}
-										href={resolve('/(protected)/org/[organizationSlug]/settings', {
+										href={resolve('/(protected)/[organizationSlug]/settings', {
 											organizationSlug: activeOrganization.slug
 										})}
 									>

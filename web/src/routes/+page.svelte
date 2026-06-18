@@ -16,10 +16,18 @@
 	}
 
 	const session = authClient.useSession();
+
+	const activeOrganization = authClient.useActiveOrganization();
 </script>
 
+<svelte:head>
+	<title>ContainerMC</title>
+	<meta
+		name="description"
+		content="ContainerMC is the easiest and most cost-efficient way to deploy and manage Minecraft servers in the cloud."
+	/>
+</svelte:head>
 <svelte:window onscroll={handleScroll} />
-
 <header class="sticky top-0 bg-background">
 	<div class={cn('flex items-center justify-between transition-all', scrollY > 0 ? 'p-4' : 'p-8')}>
 		<a href={resolve('/')} class="flex items-center gap-2">
@@ -28,8 +36,9 @@
 		</a>
 		{#if $session.data}
 			<Button
-				href={resolve('/(protected)/orgs')}
-				class="border-primary bg-linear-to-b from-white/20 via-primary to-black/20 duration-300 ease-in-out hover:scale-105"
+				href={resolve('/(protected)/[organizationSlug]/dashboard', {
+					organizationSlug: $activeOrganization.data?.slug ?? ''
+				})}
 			>
 				Dashboard
 			</Button>
