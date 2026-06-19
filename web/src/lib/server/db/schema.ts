@@ -7,6 +7,7 @@ import {
 	integer,
 	numeric,
 	index,
+	uniqueIndex,
 	bigint,
 	jsonb,
 	boolean
@@ -16,6 +17,11 @@ import { organization, user } from './auth.schema';
 import { MINECRAFT_SERVER_STATUSES } from '$lib/constants';
 
 export const minecraftServerStatusEnum = pgEnum('server_status', MINECRAFT_SERVER_STATUSES);
+
+export const balanceTransactionTypeEnum = pgEnum('balance_transaction_type', [
+	'deposit',
+	'session_charge'
+]);
 
 export const userSettings = pgTable('user_settings', {
 	userId: text('user_id')
@@ -39,6 +45,29 @@ export const organizationBalance = pgTable('organization_balance', {
 		.$onUpdate(() => new Date())
 		.notNull()
 });
+
+export const balanceTransaction = pgTable(
+	'balance_transaction',
+	{
+		id: uuid('id').primaryKey().defaultRandom(),
+		organizationId: text('organization_id')
+			.notNull()
+			.references(() => organization.id, { onDelete: 'cascade' }),
+		type: balanceTransactionTypeEnum('type').notNull(),
+		amountDollars: numeric('amount_dollars', { precision: 12, scale: 6 }).notNull(),
+		minecraftServerSessionId: uuid('minecraft_server_session_id').references(
+			() => minecraftServerSession.id,
+			{ onDelete: 'set null' }
+		),
+		stripeCheckoutSessionId: text('stripe_checkout_session_id'),
+		createdAt: timestamp('created_at').notNull().defaultNow()
+	},
+	(table) => [
+		index('balance_transaction_organization_id_idx').on(table.organizationId),
+		uniqueIndex('balance_transaction_session_id_idx').on(table.minecraftServerSessionId),
+		uniqueIndex('balance_transaction_stripe_session_id_idx').on(table.stripeCheckoutSessionId)
+	]
+);
 
 export const organizationSettings = pgTable('organization_settings', {
 	organizationId: text('organization_id')
@@ -157,10 +186,22 @@ export const userSettingsRelations = relations(userSettings, ({ one }) => ({
 	})
 }));
 
-export const organizationBalanceRelations = relations(organizationBalance, ({ one }) => ({
-	user: one(user, {
+export const organizationBalanceRelations = relations(organizationBalance, ({ one, many }) => ({
+	organization: one(organization, {
 		fields: [organizationBalance.organizationId],
-		references: [user.id]
+		references: [organization.id]
+	}),
+	transactions: many(balanceTransaction)
+}));
+
+export const balanceTransactionRelations = relations(balanceTransaction, ({ one }) => ({
+	organization: one(organization, {
+		fields: [balanceTransaction.organizationId],
+		references: [organization.id]
+	}),
+	session: one(minecraftServerSession, {
+		fields: [balanceTransaction.minecraftServerSessionId],
+		references: [minecraftServerSession.id]
 	})
 }));
 

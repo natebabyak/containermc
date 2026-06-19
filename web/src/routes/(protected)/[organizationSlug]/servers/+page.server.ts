@@ -6,6 +6,7 @@ import slugify from '@sindresorhus/slugify';
 import { nanoid } from 'nanoid';
 import type { Actions } from './$types';
 import { auth } from '$lib/server/auth';
+import { InsufficientBalanceError } from '$lib/server/billing';
 import { fail } from '@sveltejs/kit';
 
 export const actions = {
@@ -87,7 +88,12 @@ export const actions = {
 			return { success: true };
 		} catch (err) {
 			console.error(err);
-			return { success: false };
+
+			if (err instanceof InsufficientBalanceError) {
+				return fail(402, { message: 'Insufficient balance to start server' });
+			}
+
+			return fail(500, { message: 'Failed to start server' });
 		}
 	},
 	stopMinecraftServer: async (event) => {

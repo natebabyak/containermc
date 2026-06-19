@@ -1,27 +1,50 @@
-import type { Actions } from './$types';
+import { computeSessionCost } from '$lib/helpers';
 import { db } from '$lib/server/db';
-import { eq } from 'drizzle-orm';
-import { fail } from '@sveltejs/kit';
-import { minecraftServer } from '$lib/server/db/schema';
+import { minecraftServerSnapshot } from '$lib/server/db/schema';
+import { and, asc, eq, gte } from 'drizzle-orm';
+import type { PageServerLoad } from './$types';
 
-export const actions = {
-	deleteMinecraftServer: async (event) => {
-		const formData = await event.request.formData();
-		const minecraftServerId = formData.get('minecraftServerId')?.toString();
+export const load: PageServerLoad = async ({ parent }) => {
+	const { activeMinecraftServer } = await parent();
+	const since = new Date(Date.now() - 24 * 60 * 60 * 1000);
 
-		if (!minecraftServerId) {
-			return fail(400, 'Minecraft server ID is missing');
-		}
+	const snapshots = await db.query.minecraftServerSnapshot.findMany({
+		where: and(
+			eq(minecraftServerSnapshot.minecraftServerId, activeMinecraftServer.id),
+			gte(minecraftServerSnapshot.createdAt, since)
+		),
+		orderBy: asc(minecraftServerSnapshot.createdAt)
+	});
 
-		try {
-			await db
-				.update(minecraftServer)
-				.set({ status: 'stopped', deletedAt: new Date() })
-				.where(eq(minecraftServer.id, minecraftServerId));
+	const activeSession = activeMinecraftServer.sessions.find((session) => !session.endedAt);
 
-			return { success: true };
-		} catch {
-			return fail(500, 'Failed to delete Minecraft server');
-		}
+	const chartData = snapshots.map((snapshot) => ({
+		time: snapshot.createdAt.toLocaleTimeString('en-US', {
+			hour: 'numeric',
+			minute: '2-digit'
+		}),
+		players: snapshot.numPlayers,
+		cpu: Number(snapshot.cpuUsagePct),
+		memory: Number(snapshot.memoryUsagePct),
+		tps: Number(snapshot.tps),
+		cost: activeSession
+			? computeSessionCost(activeSession.hardwareName, activeSession.startedAt, snapshot.createdAt)
+			: 0
+	}));
+
+	if (activeSession) {
+		const now = new Date();
+		chartData.push({
+			time: 'Now',
+			players: chartData.at(-1)?.players ?? 0,
+			cpu: chartData.at(-1)?.cpu ?? 0,
+			memory: chartData.at(-1)?.memory ?? 0,
+			tps: chartData.at(-1)?.tps ?? 20,
+			cost: computeSessionCost(activeSession.hardwareName, activeSession.startedAt, now)
+		});
 	}
-} satisfies Actions;
+
+	return {
+		chartData
+	};
+};

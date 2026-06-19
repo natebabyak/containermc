@@ -2,41 +2,11 @@ import Stripe from 'stripe';
 import { env } from '$env/dynamic/private';
 import { formatCurrency } from '$lib/formatters';
 import { auth } from '$lib/server/auth';
-import { db } from '$lib/server/db';
-import { organizationBalance } from '$lib/server/db/schema';
-import { eq } from 'drizzle-orm';
-import { fail, redirect } from '@sveltejs/kit';
+import { creditDeposit, getOrganizationTransactions } from '$lib/server/billing';
+import { error, fail, redirect } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 
 const stripe = new Stripe(env.STRIPE_SECRET_KEY);
-
-async function creditOrganizationBalance(organizationId: string, amountCents: number) {
-	const addedDollars = amountCents / 100;
-
-	const currentBalance = await db.query.organizationBalance.findFirst({
-		where: (organizationBalance, { eq }) => eq(organizationBalance.organizationId, organizationId),
-		columns: {
-			amountDollars: true
-		}
-	});
-
-	const newBalance = currentBalance
-		? parseFloat(currentBalance.amountDollars) + addedDollars
-		: addedDollars;
-
-	if (currentBalance) {
-		await db
-			.update(organizationBalance)
-			.set({ amountDollars: newBalance.toString() })
-			.where(eq(organizationBalance.organizationId, organizationId));
-		return;
-	}
-
-	await db.insert(organizationBalance).values({
-		organizationId,
-		amountDollars: newBalance.toString()
-	});
-}
 
 async function fulfillAddFundsCheckout(sessionId: string, expectedOrganizationId?: string) {
 	const session = await stripe.checkout.sessions.retrieve(sessionId);
@@ -60,7 +30,7 @@ async function fulfillAddFundsCheckout(sessionId: string, expectedOrganizationId
 		return false;
 	}
 
-	await creditOrganizationBalance(organizationId, amountCents);
+	await creditDeposit(organizationId, amountCents / 100, sessionId);
 
 	await stripe.checkout.sessions.update(sessionId, {
 		metadata: {
@@ -79,27 +49,30 @@ export const load: PageServerLoad = async ({ locals, params, request, url }) => 
 
 	const sessionId = url.searchParams.get('session_id');
 
+	const activeOrganization = await auth.api.getFullOrganization({
+		query: {
+			organizationSlug: params.organizationSlug
+		},
+		headers: request.headers
+	});
+
+	if (!activeOrganization) {
+		error(404, 'Organization not found');
+	}
+
 	if (sessionId) {
-		const activeOrganization = await auth.api.getFullOrganization({
-			query: {
-				organizationSlug: params.organizationSlug
-			},
-			headers: request.headers
-		});
-
-		if (activeOrganization) {
-			await fulfillAddFundsCheckout(sessionId, activeOrganization.id);
-		}
-
+		await fulfillAddFundsCheckout(sessionId, activeOrganization.id);
 		throw redirect(303, `/${params.organizationSlug}/billing`);
 	}
 
 	const { stripeCustomerId } = locals.user;
 
 	const paymentMethods = (await stripe.customers.listPaymentMethods(stripeCustomerId)).data;
+	const transactions = await getOrganizationTransactions(activeOrganization.id);
 
 	return {
-		paymentMethods
+		paymentMethods,
+		transactions
 	};
 };
 

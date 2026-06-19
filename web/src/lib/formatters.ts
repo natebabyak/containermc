@@ -7,6 +7,16 @@ export function formatCurrency(valueUsd: number): string {
 	}).format(valueUsd);
 }
 
+/** Balance, session costs, and ledger amounts — up to 6 decimal places when needed. */
+export function formatBalance(valueUsd: number): string {
+	return new Intl.NumberFormat('en-US', {
+		style: 'currency',
+		currency: getCurrency().toUpperCase(),
+		minimumFractionDigits: 2,
+		maximumFractionDigits: 6
+	}).format(valueUsd);
+}
+
 export function formatDuration(start: Date, end: Date): string {
 	const duration = end.getTime() - start.getTime();
 	const seconds = Math.floor(duration / 1000);

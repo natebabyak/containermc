@@ -6,7 +6,7 @@
 	import * as Empty from '$lib/components/ui/empty/index.js';
 	import * as Item from '$lib/components/ui/item/index.js';
 	import { HARDWARE_OPTIONS, REGIONS } from '$lib/constants';
-	import { formatCurrency, formatDuration, formatTime } from '$lib/formatters';
+	import { formatBalance, formatDuration, formatTime } from '$lib/formatters';
 	import { computeSessionCost } from '$lib/helpers';
 	import type { PageProps } from './$types';
 	import Circle from '@lucide/svelte/icons/circle';
@@ -42,11 +42,11 @@
 				<Item.Content>
 					<Item.Title>
 						{#if isActive}
-							{formatCurrency(
+							{formatBalance(
 								computeSessionCost(session.hardwareName, session.startedAt, new Date())
 							)}
 						{:else}
-							{formatCurrency(Number(session.costDollars))}
+							{formatBalance(Number(session.costDollars))}
 						{/if}
 					</Item.Title>
 					<Item.Description>

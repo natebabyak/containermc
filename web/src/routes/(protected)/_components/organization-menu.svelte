@@ -5,7 +5,7 @@
 	import { resolve } from '$app/paths';
 	import { getAppContext } from '$lib/context/app-context';
 	import * as Sidebar from '$lib/components/ui/sidebar/index.js';
-	import { formatCurrency } from '$lib/formatters';
+	import { formatBalance } from '$lib/formatters';
 	import { Button } from '$lib/components/ui/button/index.js';
 
 	const app = getAppContext();
@@ -21,7 +21,7 @@
 					</span>
 					{#if app.activeOrganizationBalance !== undefined}
 						<span class="text-xs text-muted-foreground">
-							{formatCurrency(app.activeOrganizationBalance)} balance
+							{formatBalance(app.activeOrganizationBalance)} balance
 						</span>
 					{/if}
 				</div>

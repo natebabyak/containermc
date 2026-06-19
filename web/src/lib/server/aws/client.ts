@@ -1,4 +1,5 @@
 import { env } from '$env/dynamic/private';
+import { CloudWatchClient } from '@aws-sdk/client-cloudwatch';
 import { CloudWatchLogsClient } from '@aws-sdk/client-cloudwatch-logs';
 import { EC2Client } from '@aws-sdk/client-ec2';
 import { ECSClient } from '@aws-sdk/client-ecs';
@@ -6,6 +7,7 @@ import { Route53Client } from '@aws-sdk/client-route-53';
 import { S3Client } from '@aws-sdk/client-s3';
 import { SSMClient } from '@aws-sdk/client-ssm';
 
+export const cloudwatch = new CloudWatchClient({});
 export const cloudwatchLogs = new CloudWatchLogsClient({});
 export const ec2 = new EC2Client({});
 export const ecs = new ECSClient({});

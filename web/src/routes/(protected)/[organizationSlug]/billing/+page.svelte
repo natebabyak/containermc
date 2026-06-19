@@ -5,12 +5,18 @@
 	import * as RadioGroup from '$lib/components/ui/radio-group/index.js';
 	import { Label } from '$lib/components/ui/label/index.js';
 	import { Button } from '$lib/components/ui/button/index.js';
+	import { page } from '$app/state';
 
-	import { formatCurrency } from '$lib/formatters';
+	import { formatBalance, formatCurrency, formatTime } from '$lib/formatters';
 	import { enhance } from '$app/forms';
+	import type { PageProps } from './$types';
+
+	let { data }: PageProps = $props();
 
 	const AMOUNTS_CENTS = ['500', '1000', '2500', '5000', '10000'] as const;
 	let selectedAmountCents = $state<(typeof AMOUNTS_CENTS)[number]>('2500');
+
+	const balance = $derived(page.data.activeOrganizationBalance ?? 0);
 </script>
 
 <svelte:head>
@@ -21,7 +27,8 @@
 	class="space-y-8 p-8 [&_h1]:text-4xl [&_h1]:font-bold [&_h2]:text-2xl [&_h2]:font-medium [&>section]:space-y-4"
 >
 	<section>
-		<h1>remaining</h1>
+		<h1>{formatBalance(balance)}</h1>
+		<p class="text-muted-foreground">Available balance</p>
 	</section>
 	<section>
 		<Card.Root>
@@ -51,6 +58,32 @@
 				</form>
 			</Card.Footer>
 		</Card.Root>
+	</section>
+	<Separator />
+	<section>
+		<h2>Transactions</h2>
+		{#if data.transactions && data.transactions.length > 0}
+			<Item.Group>
+				{#each data.transactions as transaction (transaction.id)}
+					<Item.Root size="xs" variant="outline">
+						<Item.Content>
+							<Item.Title>
+								{transaction.type === 'deposit' ? 'Deposit' : 'Session charge'}
+							</Item.Title>
+							<Item.Description>{formatTime(transaction.createdAt)}</Item.Description>
+						</Item.Content>
+						<Item.Content class="text-right">
+							<Item.Title>
+								{transaction.type === 'deposit' ? '+' : '-'}
+								{formatBalance(Number(transaction.amountDollars))}
+							</Item.Title>
+						</Item.Content>
+					</Item.Root>
+				{/each}
+			</Item.Group>
+		{:else}
+			<p class="text-muted-foreground text-sm">No transactions yet.</p>
+		{/if}
 	</section>
 	<Separator />
 	<section>

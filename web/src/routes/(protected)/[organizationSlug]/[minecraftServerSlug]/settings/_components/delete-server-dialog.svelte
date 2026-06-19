@@ -13,7 +13,7 @@
 		minecraftServer: MinecraftServerSelect;
 	}
 
-	let { minecraftServer }: Props = $props();
+	let { minecraftServer: server }: Props = $props();
 
 	const schema = z
 		.object({

@@ -2,39 +2,9 @@ import Stripe from 'stripe';
 import type { RequestHandler } from './$types';
 import { env } from '$env/dynamic/private';
 import { error } from '@sveltejs/kit';
-import { db } from '$lib/server/db';
-import { organizationBalance } from '$lib/server/db/schema';
-import { eq } from 'drizzle-orm';
+import { creditDeposit } from '$lib/server/billing';
 
 const stripe = new Stripe(env.STRIPE_SECRET_KEY);
-
-async function creditOrganizationBalance(organizationId: string, amountCents: number) {
-	const addedDollars = amountCents / 100;
-
-	const currentBalance = await db.query.organizationBalance.findFirst({
-		where: (organizationBalance, { eq }) => eq(organizationBalance.organizationId, organizationId),
-		columns: {
-			amountDollars: true
-		}
-	});
-
-	const newBalance = currentBalance
-		? parseFloat(currentBalance.amountDollars) + addedDollars
-		: addedDollars;
-
-	if (currentBalance) {
-		await db
-			.update(organizationBalance)
-			.set({ amountDollars: newBalance.toString() })
-			.where(eq(organizationBalance.organizationId, organizationId));
-		return;
-	}
-
-	await db.insert(organizationBalance).values({
-		organizationId,
-		amountDollars: newBalance.toString()
-	});
-}
 
 async function fulfillAddFundsCheckout(sessionId: string) {
 	const session = await stripe.checkout.sessions.retrieve(sessionId);
@@ -54,7 +24,7 @@ async function fulfillAddFundsCheckout(sessionId: string) {
 		return false;
 	}
 
-	await creditOrganizationBalance(organizationId, amountCents);
+	await creditDeposit(organizationId, amountCents / 100, sessionId);
 
 	await stripe.checkout.sessions.update(sessionId, {
 		metadata: {

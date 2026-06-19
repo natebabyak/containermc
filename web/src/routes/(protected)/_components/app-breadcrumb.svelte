@@ -1,49 +1,33 @@
 <script lang="ts">
 	import { page } from '$app/state';
 	import * as Breadcrumb from '$lib/components/ui/breadcrumb/index.js';
+	import { buildAppBreadcrumbs } from '$lib/breadcrumbs';
 	import { getAppContext } from '$lib/context/app-context';
 
 	const app = getAppContext();
+
+	const items = $derived(
+		buildAppBreadcrumbs(page.url.pathname, {
+			organization: app.activeOrganization,
+			minecraftServer: app.activeMinecraftServer,
+			minecraftServerSlugs: app.minecraftServers?.map((server) => server.slug)
+		})
+	);
 </script>
 
 <Breadcrumb.Root>
 	<Breadcrumb.List>
-		<Breadcrumb.Item>
-			<Breadcrumb.Link href="/">Home</Breadcrumb.Link>
-		</Breadcrumb.Item>
-		<Breadcrumb.Separator />
-		<Breadcrumb.Item>
-			{#if page.route.id === '/(protected)/orgs'}
-				<Breadcrumb.Page>Orgs</Breadcrumb.Page>
-			{:else}
-				<Breadcrumb.Link href="/orgs">Orgs</Breadcrumb.Link>
+		{#each items as item, index (index)}
+			{#if index > 0}
+				<Breadcrumb.Separator />
 			{/if}
-		</Breadcrumb.Item>
-		{#if app.activeOrganization}
-			<Breadcrumb.Separator />
 			<Breadcrumb.Item>
-				{#if app.activeMinecraftServer}
-					<Breadcrumb.Link href={`/org/${app.activeOrganization.slug}/servers`}>
-						{app.activeOrganization.name}
-					</Breadcrumb.Link>
+				{#if item.href}
+					<Breadcrumb.Link href={item.href}>{item.label}</Breadcrumb.Link>
 				{:else}
-					<Breadcrumb.Page>{app.activeOrganization.name}</Breadcrumb.Page>
+					<Breadcrumb.Page>{item.label}</Breadcrumb.Page>
 				{/if}
 			</Breadcrumb.Item>
-		{/if}
-		{#if app.activeMinecraftServer && app.activeOrganization}
-			<Breadcrumb.Separator />
-			<Breadcrumb.Item>
-				<Breadcrumb.Link href={`/org/${app.activeOrganization.slug}/servers`}>
-					Servers
-				</Breadcrumb.Link>
-			</Breadcrumb.Item>
-			<Breadcrumb.Separator />
-			<Breadcrumb.Item>
-				<Breadcrumb.Page>
-					{app.activeMinecraftServer.name}
-				</Breadcrumb.Page>
-			</Breadcrumb.Item>
-		{/if}
+		{/each}
 	</Breadcrumb.List>
 </Breadcrumb.Root>

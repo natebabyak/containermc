@@ -23,6 +23,11 @@ import {
 import { ChangeResourceRecordSetsCommand } from '@aws-sdk/client-route-53';
 import { error } from '@sveltejs/kit';
 import { computeSessionCost } from '$lib/helpers';
+import {
+	canAffordStart,
+	chargeSession,
+	InsufficientBalanceError
+} from '$lib/server/billing';
 
 /**
  * Starts a Minecraft server by running an EC2 instance and updating its status in the database.
@@ -35,6 +40,10 @@ export async function startServer(serverId: string) {
 
 	if (!server) {
 		throw new Error(`Server ${serverId} not found`);
+	}
+
+	if (!(await canAffordStart(server.organizationId, server.hardwareName))) {
+		throw new InsufficientBalanceError();
 	}
 
 	await db
@@ -316,11 +325,30 @@ export async function stopServer(serverId: string) {
 
 		if (activeSession) {
 			const costDollars = computeSessionCost(server.hardwareName, activeSession.startedAt, endedAt);
+			const costString = costDollars.toFixed(6);
 
-			await db
-				.update(minecraftServerSession)
-				.set({ endedAt, costDollars: costDollars.toFixed(6) })
-				.where(eq(minecraftServerSession.id, activeSession.id));
+			try {
+				await chargeSession(server.organizationId, activeSession.id, costDollars);
+
+				await db
+					.update(minecraftServerSession)
+					.set({ endedAt, costDollars: costString })
+					.where(eq(minecraftServerSession.id, activeSession.id));
+			} catch (err) {
+				console.error('Failed to charge session:', err);
+
+				await db
+					.update(minecraftServer)
+					.set({ status: 'error' })
+					.where(eq(minecraftServer.id, serverId));
+
+				await db
+					.update(minecraftServerSession)
+					.set({ endedAt, costDollars: costString })
+					.where(eq(minecraftServerSession.id, activeSession.id));
+
+				throw err;
+			}
 		}
 
 		await db.insert(minecraftServerBackup).values({
