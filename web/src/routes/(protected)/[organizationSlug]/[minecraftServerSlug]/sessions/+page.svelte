@@ -50,7 +50,11 @@
 						{/if}
 					</Item.Title>
 					<Item.Description>
-						{formatDuration(session.startedAt, session.endedAt)}
+						{#if session.endedAt}
+							{formatDuration(session.startedAt, session.endedAt)}
+						{:else}
+							Started at{formatTime(session.startedAt)}
+						{/if}
 					</Item.Description>
 				</Item.Content>
 				<Item.Footer>
