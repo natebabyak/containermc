@@ -1,5 +1,4 @@
 <script lang="ts">
-	import * as Dialog from '$lib/components/ui/dialog/index.js';
 	import { Button } from '$lib/components/ui/button/index.js';
 	import { Input } from '$lib/components/ui/input/index.js';
 	import * as Field from '$lib/components/ui/field/index.js';
@@ -9,10 +8,8 @@
 	import * as Item from '$lib/components/ui/item/index.js';
 	import { HARDWARE_OPTIONS, REGIONS } from '$lib/constants';
 	import z from 'zod';
-	import * as Drawer from '$lib/components/ui/drawer/index.js';
-	import { IsMobile } from '$lib/hooks/is-mobile.svelte';
 	import { Badge } from '$lib/components/ui/badge/index.js';
-	import { invalidateAll } from '$app/navigation';
+	import { goto, invalidateAll } from '$app/navigation';
 	import BadgeCheckIcon from '@lucide/svelte/icons/badge-check';
 	import { applyAction, deserialize } from '$app/forms';
 	import RotateCcw from '@lucide/svelte/icons/rotate-ccw';
@@ -21,17 +18,18 @@
 	import * as RadioGroup from '$lib/components/ui/radio-group/index.js';
 	import Label from '$lib/components/ui/label/label.svelte';
 	import { cn } from '$lib/utils';
-	import { ScrollArea } from '$lib/components/ui/scroll-area/index.js';
 	import { formatCurrency } from '$lib/formatters';
+	import { page } from '$app/state';
+	import { resolve } from '$app/paths';
 
 	const schema = z.object({
 		name: z.string().min(1, 'Name is required'),
 		regionCode: z.enum(
-			REGIONS.map((r) => r.code),
+			REGIONS.map((region) => region.code),
 			'Region is required'
 		),
 		hardwareName: z.enum(
-			HARDWARE_OPTIONS.map((o) => o.name),
+			HARDWARE_OPTIONS.map((hardware) => hardware.name),
 			'Hardware is required'
 		)
 	});
@@ -43,7 +41,7 @@
 			hardwareName: ''
 		},
 		validators: {
-			onSubmit: schema
+			onChange: schema
 		},
 		onSubmit: async ({ value }) => {
 			const formData = new FormData();
@@ -51,26 +49,29 @@
 			formData.append('regionCode', value.regionCode);
 			formData.append('hardwareName', value.hardwareName);
 
-			const response = await fetch('?/createMinecraftServer', {
-				method: 'POST',
-				body: formData
-			});
+			const response = await fetch(
+				`/${page.params.organizationSlug}/servers?/createMinecraftServer`,
+				{
+					method: 'POST',
+					body: formData
+				}
+			);
 
 			const result = deserialize(await response.text());
 
 			if (result.type === 'success') {
-				open = false;
 				form.reset();
 				await invalidateAll();
+				goto(
+					resolve('/(protected)/[organizationSlug]/servers', {
+						organizationSlug: page.params.organizationSlug!
+					})
+				);
+			} else {
+				applyAction(result);
 			}
-
-			applyAction(result);
 		}
 	}));
-
-	const isMobile = new IsMobile();
-
-	let open = $state(false);
 
 	export async function measurePing(region: (typeof REGIONS)[number]) {
 		const url = `https://ec2.${region.code}.amazonaws.com/ping`;
@@ -120,22 +121,28 @@
 	});
 </script>
 
-{#snippet formSnippet()}
-	<form
-		id="create-server-form"
-		onsubmit={(e) => {
-			e.preventDefault();
-			e.stopPropagation();
-			form.handleSubmit();
-		}}
-	>
+<form
+	onsubmit={(e) => {
+		e.preventDefault();
+		e.stopPropagation();
+		form.handleSubmit();
+	}}
+>
+	<Field.Group>
+		<Field.Set>
+			<Field.Legend>Create a new server</Field.Legend>
+			<Field.Description>Create a new server to get started</Field.Description>
+		</Field.Set>
 		<Field.Group>
 			<form.Field name="name">
 				{#snippet children(field)}
 					<Field.Field>
-						<Field.Label for={field.name}>Name</Field.Label>
+						<Field.Label for={field.name}>
+							Name
+							<span class="text-destructive">*</span>
+						</Field.Label>
 						<Input
-							aria-invalid={!!field.state.meta.errors[0]}
+							aria-invalid={!!field.state.meta.errors[0] && field.state.meta.isTouched}
 							id={field.name}
 							name={field.name}
 							oninput={(e) => field.handleChange((e.target as HTMLInputElement).value)}
@@ -143,7 +150,7 @@
 							type="text"
 							value={field.state.value}
 						/>
-						{#if field.state.meta.errors[0]}
+						{#if field.state.meta.errors[0] && field.state.meta.isTouched}
 							<Field.Error>
 								{field.state.meta.errors[0].message}
 							</Field.Error>
@@ -155,7 +162,10 @@
 				{#snippet children(field)}
 					<Field.Field>
 						<div class="flex items-center justify-between">
-							<Field.Label for={field.name}>Region</Field.Label>
+							<Field.Label for={field.name}>
+								Region
+								<span class="text-destructive">*</span>
+							</Field.Label>
 							<Button disabled={measuringPings} onclick={measurePings} size="xs" variant="outline">
 								<div class="relative size-3">
 									{#if measuringPings}
@@ -185,7 +195,10 @@
 									{#each regions as region, i (i)}
 										<Item.Root>
 											{#snippet child({ props })}
-												<Select.Item {...props} value={region.code!}>
+												<Select.Item {...props} value={region.code}>
+													<Item.Media variant="image" class="text-2xl">
+														{region.emoji}
+													</Item.Media>
 													<Item.Content>
 														<Item.Title>
 															{region.name}
@@ -208,7 +221,7 @@
 								</Select.Group>
 							</Select.Content>
 						</Select.Root>
-						{#if field.state.meta.errors[0]}
+						{#if field.state.meta.errors[0] && field.state.meta.isTouched}
 							<Field.Error>
 								{field.state.meta.errors[0].message}
 							</Field.Error>
@@ -247,7 +260,7 @@
 													{/if}
 												</Item.Title>
 												<Item.Description>
-													{hardwareOption.vcpu} vCPU &bull; {hardwareOption.memory} GB
+													{hardwareOption.vcpu} vCPU &bull; {hardwareOption.memory} GB RAM
 												</Item.Description>
 											</Item.Content>
 											<Item.Content class="*:ml-auto">
@@ -260,7 +273,7 @@
 								</Item.Root>
 							{/each}
 						</RadioGroup.Root>
-						{#if field.state.meta.errors[0]}
+						{#if field.state.meta.errors[0] && field.state.meta.isTouched}
 							<Field.Error>
 								{field.state.meta.errors[0].message}
 							</Field.Error>
@@ -268,50 +281,13 @@
 					</Field.Field>
 				{/snippet}
 			</form.Field>
+			<Field.Field>
+				<form.Subscribe selector={(state) => state.canSubmit}>
+					{#snippet children(canSubmit)}
+						<Button disabled={!canSubmit} type="submit">Create Server</Button>
+					{/snippet}
+				</form.Subscribe>
+			</Field.Field>
 		</Field.Group>
-	</form>
-{/snippet}
-
-{#snippet submitButton()}
-	<Field.Field>
-		<Button form="create-server-form" type="submit">Create Server</Button>
-	</Field.Field>
-{/snippet}
-
-{#if isMobile.current}
-	<Drawer.Root bind:open>
-		<Drawer.Trigger>
-			{#snippet child({ props })}
-				<Button {...props}>Create Server</Button>
-			{/snippet}
-		</Drawer.Trigger>
-		<Drawer.Content class="flex h-full flex-col">
-			<Drawer.Header class="border-b">
-				<Drawer.Title>Create Server</Drawer.Title>
-			</Drawer.Header>
-			<ScrollArea class="flex-1 overflow-y-auto">
-				<div class="p-4">
-					{@render formSnippet()}
-				</div>
-			</ScrollArea>
-			<Drawer.Footer class="border-t">
-				{@render submitButton()}
-			</Drawer.Footer>
-		</Drawer.Content>
-	</Drawer.Root>
-{:else}
-	<Dialog.Root bind:open>
-		<Dialog.Trigger>
-			{#snippet child({ props })}
-				<Button {...props}>Create Server</Button>
-			{/snippet}
-		</Dialog.Trigger>
-		<Dialog.Content>
-			<Dialog.Header>
-				<Dialog.Title>Create Server</Dialog.Title>
-			</Dialog.Header>
-			{@render formSnippet()}
-			{@render submitButton()}
-		</Dialog.Content>
-	</Dialog.Root>
-{/if}
+	</Field.Group>
+</form>

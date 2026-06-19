@@ -115,7 +115,7 @@
 		</div>
 		<Item.Actions class="ml-auto">
 			<Button
-				href={resolve('/(protected)/org/[organizationSlug]/server/[minecraftServerSlug]', {
+				href={resolve('/(protected)/[organizationSlug]/[minecraftServerSlug]', {
 					organizationSlug: page.params.organizationSlug!,
 					minecraftServerSlug: server.slug
 				})}

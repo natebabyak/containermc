@@ -8,7 +8,7 @@
 		variants: {
 			variant: {
 				default:
-					'bg-primary bg-linear-to-b from-white/20 to-black/20 via-primary text-primary-foreground hover:bg-primary/80',
+					'bg-primary bg-linear-to-b from-white/20 to-black/20 via-primary text-primary-foreground hover:bg-primary/80 border-primary',
 				outline:
 					'border-border bg-background hover:bg-muted hover:text-foreground dark:hover:bg-input/30 aria-expanded:bg-muted aria-expanded:text-foreground dark:bg-transparent',
 				secondary:

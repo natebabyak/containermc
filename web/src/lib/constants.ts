@@ -257,86 +257,103 @@ export const REGIONS = [
 	{
 		code: 'us-east-1',
 		name: 'US East (N. Virginia)',
-		geography: 'United States of America'
+		geography: 'United States of America',
+		emoji: '🇺🇸'
 	},
 	{
 		code: 'us-east-2',
 		name: 'US East (Ohio)',
-		geography: 'United States of America'
+		geography: 'United States of America',
+		emoji: '🇺🇸'
 	},
 	{
 		code: 'us-west-1',
 		name: 'US West (N. California)',
-		geography: 'United States of America'
+		geography: 'United States of America',
+		emoji: '🇺🇸'
 	},
 	{
 		code: 'us-west-2',
 		name: 'US West (Oregon)',
-		geography: 'United States of America'
+		geography: 'United States of America',
+		emoji: '🇺🇸'
 	},
 	{
 		code: 'ap-southeast-1',
 		name: 'Asia Pacific (Mumbai)',
-		geography: 'India'
+		geography: 'India',
+		emoji: '🇮🇳'
 	},
 	{
 		code: 'ap-southeast-2',
 		name: 'Asia Pacific (Osaka)',
-		geography: 'Japan'
+		geography: 'Japan',
+		emoji: '🇯🇵'
 	},
 	{
 		code: 'ap-southeast-3',
 		name: 'Asia Pacific (Seoul)',
-		geography: 'South Korea'
+		geography: 'South Korea',
+		emoji: '🇰🇷'
 	},
 	{
 		code: 'ap-southeast-4',
 		name: 'Asia Pacific (Singapore)',
-		geography: 'Singapore'
+		geography: 'Singapore',
+		emoji: '🇸🇬'
 	},
 	{
 		code: 'ap-south-1',
 		name: 'Asia Pacific (Sydney)',
-		geography: 'Australia'
+		geography: 'Australia',
+		emoji: '🇦🇺'
 	},
 	{
 		code: 'ap-northeast-1',
 		name: 'Asia Pacific (Tokyo)',
-		geography: 'Japan'
+		geography: 'Japan',
+		emoji: '🇯🇵'
 	},
 	{
 		code: 'ca-central-1',
 		name: 'Canada (Central)',
-		geography: 'Canada'
+		geography: 'Canada',
+		emoji: '🇨🇦'
 	},
 	{
 		code: 'eu-central-1',
 		name: 'Europe (Frankfurt)',
-		geography: 'Germany'
+		geography: 'Germany',
+		emoji: '🇩🇪'
 	},
 	{
 		code: 'eu-west-1',
 		name: 'Europe (Ireland)',
-		geography: 'Ireland'
+		geography: 'Ireland',
+		emoji: '🇮🇪'
 	},
 	{
 		code: 'eu-west-2',
 		name: 'Europe (London)',
-		geography: 'United Kingdom'
+		geography: 'United Kingdom',
+		emoji: '🇬🇧'
 	},
 	{
 		code: 'eu-west-3',
 		name: 'Europe (Paris)',
-		geography: 'France'
+		geography: 'France',
+		emoji: '🇫🇷'
 	},
 	{
 		code: 'eu-north-1',
 		name: 'Europe (Stockholm)',
-		geography: 'Sweden'
+		geography: 'Sweden',
+		emoji: '🇸🇪'
 	},
 	{
 		code: 'sa-east-1',
 		name: 'South America (São Paulo)',
-		geography: 'Brazil'
+		geography: 'Brazil',
+		emoji: '🇧🇷'
 	}
-];
+] as const;

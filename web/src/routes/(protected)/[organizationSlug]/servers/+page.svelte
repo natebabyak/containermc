@@ -5,9 +5,11 @@
 	import Search from '@lucide/svelte/icons/search';
 	import * as Kbd from '$lib/components/ui/kbd/index.js';
 	import ServerItem from './_components/server-item.svelte';
-	import CreateServerDialog from './_components/create-server-dialog.svelte';
 	import Containermc from '$lib/components/icons/containermc.svelte';
 	import * as Item from '$lib/components/ui/item/index.js';
+	import Button from '$lib/components/ui/button/button.svelte';
+	import { resolve } from '$app/paths';
+	import PlusCircle from '@lucide/svelte/icons/plus-circle';
 
 	let { data }: PageProps = $props();
 
@@ -43,7 +45,14 @@
 					</Kbd.Group>
 				</InputGroup.Addon>
 			</InputGroup.Root>
-			<CreateServerDialog />
+			<Button
+				href={resolve('/(protected)/[organizationSlug]/servers/new', {
+					organizationSlug: data.activeOrganization.slug
+				})}
+			>
+				<PlusCircle />
+				Create Server
+			</Button>
 		</div>
 		<Item.Group>
 			{#each data.minecraftServers as server (server.id)}
@@ -64,7 +73,14 @@
 				</Empty.Description>
 			</Empty.Header>
 			<Empty.Content>
-				<CreateServerDialog />
+				<Button
+					href={resolve('/(protected)/[organizationSlug]/servers/new', {
+						organizationSlug: data.activeOrganization.slug
+					})}
+				>
+					<PlusCircle />
+					Create Server
+				</Button>
 			</Empty.Content>
 		</Empty.Root>
 	</div>
