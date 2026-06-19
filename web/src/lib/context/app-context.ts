@@ -3,8 +3,9 @@ import type { Organization } from 'better-auth/plugins';
 import { createContext } from 'svelte';
 
 export interface AppContext {
-	organizations: Organization & { isPersonal: boolean }[];
+	organizations: (Organization & { isPersonal: boolean })[];
 	activeOrganization?: Organization & { isPersonal: boolean };
+	activeOrganizationBalance?: number;
 	minecraftServers?: MinecraftServerSelect[];
 	activeMinecraftServer?: MinecraftServerSelect;
 }

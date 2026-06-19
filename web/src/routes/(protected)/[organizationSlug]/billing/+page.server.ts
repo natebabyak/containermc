@@ -3,6 +3,7 @@ import { env } from '$env/dynamic/private';
 import { formatCurrency } from '$lib/formatters';
 import { fail, redirect } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
+import { page } from '$app/state';
 
 const stripe = new Stripe(env.STRIPE_SECRET_KEY);
 
@@ -44,7 +45,7 @@ export const actions = {
 					price_data: {
 						currency: 'usd',
 						product_data: {
-							name: `Add ${formatCurrency(parseInt(amountCents))} to ContainerMC balance`
+							name: `Add ${formatCurrency(parseInt(amountCents) / 100)} to ContainerMC balance`
 						},
 						unit_amount: parseInt(amountCents)
 					},
@@ -52,8 +53,8 @@ export const actions = {
 				}
 			],
 			mode: 'payment',
-			success_url: `${env.ORIGIN}/dashboard/billing`,
-			cancel_url: `${env.ORIGIN}/dashboard/billing`
+			success_url: `${env.ORIGIN}/${page.params.organizationSlug}/billing`,
+			cancel_url: `${env.ORIGIN}/${page.params.organizationSlug}/billing`
 		});
 
 		if (!session.url) {

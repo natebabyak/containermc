@@ -5,6 +5,8 @@
 	import { resolve } from '$app/paths';
 	import { getAppContext } from '$lib/context/app-context';
 	import * as Sidebar from '$lib/components/ui/sidebar/index.js';
+	import { formatCurrency } from '$lib/formatters';
+	import { Button } from '$lib/components/ui/button/index.js';
 
 	const app = getAppContext();
 </script>
@@ -13,7 +15,16 @@
 	<DropdownMenu.Trigger>
 		{#snippet child({ props })}
 			<Sidebar.MenuButton {...props} size="lg">
-				{app.activeOrganization?.name ?? 'Select org'}
+				<div class="flex flex-col">
+					<span class="font-medium">
+						{app.activeOrganization?.name}
+					</span>
+					{#if app.activeOrganizationBalance !== undefined}
+						<span class="text-xs text-muted-foreground">
+							{formatCurrency(app.activeOrganizationBalance)} balance
+						</span>
+					{/if}
+				</div>
 				<ChevronsUpDown class="ml-auto" />
 			</Sidebar.MenuButton>
 		{/snippet}
@@ -39,6 +50,10 @@
 					</Item.Root>
 				</DropdownMenu.Item>
 			{/each}
+		</DropdownMenu.Group>
+		<DropdownMenu.Separator />
+		<DropdownMenu.Group>
+			<Button href={resolve('/(protected)/orgs/new')} class="w-full">Create Organization</Button>
 		</DropdownMenu.Group>
 	</DropdownMenu.Content>
 </DropdownMenu.Root>

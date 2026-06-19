@@ -9,11 +9,13 @@
 
 	onMount(() => {
 		app.activeOrganization = data.activeOrganization;
+		app.activeOrganizationBalance = data.activeOrganizationBalance;
 		app.minecraftServers = data.minecraftServers;
 	});
 
 	onDestroy(() => {
 		app.activeOrganization = undefined;
+		app.activeOrganizationBalance = undefined;
 		app.minecraftServers = undefined;
 	});
 </script>

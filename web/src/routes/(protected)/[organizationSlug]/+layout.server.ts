@@ -30,12 +30,25 @@ export const load: LayoutServerLoad = async ({ locals, params, request }) => {
 		headers: request.headers
 	});
 
+	const activeOrganizationBalance = await db.query.organizationBalance.findFirst({
+		where: (organizationBalance, { eq }) =>
+			eq(organizationBalance.organizationId, activeOrganization.id),
+		columns: {
+			amountDollars: true
+		}
+	});
+
+	if (!activeOrganizationBalance) {
+		throw error(404, 'Organization balance not found');
+	}
+
 	const minecraftServers = await db.query.minecraftServer.findMany({
 		where: (minecraftServer, { eq }) => eq(minecraftServer.organizationId, activeOrganization.id)
 	});
 
 	return {
 		activeOrganization,
+		activeOrganizationBalance: parseFloat(activeOrganizationBalance.amountDollars),
 		minecraftServers
 	};
 };
