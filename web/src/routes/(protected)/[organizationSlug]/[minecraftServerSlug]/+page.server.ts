@@ -1,4 +1,4 @@
-import type { Actions } from './dashboard/$types';
+import type { Actions } from './$types';
 import { db } from '$lib/server/db';
 import { eq } from 'drizzle-orm';
 import { fail } from '@sveltejs/kit';

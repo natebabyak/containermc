@@ -10,13 +10,13 @@
 	import { cn } from '$lib/utils';
 	import SquareIcon from '@lucide/svelte/icons/square';
 	import PlayIcon from '@lucide/svelte/icons/play';
-	import CopyAddressButton from './copy-address-button.svelte';
 	import { enhance } from '$app/forms';
 	import { REGIONS } from '$lib/constants';
 	import { onDestroy, onMount } from 'svelte';
 	import TriangleAlert from '@lucide/svelte/icons/triangle-alert';
 	import { page } from '$app/state';
 	import type { MinecraftServerSelect } from '$lib/types';
+	import CopyAddressButton from './copy-address-button.svelte';
 
 	interface Props {
 		server: MinecraftServerSelect;
@@ -113,41 +113,28 @@
 				{server.hardwareName}
 			</Item.Description>
 		</div>
-		<Item.Actions class="ml-auto">
-			<Button
-				href={resolve('/(protected)/[organizationSlug]/[minecraftServerSlug]', {
-					organizationSlug: page.params.organizationSlug!,
-					minecraftServerSlug: server.slug
-				})}
-				size="xs"
-				variant="outline"
-			>
-				Manage
-				<ExternalLink />
-			</Button>
-		</Item.Actions>
+		{#if page.route.id === '/(protected)/[organizationSlug]/servers'}
+			<Item.Actions class="ml-auto">
+				<Button
+					href={resolve('/(protected)/[organizationSlug]/[minecraftServerSlug]', {
+						organizationSlug: page.params.organizationSlug!,
+						minecraftServerSlug: server.slug
+					})}
+					size="xs"
+					variant="outline"
+				>
+					Manage
+					<ExternalLink />
+				</Button>
+			</Item.Actions>
+		{/if}
 	</Item.Header>
 	<Item.Footer>
 		<Item.Actions>
-			{#if currentStatus === 'stopped'}
+			{#if currentStatus === 'error'}
 				<form
 					method="POST"
-					action="?/startMinecraftServer"
-					use:enhance={() => {
-						currentStatus = 'starting';
-						startPolling();
-					}}
-				>
-					<input type="hidden" name="minecraftServerId" value={server.id} />
-					<Button size="xs" type="submit" variant="outline">
-						<PlayIcon />
-						Start
-					</Button>
-				</form>
-			{:else if currentStatus === 'error'}
-				<form
-					method="POST"
-					action="?/startMinecraftServer"
+					action="/{page.params.organizationSlug}/servers?/startMinecraftServer"
 					use:enhance={() => {
 						currentStatus = 'starting';
 						startPolling();
@@ -159,22 +146,48 @@
 						Restart
 					</Button>
 				</form>
-			{:else if server}
+			{:else}
 				<form
 					method="POST"
-					action="?/stopMinecraftServer"
+					action="/{page.params.organizationSlug}/servers?/startMinecraftServer"
 					use:enhance={() => {
-						currentStatus = 'stopping';
+						currentStatus = 'starting';
 						startPolling();
 					}}
 				>
 					<input type="hidden" name="minecraftServerId" value={server.id} />
-					<Button disabled={currentStatus === 'stopping'} size="xs" type="submit" variant="outline">
-						<SquareIcon />
-						Stop
+					<Button
+						disabled={currentStatus === 'starting' ||
+							currentStatus === 'stopping' ||
+							currentStatus === 'running'}
+						size="xs"
+						type="submit"
+						variant="outline"
+					>
+						<PlayIcon />
+						Start
 					</Button>
 				</form>
 			{/if}
+			<form
+				method="POST"
+				action="/{page.params.organizationSlug}/servers?/stopMinecraftServer"
+				use:enhance={() => {
+					currentStatus = 'stopping';
+					startPolling();
+				}}
+			>
+				<input type="hidden" name="minecraftServerId" value={server.id} />
+				<Button
+					disabled={currentStatus === 'stopped' || currentStatus === 'stopping'}
+					size="xs"
+					type="submit"
+					variant="outline"
+				>
+					<SquareIcon />
+					Stop
+				</Button>
+			</form>
 			<CopyAddressButton address={`${server.slug}.mc.containermc.com`} />
 		</Item.Actions>
 	</Item.Footer>

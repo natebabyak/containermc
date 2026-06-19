@@ -4,7 +4,7 @@
 	import * as InputGroup from '$lib/components/ui/input-group/index.js';
 	import Search from '@lucide/svelte/icons/search';
 	import * as Kbd from '$lib/components/ui/kbd/index.js';
-	import ServerItem from './_components/server-item.svelte';
+	import ServerItem from '$lib/components/server-item.svelte';
 	import Containermc from '$lib/components/icons/containermc.svelte';
 	import * as Item from '$lib/components/ui/item/index.js';
 	import Button from '$lib/components/ui/button/button.svelte';
