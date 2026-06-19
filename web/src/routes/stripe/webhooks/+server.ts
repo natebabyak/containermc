@@ -3,10 +3,68 @@ import type { RequestHandler } from './$types';
 import { env } from '$env/dynamic/private';
 import { error } from '@sveltejs/kit';
 import { db } from '$lib/server/db';
-import { userBalance } from '$lib/server/db/schema';
+import { organizationBalance } from '$lib/server/db/schema';
 import { eq } from 'drizzle-orm';
 
 const stripe = new Stripe(env.STRIPE_SECRET_KEY);
+
+async function creditOrganizationBalance(organizationId: string, amountCents: number) {
+	const addedDollars = amountCents / 100;
+
+	const currentBalance = await db.query.organizationBalance.findFirst({
+		where: (organizationBalance, { eq }) => eq(organizationBalance.organizationId, organizationId),
+		columns: {
+			amountDollars: true
+		}
+	});
+
+	const newBalance = currentBalance
+		? parseFloat(currentBalance.amountDollars) + addedDollars
+		: addedDollars;
+
+	if (currentBalance) {
+		await db
+			.update(organizationBalance)
+			.set({ amountDollars: newBalance.toString() })
+			.where(eq(organizationBalance.organizationId, organizationId));
+		return;
+	}
+
+	await db.insert(organizationBalance).values({
+		organizationId,
+		amountDollars: newBalance.toString()
+	});
+}
+
+async function fulfillAddFundsCheckout(sessionId: string) {
+	const session = await stripe.checkout.sessions.retrieve(sessionId);
+
+	if (session.metadata?.fulfilled === 'true') {
+		return false;
+	}
+
+	if (session.mode !== 'payment' || session.payment_status !== 'paid') {
+		return false;
+	}
+
+	const organizationId = session.metadata?.organizationId;
+	const amountCents = session.amount_total;
+
+	if (!organizationId || !amountCents) {
+		return false;
+	}
+
+	await creditOrganizationBalance(organizationId, amountCents);
+
+	await stripe.checkout.sessions.update(sessionId, {
+		metadata: {
+			...session.metadata,
+			fulfilled: 'true'
+		}
+	});
+
+	return true;
+}
 
 export const POST: RequestHandler = async ({ request }) => {
 	const body = await request.text();
@@ -25,35 +83,11 @@ export const POST: RequestHandler = async ({ request }) => {
 	if (event.type === 'checkout.session.completed') {
 		const session = event.data.object as Stripe.Checkout.Session;
 
-		if (session.payment_status === 'paid') {
-			const userId = session.metadata?.userId;
-			const amountCents = session.amount_total;
-
-			if (!userId || !amountCents) throw error(400);
-
-			const addedDollars = amountCents / 100;
-
-			try {
-				const currentBalance = await db
-					.select({ amountDollars: userBalance.amountDollars })
-					.from(userBalance)
-					.where(eq(userBalance.userId, userId))
-					.limit(1);
-
-				const newBalance = currentBalance[0]?.amountDollars
-					? parseFloat(currentBalance[0].amountDollars) + addedDollars
-					: addedDollars;
-
-				await db
-					.update(userBalance)
-					.set({
-						amountDollars: newBalance.toString()
-					})
-					.where(eq(userBalance.userId, userId));
-			} catch (err) {
-				console.error('Database Update Failed: ', err);
-				throw error(500);
-			}
+		try {
+			await fulfillAddFundsCheckout(session.id);
+		} catch (err) {
+			console.error('Checkout fulfillment failed: ', err);
+			throw error(500);
 		}
 	}
 
