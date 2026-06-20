@@ -1,7 +1,12 @@
 import type { Handle } from '@sveltejs/kit';
 import { building } from '$app/environment';
 import { auth } from '$lib/server/auth';
+import { startCronScheduler } from '$lib/server/cron';
 import { svelteKitHandler } from 'better-auth/svelte-kit';
+
+if (!building) {
+	startCronScheduler();
+}
 
 export const handleError = ({ error }) => {
 	console.error(error);

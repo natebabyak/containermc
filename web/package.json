@@ -4,7 +4,7 @@
 	"version": "0.0.1",
 	"type": "module",
 	"scripts": {
-		"dev": "vite dev",
+		"dev": "bun --bun vite dev",
 		"build": "vite build",
 		"preview": "vite preview",
 		"prepare": "svelte-kit sync || echo ''",
@@ -31,6 +31,7 @@
 		"@sveltejs/vite-plugin-svelte": "^7.0.0",
 		"@tailwindcss/typography": "^0.5.19",
 		"@tailwindcss/vite": "^4.2.2",
+		"@types/bun": "^1.3.14",
 		"@types/d3-scale": "^4.0.9",
 		"@types/node": "^22",
 		"bits-ui": "^2.16.3",
@@ -79,5 +80,8 @@
 		"nanoid": "^5.1.11",
 		"stripe": "^22.2.0",
 		"zod": "^4.4.3"
+	},
+	"engines": {
+		"bun": ">=1.3.11"
 	}
 }

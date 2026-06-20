@@ -1,13 +1,13 @@
 import { shouldStopForBalance } from '$lib/server/billing';
-import { assertCronAuth } from '$lib/server/cron-auth';
 import { db } from '$lib/server/db';
 import { stopServer } from '$lib/server/minecraft-servers';
-import type { RequestHandler } from './$types';
-import { json } from '@sveltejs/kit';
 
-export const POST: RequestHandler = async ({ request }) => {
-	assertCronAuth(request);
+export type BillingMonitorResult = {
+	stopped: string[];
+	errors: { serverId: string; message: string }[];
+};
 
+export async function runBillingMonitor(): Promise<BillingMonitorResult> {
 	const activeSessions = await db.query.minecraftServerSession.findMany({
 		where: (session, { isNull }) => isNull(session.endedAt),
 		with: {
@@ -47,5 +47,5 @@ export const POST: RequestHandler = async ({ request }) => {
 		}
 	}
 
-	return json({ stopped, errors });
-};
+	return { stopped, errors };
+}
