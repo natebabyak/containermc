@@ -16,13 +16,15 @@
 		{#snippet child({ props })}
 			<Sidebar.MenuButton {...props} size="lg">
 				<div class="flex flex-col">
-					<span class="font-medium">
-						{app.activeOrganization?.name}
-					</span>
-					{#if app.activeOrganizationBalance !== undefined}
-						<span class="text-xs text-muted-foreground">
-							{formatBalance(app.activeOrganizationBalance)} balance
-						</span>
+					{#if app.activeOrganization}
+						<span class="font-medium">{app.activeOrganization.name}</span>
+						{#if app.activeOrganizationBalance !== undefined}
+							<span class="text-xs text-muted-foreground">
+								{formatBalance(app.activeOrganizationBalance)} balance
+							</span>
+						{/if}
+					{:else}
+						<span class="font-medium">Organizations</span>
 					{/if}
 				</div>
 				<ChevronsUpDown class="ml-auto" />
