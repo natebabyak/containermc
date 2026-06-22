@@ -14,7 +14,7 @@
 	import type { PageProps } from './$types';
 	import StatCard from './_components/stat-card.svelte';
 	import SpendChart from './_components/spend-chart.svelte';
-	import TimeRangeSelect from './_components/time-range-select.svelte';
+	import TimeRangeSelect from '$lib/components/time-range-select.svelte';
 
 	let { data }: PageProps = $props();
 
@@ -124,17 +124,17 @@
 	</section>
 
 	<section class="space-y-4">
-		<div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-			<div>
-				<h2 class="text-2xl font-medium">Spend by server</h2>
-				<p class="text-muted-foreground text-sm">
-					{formatBalance(data.rangeTotalSpend)} total in selected period
-				</p>
-			</div>
-			<TimeRangeSelect value={data.range} />
-		</div>
 		<Card.Root>
-			<Card.Content class="pt-6">
+			<Card.Header>
+				<Card.Title>Spend by server</Card.Title>
+				<Card.Description>
+					{formatBalance(data.rangeTotalSpend)} total in selected period
+				</Card.Description>
+				<Card.Action>
+					<TimeRangeSelect value={data.range} />
+				</Card.Action>
+			</Card.Header>
+			<Card.Content>
 				<SpendChart
 					data={data.spendChart}
 					series={data.spendChartSeries}

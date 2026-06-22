@@ -3,7 +3,8 @@ import type { ServerAverageMetrics, ServerChartPoint, TimeRange } from '$lib/ser
 import {
 	formatBucketLabel,
 	getBucketMs,
-	getRangeMs
+	getRangeMs,
+	isLiveMetricsRange
 } from '$lib/time-range';
 import { db } from '$lib/server/db';
 import { minecraftServerSnapshot } from '$lib/server/db/schema';
@@ -103,7 +104,7 @@ export async function getServerDashboardData(
 
 	const activeSession = server.sessions.find((session) => !session.endedAt);
 
-	if (activeSession && (range === '1h' || range === '24h')) {
+	if (activeSession && isLiveMetricsRange(range)) {
 		const latestSnapshot = snapshots.at(-1);
 		chartData.push({
 			time: 'Now',

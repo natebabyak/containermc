@@ -38,10 +38,15 @@
 			series={chartSeries}
 			seriesLayout="stack"
 			legend={true}
+			tooltipContext={false}
 			props={{
 				yAxis: { format: (value: number) => formatBalance(value) }
 			}}
-		/>
+		>
+			{#snippet tooltip()}
+				<Chart.Tooltip />
+			{/snippet}
+		</BarChart>
 	</Chart.Container>
 {:else}
 	<p class="text-muted-foreground py-8 text-center text-sm">No usage in this period</p>

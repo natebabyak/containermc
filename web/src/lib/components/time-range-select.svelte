@@ -2,14 +2,12 @@
 	import * as Select from '$lib/components/ui/select/index.js';
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
-	import type { TimeRange } from '$lib/organization-dashboard';
+	import { getRangeLabel, TIME_RANGES, type TimeRange } from '$lib/time-range';
 
-	const OPTIONS = [
-		{ value: '1h', label: 'Last hour' },
-		{ value: '24h', label: 'Last 24 hours' },
-		{ value: '7d', label: 'Last 7 days' },
-		{ value: '30d', label: 'Last 30 days' }
-	] as const satisfies ReadonlyArray<{ value: TimeRange; label: string }>;
+	const OPTIONS = TIME_RANGES.map((value) => ({
+		value,
+		label: getRangeLabel(value)
+	}));
 
 	interface Props {
 		value: TimeRange;
@@ -17,9 +15,7 @@
 
 	let { value }: Props = $props();
 
-	const selectedLabel = $derived(
-		OPTIONS.find((option) => option.value === value)?.label ?? 'Last 24 hours'
-	);
+	const selectedLabel = $derived(getRangeLabel(value));
 
 	function onRangeChange(next: string) {
 		const url = new URL(page.url);

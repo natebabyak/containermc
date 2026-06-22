@@ -8,15 +8,15 @@
 	import ServerStatCards from './_components/server-stat-cards.svelte';
 	import ServerConsole from './_components/server-console.svelte';
 	import ServerLogs from './_components/server-logs.svelte';
-	import TimeRangeSelect from './_components/time-range-select.svelte';
 	import { onDestroy } from 'svelte';
 	import { computeSessionCost } from '$lib/helpers';
+	import { isLiveMetricsRange } from '$lib/time-range';
 
 	let { data }: PageProps = $props();
 
 	let server = $derived(data.activeMinecraftServer);
 	let isRunning = $derived(server.status === 'running');
-	let showNowPoint = $derived(isRunning && (data.range === '1h' || data.range === '24h'));
+	let showNowPoint = $derived(isRunning && isLiveMetricsRange(data.range));
 
 	interface LiveMetrics {
 		players: number;
@@ -173,10 +173,7 @@
 </svelte:head>
 
 <div class="min-w-0 max-w-full space-y-4 overflow-hidden">
-	<div class="flex flex-wrap items-center justify-between gap-4">
-		<h1 class="text-2xl font-medium">{server.name}</h1>
-		<TimeRangeSelect value={data.range} />
-	</div>
+	<h1 class="text-2xl font-medium">{server.name}</h1>
 	<ServerStatCards metrics={data.averageMetrics} range={data.range} />
 	<ServerConsole serverId={server.id} disabled={!isRunning} />
 	<ServerLogs serverId={server.id} disabled={!isRunning} />
@@ -193,6 +190,7 @@
 					seriesLabel={panel.seriesLabel}
 					color={panel.color}
 					data={chartData}
+					range={data.range}
 				/>
 			{/each}
 		</div>

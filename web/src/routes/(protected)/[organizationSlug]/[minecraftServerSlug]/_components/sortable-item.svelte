@@ -5,6 +5,8 @@
 	import { LineChart } from 'layerchart';
 	import { scaleBand } from 'd3-scale';
 	import { createSortable } from '@dnd-kit/svelte/sortable';
+	import TimeRangeSelect from '$lib/components/time-range-select.svelte';
+	import type { TimeRange } from '$lib/time-range';
 
 	interface ChartPoint {
 		time: string;
@@ -23,9 +25,10 @@
 		seriesLabel: string;
 		color: string;
 		data: ChartPoint[];
+		range: TimeRange;
 	}
 
-	let { id, index, title, seriesKey, seriesLabel, color, data }: Props = $props();
+	let { id, index, title, seriesKey, seriesLabel, color, data, range }: Props = $props();
 
 	const sortable = createSortable({
 		get id() {
@@ -49,18 +52,20 @@
 </script>
 
 <Item.Root variant="outline" class="bg-background min-w-0 w-full max-w-full overflow-hidden" {@attach sortable.attach}>
-	<Item.Header>
+	<Item.Header class="flex flex-row items-center justify-between gap-4">
 		<Item.Title>{title}</Item.Title>
+		<TimeRangeSelect value={range} />
 	</Item.Header>
 	<Item.Content>
 		{#if data.length > 0}
-			<Chart.Container config={chartConfig} class="min-h-50 min-w-0 w-full overflow-hidden">
+			<Chart.Container config={chartConfig} class="min-h-50 min-w-0 w-full">
 				<LineChart
 					{data}
 					xScale={scaleBand().padding(0.25)}
 					x="time"
 					axis="x"
 					seriesLayout="group"
+					tooltipContext={false}
 					series={[
 						{
 							key: seriesKey,
@@ -71,7 +76,11 @@
 					props={{
 						yAxis: valueFormatter ? { format: valueFormatter } : undefined
 					}}
-				/>
+				>
+					{#snippet tooltip()}
+						<Chart.Tooltip />
+					{/snippet}
+				</LineChart>
 			</Chart.Container>
 		{:else}
 			<p class="text-muted-foreground py-8 text-center text-sm">
