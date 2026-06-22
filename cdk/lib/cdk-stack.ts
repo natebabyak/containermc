@@ -44,6 +44,18 @@ export class ContainerMCStack extends cdk.Stack {
       ],
     });
 
+    instanceRole.addToPolicy(
+      new iam.PolicyStatement({
+        actions: [
+          "logs:CreateLogGroup",
+          "logs:CreateLogStream",
+          "logs:PutLogEvents",
+          "logs:DescribeLogStreams",
+        ],
+        resources: ["arn:aws:logs:*:*:log-group:/minecraft/servers/*"],
+      }),
+    );
+
     const instanceProfile = new iam.CfnInstanceProfile(
       this,
       "InstanceProfile",

@@ -8,11 +8,7 @@ import {
 } from '$lib/server/db/schema';
 import { HARDWARE_OPTIONS } from '$lib/constants';
 import { and, eq, isNull } from 'drizzle-orm';
-import {
-	GetParameterCommand,
-	SendCommandCommand,
-	GetCommandInvocationCommand
-} from '@aws-sdk/client-ssm';
+import { GetParameterCommand } from '@aws-sdk/client-ssm';
 import {
 	_InstanceType,
 	DescribeInstancesCommand,
@@ -28,6 +24,13 @@ import {
 	chargeSession,
 	InsufficientBalanceError
 } from '$lib/server/billing';
+import {
+	cloudInitLogGroup,
+	dockerLogGroup,
+	getAwsRegion,
+	getRconPassword,
+	runSsmCommand
+} from '$lib/server/instance-control';
 
 /**
  * Starts a Minecraft server by running an EC2 instance and updating its status in the database.
@@ -82,6 +85,11 @@ export async function startServer(serverId: string) {
 			throw new Error('Invalid instance type');
 		}
 
+		const rconPassword = getRconPassword();
+		const awsRegion = getAwsRegion();
+		const dockerLogsGroup = dockerLogGroup(server.id);
+		const cloudInitLogsGroup = cloudInitLogGroup(server.id);
+
 		const dockerCompose = `services:
   mc:
     container_name: mc
@@ -97,9 +105,16 @@ export async function startServer(serverId: string) {
       MEMORY: "${Math.max(512, memoryGb * 1024 - 1024)}M"
       ENABLE_RCON: "true"
       RCON_PORT: "25575"
-      RCON_PASSWORD: "mcpaas"
+      RCON_PASSWORD: "${rconPassword}"
     volumes:
-      - "/mnt/world:/data"`;
+      - "/mnt/world:/data"
+    logging:
+      driver: awslogs
+      options:
+        awslogs-region: "${awsRegion}"
+        awslogs-group: "${dockerLogsGroup}"
+        awslogs-stream: "mc"
+        awslogs-create-group: "true"`;
 
 		const userDataScript = `#!/bin/bash
 set -e
@@ -108,15 +123,15 @@ yum update -y
 yum install -y docker amazon-cloudwatch-agent
 systemctl enable --now docker
 
-curl -sL "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" \
+curl -sL "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" \\
   -o /usr/local/bin/docker-compose
 chmod +x /usr/local/bin/docker-compose
 
 mkdir -p /mnt/world /srv/minecraft
 
-AWS_ACCESS_KEY_ID=${env.R2_ACCESS_KEY_ID} \
-AWS_SECRET_ACCESS_KEY=${env.R2_SECRET_ACCESS_KEY} \
-aws s3 sync s3://${env.R2_BUCKET}/${server.slug}/ /mnt/world/ \
+AWS_ACCESS_KEY_ID=${env.R2_ACCESS_KEY_ID} \\
+AWS_SECRET_ACCESS_KEY=${env.R2_SECRET_ACCESS_KEY} \\
+aws s3 sync s3://${env.R2_BUCKET}/${server.slug}/ /mnt/world/ \\
   --endpoint-url ${r2Endpoint} || true
 
 cat > /opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json << EOF
@@ -127,6 +142,20 @@ cat > /opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json << EOF
     "metrics_collected": {
       "cpu": { "measurement": ["cpu_usage_active"], "metrics_collection_interval": 30 },
       "mem": { "measurement": ["mem_used_percent"], "metrics_collection_interval": 30 }
+    }
+  },
+  "logs": {
+    "logs_collected": {
+      "files": {
+        "collect_list": [
+          {
+            "file_path": "/var/log/cloud-init-output.log",
+            "log_group_name": "${cloudInitLogsGroup}",
+            "log_stream_name": "cloud-init",
+            "retention_in_days": 7
+          }
+        ]
+      }
     }
   }
 }
@@ -255,39 +284,18 @@ export async function stopServer(serverId: string) {
 	const r2Endpoint = `https://${env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`;
 
 	try {
-		const syncCommand = await ssm.send(
-			new SendCommandCommand({
-				InstanceIds: [server.instanceId],
-				DocumentName: 'AWS-RunShellScript',
-				Parameters: {
-					commands: [
-						'docker exec mc rcon-cli --password mcpaas save-off || true',
-						'docker exec mc rcon-cli --password mcpaas save-all || true',
-						'sleep 3',
-						`AWS_ACCESS_KEY_ID=${env.R2_ACCESS_KEY_ID} AWS_SECRET_ACCESS_KEY=${env.R2_SECRET_ACCESS_KEY} aws s3 sync /mnt/world s3://${env.R2_BUCKET}/${server.slug}/ --endpoint-url ${r2Endpoint} --delete`,
-						'docker exec mc rcon-cli --password mcpaas save-on || true'
-					]
-				},
-				TimeoutSeconds: 120
-			})
+		const rconPassword = getRconPassword();
+		await runSsmCommand(
+			server.instanceId,
+			[
+				`docker exec mc rcon-cli --password ${rconPassword} save-off || true`,
+				`docker exec mc rcon-cli --password ${rconPassword} save-all || true`,
+				'sleep 3',
+				`AWS_ACCESS_KEY_ID=${env.R2_ACCESS_KEY_ID} AWS_SECRET_ACCESS_KEY=${env.R2_SECRET_ACCESS_KEY} aws s3 sync /mnt/world s3://${env.R2_BUCKET}/${server.slug}/ --endpoint-url ${r2Endpoint} --delete`,
+				`docker exec mc rcon-cli --password ${rconPassword} save-on || true`
+			],
+			120
 		);
-
-		const commandId = syncCommand.Command?.CommandId;
-		if (!commandId) throw new Error('SSM did not return a command ID for world sync');
-
-		for (let attempts = 0; attempts < 24; attempts++) {
-			await new Promise((resolve) => setTimeout(resolve, 5000));
-			const invocation = await ssm.send(
-				new GetCommandInvocationCommand({
-					CommandId: commandId,
-					InstanceId: server.instanceId
-				})
-			);
-			if (invocation.Status === 'Success') break;
-			if (['Failed', 'Cancelled', 'TimedOut'].includes(invocation.Status ?? '')) {
-				throw new Error(`World sync failed with SSM status: ${invocation.Status}`);
-			}
-		}
 
 		await ec2.send(new TerminateInstancesCommand({ InstanceIds: [server.instanceId] }));
 

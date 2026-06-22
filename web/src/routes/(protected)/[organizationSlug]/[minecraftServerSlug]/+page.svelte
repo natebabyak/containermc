@@ -1,19 +1,32 @@
 <script lang="ts">
-	import * as InputGroup from '$lib/components/ui/input-group/index.js';
 	import type { PageProps } from './$types';
-	import SquareTerminal from '@lucide/svelte/icons/square-terminal';
-	import * as Item from '$lib/components/ui/item/index.js';
 	import { DragDropProvider } from '@dnd-kit/svelte';
 	import { move } from '@dnd-kit/helpers';
 	import SortableItem from './_components/sortable-item.svelte';
 	import type { DragEndEvent, DragOverEvent } from '@dnd-kit/abstract';
 	import ServerItem from '$lib/components/server-item.svelte';
+	import ServerStatCards from './_components/server-stat-cards.svelte';
+	import ServerConsole from './_components/server-console.svelte';
+	import ServerLogs from './_components/server-logs.svelte';
+	import { onDestroy } from 'svelte';
+	import { computeSessionCost } from '$lib/helpers';
 
 	let { data }: PageProps = $props();
 
 	let server = $derived(data.activeMinecraftServer);
+	let isRunning = $derived(server.status === 'running');
 
-	let logs = $state<string[]>([]);
+	interface Metrics {
+		players: number;
+		tps: number;
+		cpu: number;
+		memory: number;
+	}
+
+	let metrics = $state<Metrics | null>(data.latestMetrics);
+	let chartData = $state(data.chartData);
+
+	let metricsInterval: ReturnType<typeof setInterval> | null = null;
 
 	const chartPanels = [
 		{
@@ -67,32 +80,95 @@
 	function onDragEnd(event: DragEndEvent) {
 		if (event.canceled) panelOrder = snapshot;
 	}
+
+	function updateChartNowPoint(nextMetrics: Metrics) {
+		const nowIndex = chartData.findIndex((point) => point.time === 'Now');
+		if (nowIndex === -1) return;
+
+		const activeSession = server.sessions.find((session) => !session.endedAt);
+		const cost = activeSession
+			? computeSessionCost(activeSession.hardwareName, activeSession.startedAt, new Date())
+			: 0;
+
+		chartData = chartData.map((point, index) =>
+			index === nowIndex
+				? {
+						...point,
+						players: nextMetrics.players,
+						cpu: nextMetrics.cpu,
+						memory: nextMetrics.memory,
+						tps: nextMetrics.tps,
+						cost
+					}
+				: point
+		);
+	}
+
+	async function fetchLatestMetrics() {
+		if (!isRunning) return;
+
+		try {
+			const response = await fetch(
+				`/api/minecraft-server/${server.id}/metrics/latest?live=1`
+			);
+			if (!response.ok) return;
+
+			const payload = await response.json();
+			if (!payload.metrics) return;
+
+			metrics = payload.metrics;
+			updateChartNowPoint(payload.metrics);
+		} catch {
+			// Ignore polling errors.
+		}
+	}
+
+	function startMetricsPolling() {
+		stopMetricsPolling();
+		if (!isRunning) return;
+
+		void fetchLatestMetrics();
+		metricsInterval = setInterval(() => {
+			if (document.visibilityState === 'visible') {
+				void fetchLatestMetrics();
+			}
+		}, 30000);
+	}
+
+	function stopMetricsPolling() {
+		if (metricsInterval) {
+			clearInterval(metricsInterval);
+			metricsInterval = null;
+		}
+	}
+
+	onDestroy(() => {
+		stopMetricsPolling();
+	});
+
+	$effect(() => {
+		metrics = data.latestMetrics;
+		chartData = data.chartData;
+	});
+
+	$effect(() => {
+		if (isRunning) {
+			startMetricsPolling();
+		} else {
+			stopMetricsPolling();
+		}
+	});
 </script>
 
 <svelte:head>
 	<title>{server.name} - ContainerMC</title>
 </svelte:head>
+
 <div class="space-y-4">
-	<InputGroup.Root>
-		<InputGroup.Input placeholder="Enter command..." />
-		<InputGroup.Addon>
-			<SquareTerminal />
-		</InputGroup.Addon>
-	</InputGroup.Root>
+	<ServerStatCards {metrics} {isRunning} />
+	<ServerConsole serverId={server.id} disabled={!isRunning} />
+	<ServerLogs serverId={server.id} disabled={!isRunning} />
 	<ServerItem {server} />
-	<Item.Root variant="outline">
-		<Item.Header>
-			<Item.Title>Logs</Item.Title>
-		</Item.Header>
-		<Item.Content>
-			{#each logs as log, i (i)}
-				<pre>{log}</pre>
-			{/each}
-			{#if logs.length === 0}
-				<p class="text-muted-foreground text-sm">Server logs coming soon.</p>
-			{/if}
-		</Item.Content>
-	</Item.Root>
 	<DragDropProvider {onDragStart} {onDragOver} {onDragEnd}>
 		<div class="grid-col-1 grid gap-4 lg:grid-cols-2">
 			{#each panelOrder as panelId, index (panelId)}
@@ -104,7 +180,7 @@
 					seriesKey={panel.seriesKey}
 					seriesLabel={panel.seriesLabel}
 					color={panel.color}
-					data={data.chartData}
+					data={chartData}
 				/>
 			{/each}
 		</div>

@@ -1,7 +1,7 @@
 import { computeSessionCost } from '$lib/helpers';
 import { db } from '$lib/server/db';
 import { minecraftServerSnapshot } from '$lib/server/db/schema';
-import { and, asc, eq, gte } from 'drizzle-orm';
+import { and, asc, desc, eq, gte } from 'drizzle-orm';
 import type { PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ parent }) => {
@@ -14,6 +14,11 @@ export const load: PageServerLoad = async ({ parent }) => {
 			gte(minecraftServerSnapshot.createdAt, since)
 		),
 		orderBy: asc(minecraftServerSnapshot.createdAt)
+	});
+
+	const latestSnapshot = await db.query.minecraftServerSnapshot.findFirst({
+		where: eq(minecraftServerSnapshot.minecraftServerId, activeMinecraftServer.id),
+		orderBy: desc(minecraftServerSnapshot.createdAt)
 	});
 
 	const activeSession = activeMinecraftServer.sessions.find((session) => !session.endedAt);
@@ -44,7 +49,18 @@ export const load: PageServerLoad = async ({ parent }) => {
 		});
 	}
 
+	const latestMetrics = latestSnapshot
+		? {
+				players: latestSnapshot.numPlayers,
+				tps: Number(latestSnapshot.tps),
+				cpu: Number(latestSnapshot.cpuUsagePct),
+				memory: Number(latestSnapshot.memoryUsagePct),
+				collectedAt: latestSnapshot.createdAt.toISOString()
+			}
+		: null;
+
 	return {
-		chartData
+		chartData,
+		latestMetrics
 	};
 };

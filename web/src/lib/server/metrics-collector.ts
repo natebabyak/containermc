@@ -1,12 +1,15 @@
-import {
-	GetCommandInvocationCommand,
-	SendCommandCommand
-} from '@aws-sdk/client-ssm';
 import { GetMetricDataCommand } from '@aws-sdk/client-cloudwatch';
 import { db } from '$lib/server/db';
 import { minecraftServer, minecraftServerSnapshot } from '$lib/server/db/schema';
-import { cloudwatch, ssm } from '$lib/server/aws/client';
-import { eq } from 'drizzle-orm';
+import { cloudwatch } from '$lib/server/aws/client';
+import {
+	parsePlayerCount,
+	parseTps,
+	runRconCommand
+} from '$lib/server/instance-control';
+import { eq, lt } from 'drizzle-orm';
+
+const SNAPSHOT_RETENTION_MS = 7 * 24 * 60 * 60 * 1000;
 
 async function getCloudWatchMetric(
 	serverId: string,
@@ -43,7 +46,6 @@ async function getCloudWatchMetric(
 		return value;
 	}
 
-	// Fallback: EC2 namespace if CloudWatch agent uses host metrics
 	const ec2Result = await cloudwatch.send(
 		new GetMetricDataCommand({
 			MetricDataQueries: [
@@ -69,51 +71,32 @@ async function getCloudWatchMetric(
 	return ec2Result.MetricDataResults?.[0]?.Values?.at(-1) ?? 0;
 }
 
-async function runSsmCommand(instanceId: string, commands: string[]): Promise<string> {
-	const command = await ssm.send(
-		new SendCommandCommand({
-			InstanceIds: [instanceId],
-			DocumentName: 'AWS-RunShellScript',
-			Parameters: { commands },
-			TimeoutSeconds: 30
-		})
-	);
+export type LiveMetrics = {
+	players: number;
+	tps: number;
+	cpu: number;
+	memory: number;
+	collectedAt: string;
+};
 
-	const commandId = command.Command?.CommandId;
-	if (!commandId) {
-		throw new Error('SSM did not return a command ID');
-	}
+export async function fetchLiveMetrics(server: {
+	id: string;
+	instanceId: string;
+}): Promise<LiveMetrics> {
+	const [cpuUsagePct, memoryUsagePct, listOutput, tpsOutput] = await Promise.all([
+		getCloudWatchMetric(server.id, 'cpu_usage_active', server.instanceId),
+		getCloudWatchMetric(server.id, 'mem_used_percent', server.instanceId),
+		runRconCommand(server.instanceId, 'list').catch(() => ''),
+		runRconCommand(server.instanceId, 'tps').catch(() => '20.0')
+	]);
 
-	for (let attempt = 0; attempt < 12; attempt++) {
-		await new Promise((resolve) => setTimeout(resolve, 2500));
-
-		const invocation = await ssm.send(
-			new GetCommandInvocationCommand({
-				CommandId: commandId,
-				InstanceId: instanceId
-			})
-		);
-
-		if (invocation.Status === 'Success') {
-			return invocation.StandardOutputContent ?? '';
-		}
-
-		if (['Failed', 'Cancelled', 'TimedOut'].includes(invocation.Status ?? '')) {
-			throw new Error(`SSM command failed: ${invocation.Status}`);
-		}
-	}
-
-	throw new Error('SSM command timed out');
-}
-
-function parsePlayerCount(output: string): number {
-	const match = output.match(/There are (\d+) of a max/i);
-	return match ? parseInt(match[1], 10) : 0;
-}
-
-function parseTps(output: string): number {
-	const match = output.match(/([\d.]+)\s*tps/i) ?? output.match(/^([\d.]+)/);
-	return match ? parseFloat(match[1]) : 20;
+	return {
+		players: parsePlayerCount(listOutput),
+		tps: parseTps(tpsOutput),
+		cpu: Number(cpuUsagePct.toFixed(2)),
+		memory: Number(memoryUsagePct.toFixed(2)),
+		collectedAt: new Date().toISOString()
+	};
 }
 
 async function collectServerMetrics(server: {
@@ -127,12 +110,8 @@ async function collectServerMetrics(server: {
 	const [cpuUsagePct, memoryUsagePct, listOutput, tpsOutput] = await Promise.all([
 		getCloudWatchMetric(server.id, 'cpu_usage_active', server.instanceId),
 		getCloudWatchMetric(server.id, 'mem_used_percent', server.instanceId),
-		runSsmCommand(server.instanceId, ['docker exec mc rcon-cli --password mcpaas list']).catch(
-			() => ''
-		),
-		runSsmCommand(server.instanceId, ['docker exec mc rcon-cli --password mcpaas tps']).catch(
-			() => '20.0'
-		)
+		runRconCommand(server.instanceId, 'list').catch(() => ''),
+		runRconCommand(server.instanceId, 'tps').catch(() => '20.0')
 	]);
 
 	await db.insert(minecraftServerSnapshot).values({
@@ -142,6 +121,11 @@ async function collectServerMetrics(server: {
 		numPlayers: parsePlayerCount(listOutput),
 		tps: parseTps(tpsOutput).toFixed(2)
 	});
+}
+
+async function pruneOldSnapshots() {
+	const cutoff = new Date(Date.now() - SNAPSHOT_RETENTION_MS);
+	await db.delete(minecraftServerSnapshot).where(lt(minecraftServerSnapshot.createdAt, cutoff));
 }
 
 export async function collectRunningServerMetrics(): Promise<{
@@ -170,6 +154,8 @@ export async function collectRunningServerMetrics(): Promise<{
 			});
 		}
 	}
+
+	await pruneOldSnapshots();
 
 	return { collected, errors };
 }
