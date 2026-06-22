@@ -19,12 +19,12 @@
 
 <Sidebar.Provider>
 	<AppSidebar />
-	<div class="flex size-full min-h-screen flex-col">
+	<div class="flex size-full min-h-screen min-w-0 flex-col">
 		<header class="sticky top-0 z-50 flex items-center gap-2 border-b bg-background p-4">
 			<Sidebar.Trigger />
 			<AppBreadcrumb />
 		</header>
-		<main class="flex-1 p-4">
+		<main class="min-w-0 flex-1 overflow-x-hidden p-4">
 			{@render children()}
 		</main>
 		<footer

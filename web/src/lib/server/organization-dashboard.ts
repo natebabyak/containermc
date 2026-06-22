@@ -1,48 +1,16 @@
 import { HARDWARE_OPTIONS } from '$lib/constants';
 import { computeIntervalCost } from '$lib/helpers';
 import type { SpendChartPoint, SpendChartSeries, TimeRange } from '$lib/organization-dashboard';
+import {
+	formatBucketLabel,
+	getBucketMs,
+	getRangeMs
+} from '$lib/time-range';
 import { db } from '$lib/server/db';
 import { getMinimumStartBalance, getOrganizationTransactions } from '$lib/server/billing';
 
 export type { SpendChartPoint, SpendChartSeries, TimeRange } from '$lib/organization-dashboard';
 export { parseTimeRange } from '$lib/organization-dashboard';
-
-function getRangeMs(range: TimeRange): number {
-	switch (range) {
-		case '1h':
-			return 60 * 60 * 1000;
-		case '24h':
-			return 24 * 60 * 60 * 1000;
-		case '7d':
-			return 7 * 24 * 60 * 60 * 1000;
-		case '30d':
-			return 30 * 24 * 60 * 60 * 1000;
-	}
-}
-
-function getBucketMs(range: TimeRange): number {
-	switch (range) {
-		case '1h':
-			return 5 * 60 * 1000;
-		case '24h':
-			return 60 * 60 * 1000;
-		case '7d':
-		case '30d':
-			return 24 * 60 * 60 * 1000;
-	}
-}
-
-function formatBucketLabel(date: Date, range: TimeRange): string {
-	switch (range) {
-		case '1h':
-		case '24h':
-			return date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
-		case '7d':
-			return date.toLocaleDateString('en-US', { weekday: 'short' });
-		case '30d':
-			return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-	}
-}
 
 function sessionOverlapsRange(
 	session: { startedAt: Date; endedAt: Date | null },

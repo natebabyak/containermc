@@ -8,6 +8,7 @@
 	import ServerStatCards from './_components/server-stat-cards.svelte';
 	import ServerConsole from './_components/server-console.svelte';
 	import ServerLogs from './_components/server-logs.svelte';
+	import TimeRangeSelect from './_components/time-range-select.svelte';
 	import { onDestroy } from 'svelte';
 	import { computeSessionCost } from '$lib/helpers';
 
@@ -15,16 +16,46 @@
 
 	let server = $derived(data.activeMinecraftServer);
 	let isRunning = $derived(server.status === 'running');
+	let showNowPoint = $derived(isRunning && (data.range === '1h' || data.range === '24h'));
 
-	interface Metrics {
+	interface LiveMetrics {
 		players: number;
 		tps: number;
 		cpu: number;
 		memory: number;
 	}
 
-	let metrics = $state<Metrics | null>(data.latestMetrics);
-	let chartData = $state(data.chartData);
+	let liveNowMetrics = $state<LiveMetrics | null>(null);
+
+	let chartData = $derived.by(() => {
+		const points = data.chartData;
+		if (!liveNowMetrics) {
+			return points;
+		}
+
+		const nowIndex = points.findIndex((point) => point.time === 'Now');
+		if (nowIndex === -1) {
+			return points;
+		}
+
+		const activeSession = server.sessions.find((session) => !session.endedAt);
+		const cost = activeSession
+			? computeSessionCost(activeSession.hardwareName, activeSession.startedAt, new Date())
+			: 0;
+
+		return points.map((point, index) =>
+			index === nowIndex
+				? {
+						...point,
+						players: liveNowMetrics!.players,
+						cpu: liveNowMetrics!.cpu,
+						memory: liveNowMetrics!.memory,
+						tps: liveNowMetrics!.tps,
+						cost
+					}
+				: point
+		);
+	});
 
 	let metricsInterval: ReturnType<typeof setInterval> | null = null;
 
@@ -81,31 +112,8 @@
 		if (event.canceled) panelOrder = snapshot;
 	}
 
-	function updateChartNowPoint(nextMetrics: Metrics) {
-		const nowIndex = chartData.findIndex((point) => point.time === 'Now');
-		if (nowIndex === -1) return;
-
-		const activeSession = server.sessions.find((session) => !session.endedAt);
-		const cost = activeSession
-			? computeSessionCost(activeSession.hardwareName, activeSession.startedAt, new Date())
-			: 0;
-
-		chartData = chartData.map((point, index) =>
-			index === nowIndex
-				? {
-						...point,
-						players: nextMetrics.players,
-						cpu: nextMetrics.cpu,
-						memory: nextMetrics.memory,
-						tps: nextMetrics.tps,
-						cost
-					}
-				: point
-		);
-	}
-
 	async function fetchLatestMetrics() {
-		if (!isRunning) return;
+		if (!showNowPoint) return;
 
 		try {
 			const response = await fetch(
@@ -116,8 +124,7 @@
 			const payload = await response.json();
 			if (!payload.metrics) return;
 
-			metrics = payload.metrics;
-			updateChartNowPoint(payload.metrics);
+			liveNowMetrics = payload.metrics;
 		} catch {
 			// Ignore polling errors.
 		}
@@ -125,7 +132,7 @@
 
 	function startMetricsPolling() {
 		stopMetricsPolling();
-		if (!isRunning) return;
+		if (!showNowPoint) return;
 
 		void fetchLatestMetrics();
 		metricsInterval = setInterval(() => {
@@ -147,14 +154,15 @@
 	});
 
 	$effect(() => {
-		metrics = data.latestMetrics;
-		chartData = data.chartData;
+		data.range;
+		liveNowMetrics = null;
 	});
 
 	$effect(() => {
-		if (isRunning) {
+		if (showNowPoint) {
 			startMetricsPolling();
 		} else {
+			liveNowMetrics = null;
 			stopMetricsPolling();
 		}
 	});
@@ -164,13 +172,17 @@
 	<title>{server.name} - ContainerMC</title>
 </svelte:head>
 
-<div class="space-y-4">
-	<ServerStatCards {metrics} {isRunning} />
+<div class="min-w-0 max-w-full space-y-4 overflow-hidden">
+	<div class="flex flex-wrap items-center justify-between gap-4">
+		<h1 class="text-2xl font-medium">{server.name}</h1>
+		<TimeRangeSelect value={data.range} />
+	</div>
+	<ServerStatCards metrics={data.averageMetrics} range={data.range} />
 	<ServerConsole serverId={server.id} disabled={!isRunning} />
 	<ServerLogs serverId={server.id} disabled={!isRunning} />
 	<ServerItem {server} />
 	<DragDropProvider {onDragStart} {onDragOver} {onDragEnd}>
-		<div class="grid-col-1 grid gap-4 lg:grid-cols-2">
+		<div class="grid-col-1 grid min-w-0 gap-4 lg:grid-cols-2">
 			{#each panelOrder as panelId, index (panelId)}
 				{@const panel = chartPanels.find((entry) => entry.id === panelId)!}
 				<SortableItem

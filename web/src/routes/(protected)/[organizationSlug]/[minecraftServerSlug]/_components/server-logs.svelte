@@ -3,6 +3,7 @@
 	import * as Item from '$lib/components/ui/item/index.js';
 	import { Button } from '$lib/components/ui/button/index.js';
 	import { Spinner } from '$lib/components/ui/spinner/index.js';
+	import { ScrollArea } from '$lib/components/ui/scroll-area/index.js';
 
 	type LogSource = 'server' | 'ec2';
 
@@ -17,9 +18,20 @@
 	let lines = $state<string[]>([]);
 	let loading = $state(false);
 	let errorMessage = $state<string | null>(null);
-	let logContainer: HTMLPreElement | undefined = $state();
+	let logViewport: HTMLElement | null = $state(null);
 
 	let pollInterval: ReturnType<typeof setInterval> | null = null;
+
+	const logText = $derived(lines.join('\n'));
+
+	function scrollLogsToBottom() {
+		queueMicrotask(() => {
+			if (logViewport) {
+				logViewport.scrollTop = logViewport.scrollHeight;
+				logViewport.scrollLeft = logViewport.scrollWidth;
+			}
+		});
+	}
 
 	async function fetchLogs() {
 		if (disabled) return;
@@ -43,11 +55,7 @@
 			errorMessage = 'Failed to load logs';
 		} finally {
 			loading = false;
-			queueMicrotask(() => {
-				if (logContainer) {
-					logContainer.scrollTop = logContainer.scrollHeight;
-				}
-			});
+			scrollLogsToBottom();
 		}
 	}
 
@@ -90,15 +98,15 @@
 	});
 </script>
 
-<Item.Root variant="outline">
+<Item.Root variant="outline" class="min-w-0 w-full max-w-full">
 	<Item.Header class="flex flex-row items-center justify-between gap-4">
-		<div>
+		<div class="min-w-0">
 			<Item.Title>Logs</Item.Title>
 			<Item.Description>
 				{source === 'server' ? 'Minecraft server output' : 'EC2 bootstrap logs'}
 			</Item.Description>
 		</div>
-		<div class="flex gap-2">
+		<div class="flex shrink-0 gap-2">
 			<Button
 				variant={source === 'server' ? 'default' : 'outline'}
 				size="sm"
@@ -117,7 +125,7 @@
 			</Button>
 		</div>
 	</Item.Header>
-	<Item.Content>
+	<Item.Content class="min-w-0">
 		{#if disabled}
 			<p class="text-muted-foreground text-sm">Start the server to view logs.</p>
 		{:else if loading && lines.length === 0}
@@ -130,10 +138,13 @@
 		{:else if lines.length === 0}
 			<p class="text-muted-foreground text-sm">No logs yet.</p>
 		{:else}
-			<pre
-				bind:this={logContainer}
-				class="max-h-80 overflow-y-auto rounded-md border bg-muted/30 p-3 font-mono text-xs whitespace-pre-wrap"
-			>{lines.join('\n')}</pre>
+			<ScrollArea
+				orientation="both"
+				class="h-80 w-full rounded-md border bg-muted/30"
+				viewportRef={logViewport}
+			>
+				<pre class="min-w-full w-max p-3 font-mono text-xs whitespace-pre">{logText}</pre>
+			</ScrollArea>
 		{/if}
 	</Item.Content>
 </Item.Root>

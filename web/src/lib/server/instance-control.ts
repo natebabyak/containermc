@@ -13,6 +13,7 @@ import { db } from '$lib/server/db';
 import { minecraftServer } from '$lib/server/db/schema';
 import { cloudwatchLogs, ssm } from '$lib/server/aws/client';
 import { eq } from 'drizzle-orm';
+import { isAllowedRconCommand } from '$lib/rcon-commands';
 
 export type LogSource = 'server' | 'ec2';
 
@@ -35,7 +36,7 @@ export function cloudInitLogGroup(serverId: string) {
 }
 
 export function validateRconCommand(command: string): string {
-	const trimmed = command.trim();
+	const trimmed = command.trim().replace(/^\//, '');
 	if (!trimmed) {
 		throw error(400, 'Command is required');
 	}
@@ -45,6 +46,11 @@ export function validateRconCommand(command: string): string {
 	if (UNSAFE_COMMAND.test(trimmed)) {
 		throw error(400, 'Invalid characters in command');
 	}
+	if (!isAllowedRconCommand(trimmed)) {
+		const commandName = trimmed.split(/\s+/)[0];
+		throw error(400, `Command not allowed: ${commandName}`);
+	}
+
 	return trimmed;
 }
 
@@ -91,12 +97,14 @@ export async function runSsmCommand(
 	commands: string[],
 	timeoutSeconds = 30
 ): Promise<string> {
+	const timeout = Math.max(30, timeoutSeconds);
+
 	const command = await ssm.send(
 		new SendCommandCommand({
 			InstanceIds: [instanceId],
 			DocumentName: 'AWS-RunShellScript',
 			Parameters: { commands },
-			TimeoutSeconds: timeoutSeconds
+			TimeoutSeconds: timeout
 		})
 	);
 
@@ -105,7 +113,7 @@ export async function runSsmCommand(
 		throw new Error('SSM did not return a command ID');
 	}
 
-	const maxAttempts = Math.ceil(timeoutSeconds / 2.5);
+	const maxAttempts = Math.ceil(timeout / 2.5);
 
 	for (let attempt = 0; attempt < maxAttempts; attempt++) {
 		await new Promise((resolve) => setTimeout(resolve, 2500));
@@ -146,6 +154,38 @@ export function parsePlayerCount(output: string): number {
 export function parseTps(output: string): number {
 	const match = output.match(/([\d.]+)\s*tps/i) ?? output.match(/^([\d.]+)/);
 	return match ? parseFloat(match[1]) : 20;
+}
+
+export function parseHostMetricsOutput(output: string): { cpu: number; memory: number } {
+	const [cpuRaw, memoryRaw] = output.trim().split(/\s+/);
+	const cpu = Number.parseFloat(cpuRaw ?? '0');
+	const memory = Number.parseFloat(memoryRaw ?? '0');
+
+	return {
+		cpu: Number.isFinite(cpu) ? Number(cpu.toFixed(2)) : 0,
+		memory: Number.isFinite(memory) ? Number(memory.toFixed(2)) : 0
+	};
+}
+
+const HOST_METRICS_SCRIPT = [
+	'read _ u1 n1 s1 id1 rest < /proc/stat',
+	't1=$((u1+n1+s1+id1))',
+	'sleep 1',
+	'read _ u2 n2 s2 id2 rest < /proc/stat',
+	't2=$((u2+n2+s2+id2))',
+	'dt=$((t2-t1))',
+	'di=$((id2-id1))',
+	'CPU=0',
+	'if [ "$dt" -gt 0 ]; then CPU=$(awk "BEGIN {printf \\"%.2f\\", 100 * ($dt - $di) / $dt}"); fi',
+	"MEM=$(awk '/MemTotal/{t=$2} /MemAvailable/{a=$2} END {if(t>0) printf \"%.2f\", (t-a)/t*100; else print \"0\"}' /proc/meminfo)",
+	'echo "$CPU $MEM"'
+].join('\n');
+
+export async function getHostMetricsViaSsm(
+	instanceId: string
+): Promise<{ cpu: number; memory: number }> {
+	const output = await runSsmCommand(instanceId, [HOST_METRICS_SCRIPT]);
+	return parseHostMetricsOutput(output);
 }
 
 async function filterCloudWatchLogs(

@@ -48,13 +48,13 @@
 	);
 </script>
 
-<Item.Root variant="outline" class="bg-background" {@attach sortable.attach}>
+<Item.Root variant="outline" class="bg-background min-w-0 w-full max-w-full overflow-hidden" {@attach sortable.attach}>
 	<Item.Header>
 		<Item.Title>{title}</Item.Title>
 	</Item.Header>
 	<Item.Content>
 		{#if data.length > 0}
-			<Chart.Container config={chartConfig} class="min-h-50 w-full">
+			<Chart.Container config={chartConfig} class="min-h-50 min-w-0 w-full overflow-hidden">
 				<LineChart
 					{data}
 					xScale={scaleBand().padding(0.25)}
@@ -75,7 +75,7 @@
 			</Chart.Container>
 		{:else}
 			<p class="text-muted-foreground py-8 text-center text-sm">
-				No data yet. Metrics appear while the server is running.
+				No metrics in this time range.
 			</p>
 		{/if}
 	</Item.Content>

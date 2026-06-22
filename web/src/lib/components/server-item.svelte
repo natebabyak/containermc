@@ -73,7 +73,7 @@
 	});
 </script>
 
-<Item.Root variant="outline">
+<Item.Root variant="outline" class="min-w-0 w-full max-w-full">
 	<Item.Header class="justify-start">
 		<Item.Media variant="image">
 			{#if server.iconUrl}

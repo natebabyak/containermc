@@ -1,40 +1,37 @@
 <script lang="ts">
 	import StatCard from '../../_components/stat-card.svelte';
-
-	interface Metrics {
-		players: number;
-		tps: number;
-		cpu: number;
-		memory: number;
-	}
+	import type { ServerAverageMetrics } from '$lib/server-dashboard';
+	import { getRangeLabel, type TimeRange } from '$lib/time-range';
 
 	interface Props {
-		metrics: Metrics | null;
-		isRunning: boolean;
+		metrics: ServerAverageMetrics | null;
+		range: TimeRange;
 	}
 
-	let { metrics, isRunning }: Props = $props();
+	let { metrics, range }: Props = $props();
+
+	const rangeLabel = $derived(getRangeLabel(range));
 </script>
 
 <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
 	<StatCard
 		title="Players"
-		value={metrics ? String(metrics.players) : isRunning ? '—' : '0'}
-		description={isRunning ? 'Online now' : 'Server stopped'}
+		value={metrics ? metrics.players.toFixed(1) : '—'}
+		description={`Avg over ${rangeLabel.toLowerCase()}`}
 	/>
 	<StatCard
 		title="TPS"
-		value={metrics ? metrics.tps.toFixed(1) : isRunning ? '—' : '—'}
-		description="Ticks per second"
+		value={metrics ? metrics.tps.toFixed(1) : '—'}
+		description={`Avg over ${rangeLabel.toLowerCase()}`}
 	/>
 	<StatCard
 		title="CPU"
-		value={metrics ? `${metrics.cpu.toFixed(1)}%` : isRunning ? '—' : '—'}
-		description="Host CPU usage"
+		value={metrics ? `${metrics.cpu.toFixed(1)}%` : '—'}
+		description={`Avg over ${rangeLabel.toLowerCase()}`}
 	/>
 	<StatCard
 		title="Memory"
-		value={metrics ? `${metrics.memory.toFixed(1)}%` : isRunning ? '—' : '—'}
-		description="Host memory usage"
+		value={metrics ? `${metrics.memory.toFixed(1)}%` : '—'}
+		description={`Avg over ${rangeLabel.toLowerCase()}`}
 	/>
 </div>
