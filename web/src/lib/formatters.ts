@@ -44,3 +44,20 @@ export function formatTime(date: Date): string {
 		timeStyle: 'short'
 	}).format(date);
 }
+
+export function formatFileSize(bytes: bigint | number): string {
+	const value = typeof bytes === 'bigint' ? bytes : BigInt(bytes);
+	if (value <= 0n) return '0 B';
+
+	const units = ['B', 'KB', 'MB', 'GB', 'TB'] as const;
+	let size = Number(value);
+	let unitIndex = 0;
+
+	while (size >= 1024 && unitIndex < units.length - 1) {
+		size /= 1024;
+		unitIndex++;
+	}
+
+	const decimals = unitIndex === 0 ? 0 : size >= 10 ? 1 : 2;
+	return `${size.toFixed(decimals)} ${units[unitIndex]}`;
+}

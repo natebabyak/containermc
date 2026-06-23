@@ -31,6 +31,7 @@ import {
 	getRconPassword,
 	runSsmCommand
 } from '$lib/server/instance-control';
+import { getR2PrefixSize } from '$lib/server/backups';
 
 /**
  * Starts a Minecraft server by running an EC2 instance and updating its status in the database.
@@ -299,6 +300,9 @@ export async function stopServer(serverId: string) {
 			120
 		);
 
+		const s3ObjectKey = `${server.slug}/`;
+		const sizeBytes = await getR2PrefixSize(s3ObjectKey);
+
 		await ec2.send(new TerminateInstancesCommand({ InstanceIds: [server.instanceId] }));
 
 		const hostedZoneParam = await ssm.send(
@@ -362,8 +366,8 @@ export async function stopServer(serverId: string) {
 		}
 
 		await db.insert(minecraftServerBackup).values({
-			s3ObjectKey: `${server.slug}/`,
-			sizeBytes: BigInt(0),
+			s3ObjectKey,
+			sizeBytes,
 			minecraftServerId: server.id
 		});
 	} catch (err) {
