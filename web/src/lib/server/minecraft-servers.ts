@@ -18,6 +18,7 @@ import {
 } from '@aws-sdk/client-ec2';
 import { ChangeResourceRecordSetsCommand } from '@aws-sdk/client-route-53';
 import { error } from '@sveltejs/kit';
+import { randomUUID } from 'node:crypto';
 import { computeSessionCost } from '$lib/helpers';
 import {
 	canAffordStart,
@@ -31,13 +32,14 @@ import {
 	getRconPassword,
 	runSsmCommand
 } from '$lib/server/instance-control';
-import { getR2PrefixSize } from '$lib/server/backups';
+import { getBackup, getLatestBackup, getR2PrefixSize } from '$lib/server/backups';
 
 /**
  * Starts a Minecraft server by running an EC2 instance and updating its status in the database.
  * @param serverId The ID of the server to start.
+ * @param options.backupId Optional backup to restore instead of the latest backup.
  */
-export async function startServer(serverId: string) {
+export async function startServer(serverId: string, options: { backupId?: string } = {}) {
 	const server = await db.query.minecraftServer.findFirst({
 		where: eq(minecraftServer.id, serverId)
 	});
@@ -90,6 +92,20 @@ export async function startServer(serverId: string) {
 		const awsRegion = getAwsRegion();
 		const dockerLogsGroup = dockerLogGroup(server.id);
 		const cloudInitLogsGroup = cloudInitLogGroup(server.id);
+		const backupToRestore = options.backupId
+			? await getBackup(serverId, options.backupId)
+			: await getLatestBackup(serverId);
+
+		if (options.backupId && !backupToRestore) {
+			throw new Error(`Backup ${options.backupId} not found`);
+		}
+
+		const restoreWorldCommand = backupToRestore
+			? `AWS_ACCESS_KEY_ID=${env.R2_ACCESS_KEY_ID} \\
+AWS_SECRET_ACCESS_KEY=${env.R2_SECRET_ACCESS_KEY} \\
+aws s3 sync s3://${env.R2_BUCKET}/${backupToRestore.s3ObjectKey} /mnt/world/ \\
+  --endpoint-url ${r2Endpoint}`
+			: 'echo "No backup found, starting with a fresh world"';
 
 		const dockerCompose = `services:
   mc:
@@ -130,10 +146,7 @@ chmod +x /usr/local/bin/docker-compose
 
 mkdir -p /mnt/world /srv/minecraft
 
-AWS_ACCESS_KEY_ID=${env.R2_ACCESS_KEY_ID} \\
-AWS_SECRET_ACCESS_KEY=${env.R2_SECRET_ACCESS_KEY} \\
-aws s3 sync s3://${env.R2_BUCKET}/${server.slug}/ /mnt/world/ \\
-  --endpoint-url ${r2Endpoint} || true
+${restoreWorldCommand}
 
 cat > /opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json << EOF
 {
@@ -288,19 +301,21 @@ export async function stopServer(serverId: string) {
 
 	try {
 		const rconPassword = getRconPassword();
+		const backupId = randomUUID();
+		const s3ObjectKey = `${server.slug}/backups/${backupId}/`;
+
 		await runSsmCommand(
 			server.instanceId,
 			[
 				`docker exec mc rcon-cli --password ${rconPassword} save-off || true`,
 				`docker exec mc rcon-cli --password ${rconPassword} save-all || true`,
 				'sleep 3',
-				`AWS_ACCESS_KEY_ID=${env.R2_ACCESS_KEY_ID} AWS_SECRET_ACCESS_KEY=${env.R2_SECRET_ACCESS_KEY} aws s3 sync /mnt/world s3://${env.R2_BUCKET}/${server.slug}/ --endpoint-url ${r2Endpoint} --delete`,
+				`AWS_ACCESS_KEY_ID=${env.R2_ACCESS_KEY_ID} AWS_SECRET_ACCESS_KEY=${env.R2_SECRET_ACCESS_KEY} aws s3 sync /mnt/world s3://${env.R2_BUCKET}/${s3ObjectKey} --endpoint-url ${r2Endpoint}`,
 				`docker exec mc rcon-cli --password ${rconPassword} save-on || true`
 			],
 			120
 		);
 
-		const s3ObjectKey = `${server.slug}/`;
 		const sizeBytes = await getR2PrefixSize(s3ObjectKey);
 
 		await ec2.send(new TerminateInstancesCommand({ InstanceIds: [server.instanceId] }));
@@ -366,6 +381,7 @@ export async function stopServer(serverId: string) {
 		}
 
 		await db.insert(minecraftServerBackup).values({
+			id: backupId,
 			s3ObjectKey,
 			sizeBytes,
 			minecraftServerId: server.id
@@ -378,4 +394,49 @@ export async function stopServer(serverId: string) {
 
 		throw err;
 	}
+}
+
+export async function restoreBackup(serverId: string, backupId: string) {
+	const server = await db.query.minecraftServer.findFirst({
+		where: eq(minecraftServer.id, serverId)
+	});
+
+	if (!server) {
+		throw new Error(`Server ${serverId} not found`);
+	}
+
+	const backup = await getBackup(serverId, backupId);
+	if (!backup) {
+		throw new Error(`Backup ${backupId} not found`);
+	}
+
+	if (server.status === 'starting' || server.status === 'stopping') {
+		throw new Error(`Cannot restore while server is ${server.status}`);
+	}
+
+	if (server.status === 'running' && server.instanceId) {
+		const r2Endpoint = `https://${env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`;
+		const rconPassword = getRconPassword();
+
+		await runSsmCommand(
+			server.instanceId,
+			[
+				`docker exec mc rcon-cli --password ${rconPassword} save-off || true`,
+				`docker exec mc rcon-cli --password ${rconPassword} save-all || true`,
+				'sleep 3',
+				'docker stop mc',
+				`AWS_ACCESS_KEY_ID=${env.R2_ACCESS_KEY_ID} AWS_SECRET_ACCESS_KEY=${env.R2_SECRET_ACCESS_KEY} aws s3 sync s3://${env.R2_BUCKET}/${backup.s3ObjectKey} /mnt/world/ --endpoint-url ${r2Endpoint} --delete`,
+				'cd /srv/minecraft && docker-compose up -d'
+			],
+			120
+		);
+
+		return;
+	}
+
+	if (server.status !== 'stopped' && server.status !== 'error') {
+		throw new Error(`Cannot restore while server is ${server.status}`);
+	}
+
+	await startServer(serverId, { backupId });
 }
