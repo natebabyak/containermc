@@ -191,6 +191,13 @@ cd /srv/minecraft && docker-compose up -d`;
 					?.instanceType as _InstanceType,
 				MinCount: 1,
 				MaxCount: 1,
+				InstanceMarketOptions: {
+					MarketType: 'spot',
+					SpotOptions: {
+						SpotInstanceType: 'one-time',
+						InstanceInterruptionBehavior: 'terminate'
+					}
+				},
 				UserData: Buffer.from(userDataScript).toString('base64'),
 				SecurityGroupIds: [securityGroupId],
 				SubnetId: subnetId,
