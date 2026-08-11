@@ -1,16 +1,15 @@
 {
-  "name": "with-svelte",
+  "name": "containermc",
   "private": true,
   "scripts": {
     "build": "turbo run build",
     "dev": "turbo run dev",
-    "lint": "turbo run lint",
-    "format": "prettier --write .",
+    "lint": "biome lint --write .",
+    "format": "biome format --write .",
     "check-types": "turbo run check-types"
   },
   "devDependencies": {
-    "prettier": "^3.8.1",
-    "prettier-plugin-svelte": "^3.5.1",
+    "@biomejs/biome": "2.5.8",
     "turbo": "^2.10.9"
   },
   "packageManager": "pnpm@10.0.0",
