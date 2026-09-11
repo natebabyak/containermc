@@ -12,10 +12,12 @@ import {
 import { getRequestEvent } from "$app/server";
 import { drizzleAdapter } from "@better-auth/drizzle-adapter/relations-v2";
 import { stripe } from "@better-auth/stripe";
+import slugify from "@sindresorhus/slugify";
 import { betterAuth } from "better-auth/minimal";
 import { organization } from "better-auth/plugins";
 import { emailOTP } from "better-auth/plugins";
 import { sveltekitCookies } from "better-auth/svelte-kit";
+import { nanoid } from "nanoid";
 import { Resend } from "resend";
 import Stripe from "stripe";
 
@@ -29,6 +31,7 @@ const stripeClient = new Stripe(STRIPE_SECRET_KEY!, {
 });
 
 export const auth = betterAuth({
+  appName: "ContainerMC",
   baseURL: BETTER_AUTH_URL,
   secret: BETTER_AUTH_SECRET,
   database: drizzleAdapter(db, {
@@ -87,6 +90,23 @@ export const auth = betterAuth({
   advanced: {
     database: {
       joins: true,
+    },
+  },
+  databaseHooks: {
+    user: {
+      create: {
+        after: async (user) => {
+          const slug = slugify(`${user.name}-${nanoid(4)}`);
+
+          await auth.api.createOrganization({
+            body: {
+              name: "Personal Organization",
+              slug,
+              keepCurrentActiveOrganization: false,
+            },
+          });
+        },
+      },
     },
   },
 });
