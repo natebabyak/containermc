@@ -1,17 +1,11 @@
 import { sql } from "drizzle-orm";
-import { pgTable, text, timestamp, uuid, bigint, pgEnum } from "drizzle-orm/pg-core";
+import { pgTable, text, timestamp, uuid, pgEnum } from "drizzle-orm/pg-core";
 
 import { organization } from "./auth-schema";
 
-export const minecraftServerStatus = pgEnum("minecraft_server_status", [
-  "error",
-  "running",
-  "starting",
-  "stopped",
-  "stopping",
-]);
+export const status = pgEnum("status", ["error", "running", "starting", "stopped", "stopping"]);
 
-export const minecraftServer = pgTable("minecraft_server", {
+export const server = pgTable("server", {
   id: uuid("id")
     .primaryKey()
     .default(sql`uuidv7()`),
@@ -20,7 +14,7 @@ export const minecraftServer = pgTable("minecraft_server", {
     .references(() => organization.id, { onDelete: "cascade" }),
   name: text("name").notNull(),
   slug: text("slug").notNull().unique(),
-  status: minecraftServerStatus("status").notNull(),
+  status: status("status").notNull(),
   awsRegionCode: text("aws_region_code").notNull(),
   type: text("type").notNull(),
   version: text("version").notNull(),
@@ -28,4 +22,28 @@ export const minecraftServer = pgTable("minecraft_server", {
   motd: text("motd"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const mod = pgTable("mod", {
+  id: uuid("id")
+    .primaryKey()
+    .default(sql`uuidv7()`),
+});
+
+export const plugin = pgTable("plugin", {
+  id: uuid("id")
+    .primaryKey()
+    .default(sql`uuidv7()`),
+});
+
+export const serverMod = pgTable("server_mod", {
+  id: uuid("id")
+    .primaryKey()
+    .default(sql`uuidv7()`),
+  serverId: uuid("server_id")
+    .notNull()
+    .references(() => server.id, { onDelete: "cascade" }),
+  modId: uuid("mod_id")
+    .notNull()
+    .references(() => mod.id, { onDelete: "cascade" }),
 });
