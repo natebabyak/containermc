@@ -5,7 +5,11 @@
   "exports": {
     ".": "./src/index.ts"
   },
+  "scripts": {
+    "push": "drizzle-kit push"
+  },
   "dependencies": {
+    "@types/node": "^26.2.0",
     "dotenv": "^17.4.2",
     "drizzle-orm": "^0.45.2",
     "pg": "^8.23.0"

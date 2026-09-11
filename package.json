@@ -7,7 +7,8 @@
     "lint": "biome lint --write .",
     "format": "biome format --write .",
     "check-types": "turbo run check-types",
-    "auth": "pnpm dlx auth@latest generate --output packages/db/src/auth-schema.ts --config apps/api/src/lib/auth.ts --yes"
+    "auth": "pnpm dlx auth@latest generate --output packages/db/src/auth-schema.ts --config apps/api/src/lib/auth.ts --yes",
+    "db": "pnpm --filter @workspace/db push"
   },
   "devDependencies": {
     "@biomejs/biome": "2.5.8",
