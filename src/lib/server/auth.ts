@@ -1,28 +1,60 @@
 import {
-	ORIGIN,
-	BETTER_AUTH_SECRET,
-	GITHUB_CLIENT_ID,
-	GITHUB_CLIENT_SECRET
-} from '$app/env/private';
+  BETTER_AUTH_SECRET,
+  BETTER_AUTH_URL,
+  DISCORD_CLIENT_ID,
+  DISCORD_CLIENT_SECRET,
+  GITHUB_CLIENT_ID,
+  GITHUB_CLIENT_SECRET,
+  STRIPE_SECRET_KEY,
+  STRIPE_WEBHOOK_SECRET,
+} from "$app/env/private";
+import { getRequestEvent } from "$app/server";
+import { drizzleAdapter } from "@better-auth/drizzle-adapter/relations-v2";
+import { stripe } from "@better-auth/stripe";
+import { betterAuth } from "better-auth/minimal";
+import { organization } from "better-auth/plugins";
+import { sveltekitCookies } from "better-auth/svelte-kit";
+import Stripe from "stripe";
 
-import { betterAuth } from 'better-auth/minimal';
-import { drizzleAdapter } from 'better-auth/adapters/drizzle';
-import { sveltekitCookies } from 'better-auth/svelte-kit';
-import { getRequestEvent } from '$app/server';
-import { db } from '#lib/server/db/index.ts';
+import * as schema from "#lib/server/db/auth-schema.ts";
+import { db } from "#lib/server/db/index.ts";
+
+const stripeClient = new Stripe(STRIPE_SECRET_KEY!, {
+  apiVersion: "2026-08-26.dahlia",
+});
 
 export const auth = betterAuth({
-	baseURL: ORIGIN,
-	secret: BETTER_AUTH_SECRET,
-	database: drizzleAdapter(db, { provider: 'pg' }),
-	emailAndPassword: { enabled: true },
-	socialProviders: {
-		github: {
-			clientId: GITHUB_CLIENT_ID,
-			clientSecret: GITHUB_CLIENT_SECRET
-		}
-	},
-	plugins: [
-		sveltekitCookies(getRequestEvent) // make sure this is the last plugin in the array
-	]
+  baseURL: BETTER_AUTH_URL,
+  secret: BETTER_AUTH_SECRET,
+  database: drizzleAdapter(db, {
+    provider: "pg",
+    schema,
+  }),
+  emailAndPassword: {
+    enabled: true,
+  },
+  socialProviders: {
+    discord: {
+      clientId: DISCORD_CLIENT_ID,
+      clientSecret: DISCORD_CLIENT_SECRET,
+    },
+    github: {
+      clientId: GITHUB_CLIENT_ID,
+      clientSecret: GITHUB_CLIENT_SECRET,
+    },
+  },
+  plugins: [
+    organization(),
+    stripe({
+      stripeClient,
+      stripeWebhookSecret: STRIPE_WEBHOOK_SECRET,
+      createCustomerOnSignUp: true,
+    }),
+    sveltekitCookies(getRequestEvent),
+  ],
+  advanced: {
+    database: {
+      joins: true,
+    },
+  },
 });

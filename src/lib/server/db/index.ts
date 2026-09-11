@@ -1,10 +1,12 @@
-import { drizzle } from 'drizzle-orm/neon-http';
-import { neon } from '@neondatabase/serverless';
-import * as schema from './schema';
-import { DATABASE_URL } from '$app/env/private';
+import { DATABASE_URL } from "$app/env/private";
+import { drizzle } from "drizzle-orm/node-postgres";
 
-if (!DATABASE_URL) throw new Error('DATABASE_URL is not set');
+import { authRelations } from "./auth-schema";
+import { relations } from "./relations";
 
-const client = neon(DATABASE_URL);
-
-export const db = drizzle(client, { schema });
+export const db = drizzle(DATABASE_URL, {
+  relations: {
+    ...relations,
+    ...authRelations,
+  },
+});
