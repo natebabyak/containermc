@@ -1,50 +1,127 @@
-# Turborepo Svelte starter
+# ContainerMC
 
-This Turborepo starter is maintained by the Turborepo core team
-on [GitHub](https://github.com/vercel/turborepo/tree/main/examples/with-svelte/packages)
-.
+Pay-as-you-go Minecraft server hosting — provision cloud infrastructure, manage servers, and meter usage from a single web application.
 
-## Using this example
+ContainerMC is an early-stage product that automates Minecraft server lifecycle management on AWS: users create organizations, deploy servers on demand, and pay only while instances are running. The project pairs a SvelteKit web app with AWS CDK infrastructure and usage-based billing.
 
-Run the following command:
+> **Status:** Actively under development.
 
-```sh
-npx create-turbo@latest -e with-svelte
+## Highlights
+
+- **Full-stack ownership** — SvelteKit app, PostgreSQL data model, auth, payments, and AWS provisioning in one codebase
+- **On-demand infrastructure** — EC2 instances provisioned per server start, with Route 53 DNS and SSM-driven world sync
+- **Usage-based billing** — Per-session cost tracking with Stripe Checkout for prepaid organization balance
+- **Multi-tenant organizations** — Team accounts with member management via Better Auth
+
+## Tech stack
+
+| Layer       | Technologies                                                                    |
+| ----------- | ------------------------------------------------------------------------------- |
+| Frontend    | Svelte 5, SvelteKit 2, Tailwind CSS, shadcn-svelte                              |
+| Runtime     | Bun                                                                             |
+| Data        | PostgreSQL, Drizzle ORM                                                         |
+| Auth        | Better Auth                                                                     |
+| Payments    | Stripe                                                                          |
+| Cloud       | AWS CDK, EC2, Route 53, SSM                                                     |
+| Storage     | Cloudflare R2                                                                   |
+| Game server | [itzg/docker-minecraft-server](https://github.com/itzg/docker-minecraft-server) |
+
+## Platform
+
+- User authentication with email/password and social providers
+- Organization creation and team membership
+- Server creation, start, and stop with AWS EC2 provisioning
+- Per-server DNS records via Route 53
+- World data persistence with Cloudflare R2
+- Session metering with hardware-tier hourly rates
+- Stripe Checkout for organization balance top-ups
+- AWS CDK stack for VPC, security groups, IAM, and SSM parameters
+
+## Architecture
+
+```mermaid
+flowchart TB
+    App["SvelteKit · Bun"]
+    DB[(PostgreSQL)]
+    Stripe[Stripe]
+    AWS[AWS APIs]
+    EC2[EC2 + Docker]
+    R2[Cloudflare R2]
+
+    App --> DB
+    App --> Stripe
+    App --> AWS
+    AWS --> EC2
+    EC2 --> R2
 ```
 
-## What's inside?
+Starting a server reads networking parameters from SSM, launches an EC2 instance, assigns a DNS record, and opens a billing session. Stopping syncs world files to R2, terminates the instance, removes DNS, and closes the session with a computed cost.
 
-This Turborepo includes the following packages/apps:
+## Project structure
 
-### Apps
+```
+containermc/
+├── web/          SvelteKit application
+├── cdk/          AWS CDK stack
+└── README.md
+```
 
-- `docs`: a [svelte-kit](https://kit.svelte.dev/) app
-- `web`: another [svelte-kit](https://kit.svelte.dev/) app
+## Getting started
 
-### Packages
+### Prerequisites
 
-#### `eslint-config`
+- [Bun](https://bun.sh)
+- Docker
+- Node.js (for CDK)
+- AWS CLI
+- Stripe account
+- Cloudflare R2 bucket
 
-`eslint` configurations (includes `eslint-plugin-svelte` and `eslint-config-prettier`)
+### Local web app
 
-#### `typescript-config`
+```sh
+cd web
+bun install
+docker compose up -d
+cp .env.example .env
+bun run db:push
+bun run dev
+```
 
-A package containing a custom `tsconfig` file.
+See [`web/README.md`](web/README.md) for additional detail.
 
-#### `ui`
+### AWS infrastructure
 
-A stub Svelte component library shared by both `web` and `docs` applications. The package supports Svelte components and
-runes in `.svelte.ts` files, which are not supported in the svelte-kit generated tsconfig.
+```sh
+cd cdk
+npm install
+export HOSTED_ZONE_ID=<your-route53-hosted-zone-id>
+npx cdk bootstrap
+npx cdk deploy
+```
 
-Please refer to the [packaging](https://svelte.dev/docs/kit/packaging) page of the svelte documentation for additional
-information about svelte component libraries.
+**Useful CDK commands:**
 
-Each package/app is 100% [TypeScript](https://www.typescriptlang.org/).
+```sh
+cdk synth
+cdk diff
+cdk destroy
+```
 
-### Utilities
+## Roadmap
 
-This Turborepo has some additional tools already setup for you:
+- Live server dashboard with console, logs, and performance metrics
+- Mod and plugin installation via Modrinth
+- Configurable auto-start and auto-stop
+- Backup restore and scheduling
 
-- [TypeScript](https://www.typescriptlang.org/) for static type checking
-- [ESLint](https://eslint.org/) for code linting
-- [Prettier](https://prettier.io) for code formatting
+## Acknowledgements
+
+ContainerMC builds on open-source projects including:
+
+- [Svelte](https://github.com/sveltejs/svelte) and [SvelteKit](https://github.com/sveltejs/kit)
+- [Better Auth](https://www.better-auth.com/)
+- [Drizzle ORM](https://orm.drizzle.team/)
+- [shadcn-svelte](https://www.shadcn-svelte.com/)
+- [itzg/docker-minecraft-server](https://github.com/itzg/docker-minecraft-server)
+- [AWS CDK](https://github.com/aws/aws-cdk)
