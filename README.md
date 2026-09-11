@@ -15,15 +15,15 @@ ContainerMC is an early-stage product that automates Minecraft server lifecycle 
 
 ## Tech stack
 
-| Layer | Technologies |
-| --- | --- |
-| Frontend | Svelte 5, SvelteKit 2, Tailwind CSS, shadcn-svelte |
-| Runtime | Bun |
-| Data | PostgreSQL, Drizzle ORM |
-| Auth | Better Auth |
-| Payments | Stripe |
-| Cloud | AWS CDK, EC2, Route 53, SSM |
-| Storage | Cloudflare R2 |
+| Layer       | Technologies                                                                    |
+| ----------- | ------------------------------------------------------------------------------- |
+| Frontend    | Svelte 5, SvelteKit 2, Tailwind CSS, shadcn-svelte                              |
+| Runtime     | Bun                                                                             |
+| Data        | PostgreSQL, Drizzle ORM                                                         |
+| Auth        | Better Auth                                                                     |
+| Payments    | Stripe                                                                          |
+| Cloud       | AWS CDK, EC2, Route 53, SSM                                                     |
+| Storage     | Cloudflare R2                                                                   |
 | Game server | [itzg/docker-minecraft-server](https://github.com/itzg/docker-minecraft-server) |
 
 ## Platform
