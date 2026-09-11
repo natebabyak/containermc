@@ -2,13 +2,14 @@
   import "./layout.css";
   import { ModeWatcher } from "mode-watcher";
 
+  import favicon from "#lib/assets/favicon.svg?url";
   import * as Tooltip from "#lib/components/ui/tooltip/index.ts";
 
   let { children } = $props();
 </script>
 
 <svelte:head>
-  <link rel="icon" href="/favicon.svg" />
+  <link rel="icon" href={favicon} />
 </svelte:head>
 
 <ModeWatcher />
