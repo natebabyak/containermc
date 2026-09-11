@@ -13,6 +13,7 @@ import { drizzleAdapter } from "@better-auth/drizzle-adapter/relations-v2";
 import { stripe } from "@better-auth/stripe";
 import { betterAuth } from "better-auth/minimal";
 import { organization } from "better-auth/plugins";
+import { emailOTP } from "better-auth/plugins";
 import { sveltekitCookies } from "better-auth/svelte-kit";
 import Stripe from "stripe";
 
@@ -32,6 +33,7 @@ export const auth = betterAuth({
   }),
   emailAndPassword: {
     enabled: true,
+    requireEmailVerification: true,
   },
   socialProviders: {
     discord: {
@@ -44,6 +46,13 @@ export const auth = betterAuth({
     },
   },
   plugins: [
+    emailOTP({
+      sendVerificationOnSignUp: true,
+      async sendVerificationOTP({ email, otp, type }) {
+        // Replace this with the project email provider when one is configured.
+        console.info(`[auth] ${type} OTP for ${email}: ${otp}`);
+      },
+    }),
     organization(),
     stripe({
       stripeClient,
