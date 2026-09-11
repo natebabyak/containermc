@@ -5,6 +5,7 @@ import {
   DISCORD_CLIENT_SECRET,
   GITHUB_CLIENT_ID,
   GITHUB_CLIENT_SECRET,
+  RESEND_API_KEY,
   STRIPE_SECRET_KEY,
   STRIPE_WEBHOOK_SECRET,
 } from "$app/env/private";
@@ -15,10 +16,13 @@ import { betterAuth } from "better-auth/minimal";
 import { organization } from "better-auth/plugins";
 import { emailOTP } from "better-auth/plugins";
 import { sveltekitCookies } from "better-auth/svelte-kit";
+import { Resend } from "resend";
 import Stripe from "stripe";
 
 import * as schema from "#lib/server/db/auth-schema.ts";
 import { db } from "#lib/server/db/index.ts";
+
+const resend = new Resend(RESEND_API_KEY);
 
 const stripeClient = new Stripe(STRIPE_SECRET_KEY!, {
   apiVersion: "2026-08-26.dahlia",
@@ -47,10 +51,29 @@ export const auth = betterAuth({
   },
   plugins: [
     emailOTP({
-      sendVerificationOnSignUp: true,
       async sendVerificationOTP({ email, otp, type }) {
-        // Replace this with the project email provider when one is configured.
-        console.info(`[auth] ${type} OTP for ${email}: ${otp}`);
+        if (type === "sign-in") {
+          await resend.emails.send({
+            from: "noreply@containermc.com",
+            to: email,
+            subject: "ContainerMC Sign-in OTP",
+            text: `Your sign-in OTP is ${otp}`,
+          });
+        } else if (type === "email-verification") {
+          await resend.emails.send({
+            from: "noreply@containermc.com",
+            to: email,
+            subject: "ContainerMC Email Verification OTP",
+            text: `Your email verification OTP is ${otp}`,
+          });
+        } else {
+          await resend.emails.send({
+            from: "noreply@containermc.com",
+            to: email,
+            subject: "ContainerMC Password Reset OTP",
+            text: `Your password reset OTP is ${otp}`,
+          });
+        }
       },
     }),
     organization(),

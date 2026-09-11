@@ -22,17 +22,8 @@ export const variables = defineEnvVars({
   GITHUB_CLIENT_SECRET: {
     description: "GitHub OAuth client secret",
   },
-  SMTP_HOST: {
-    description: "SMTP host",
-  },
-  SMTP_PORT: {
-    description: "SMTP port",
-  },
-  SMTP_USERNAME: {
-    description: "SMTP username",
-  },
-  SMTP_PASSWORD: {
-    description: "SMTP password",
+  RESEND_API_KEY: {
+    description: "Resend API key",
   },
   STRIPE_SECRET_KEY: {
     description: "Stripe secret key",
