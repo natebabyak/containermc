@@ -1,5 +1,6 @@
 <script lang="ts">
   import { goto } from "$app/navigation";
+  import { resolve } from "$app/paths";
   import SiDiscord from "@icons-pack/svelte-simple-icons/icons/SiDiscord";
   import SiGithub from "@icons-pack/svelte-simple-icons/icons/SiGithub";
   import { createForm } from "@tanstack/svelte-form";
@@ -18,18 +19,6 @@
   });
 
   let errorMessage = $state("");
-  let isSocialSigningIn = $state(false);
-
-  async function signInWithProvider(provider: "discord" | "github") {
-    errorMessage = "";
-    isSocialSigningIn = true;
-    const { error } = await authClient.signIn.social({
-      provider,
-      callbackURL: `${window.location.origin}/`,
-    });
-    isSocialSigningIn = false;
-    if (error) errorMessage = error.message ?? "Unable to sign in";
-  }
 
   const form = createForm(() => ({
     defaultValues: { email: "", password: "" },
@@ -64,21 +53,27 @@
     <Card.Content>
       <div class="flex flex-col gap-2">
         <Button
+          onclick={async () =>
+            await authClient.signIn.social({
+              provider: "discord",
+              callbackURL: resolve("/dashboard"),
+            })}
           type="button"
           variant="outline"
           class="w-full"
-          disabled={isSocialSigningIn}
-          onclick={() => signInWithProvider("discord")}
         >
           <SiDiscord />
           Continue with Discord
         </Button>
         <Button
+          onclick={async () =>
+            await authClient.signIn.social({
+              provider: "github",
+              callbackURL: resolve("/dashboard"),
+            })}
           type="button"
           variant="outline"
           class="w-full"
-          disabled={isSocialSigningIn}
-          onclick={() => signInWithProvider("github")}
         >
           <SiGithub />
           Continue with GitHub</Button

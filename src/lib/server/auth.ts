@@ -12,7 +12,6 @@ import {
 import { getRequestEvent } from "$app/server";
 import { drizzleAdapter } from "@better-auth/drizzle-adapter/relations-v2";
 import { stripe } from "@better-auth/stripe";
-import slugify from "@sindresorhus/slugify";
 import { betterAuth } from "better-auth/minimal";
 import { organization } from "better-auth/plugins";
 import { emailOTP } from "better-auth/plugins";
@@ -96,15 +95,40 @@ export const auth = betterAuth({
     user: {
       create: {
         after: async (user) => {
-          const slug = slugify(`${user.name}-${nanoid(4)}`);
+          const organizationId = `personal-${user.id}`;
 
-          await auth.api.createOrganization({
-            body: {
-              name: "Personal Organization",
-              slug,
-              keepCurrentActiveOrganization: false,
+          await db.insert(schema.organization).values({
+            id: organizationId,
+            name: `${user.name}'s Personal Org`,
+            slug: organizationId,
+            createdAt: new Date(),
+          });
+
+          await db.insert(schema.member).values({
+            id: nanoid(),
+            organizationId,
+            userId: user.id,
+            role: "owner",
+            createdAt: new Date(),
+          });
+        },
+      },
+    },
+    session: {
+      create: {
+        before: async (session) => {
+          const org = await db.query.organization.findFirst({
+            where: {
+              id: `personal-${session.userId}`,
             },
           });
+
+          return {
+            data: {
+              ...session,
+              activeOrganizationId: org?.id,
+            },
+          };
         },
       },
     },
