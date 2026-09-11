@@ -5,6 +5,10 @@
 {
   "languages": {
     "CSS": {
+      "code_actions_on_format": {
+        "source.fixAll.oxlint": true,
+        "source.organizeImports.oxlint": true
+      },
       "format_on_save": "on",
       "prettier": {
         "allowed": false
@@ -16,6 +20,10 @@
       }
     },
     "JSON": {
+      "code_actions_on_format": {
+        "source.fixAll.oxlint": true,
+        "source.organizeImports.oxlint": true
+      },
       "format_on_save": "on",
       "prettier": {
         "allowed": false
@@ -27,6 +35,10 @@
       }
     },
     "JSONC": {
+      "code_actions_on_format": {
+        "source.fixAll.oxlint": true,
+        "source.organizeImports.oxlint": true
+      },
       "format_on_save": "on",
       "prettier": {
         "allowed": false
@@ -38,6 +50,10 @@
       }
     },
     "Svelte": {
+      "code_actions_on_format": {
+        "source.fixAll.oxlint": true,
+        "source.organizeImports.oxlint": true
+      },
       "format_on_save": "on",
       "prettier": {
         "allowed": false
@@ -49,6 +65,10 @@
       }
     },
     "TypeScript": {
+      "code_actions_on_format": {
+        "source.fixAll.oxlint": true,
+        "source.organizeImports.oxlint": true
+      },
       "format_on_save": "on",
       "prettier": {
         "allowed": false

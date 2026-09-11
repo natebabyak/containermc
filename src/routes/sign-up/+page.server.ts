@@ -1,0 +1,28 @@
+import { resolve } from "$app/paths";
+import { redirect } from "@sveltejs/kit";
+
+import { auth } from "#lib/server/auth.ts";
+
+import type { PageServerLoad } from "./$types";
+
+export const load: PageServerLoad = async ({ locals, request }) => {
+  if (locals.user) {
+    const organizations = await auth.api.listOrganizations({
+      headers: request.headers,
+    });
+
+    await auth.api.setActiveOrganization({
+      body: {
+        organizationId: organizations[0].id,
+      },
+      headers: request.headers,
+    });
+
+    redirect(
+      303,
+      resolve("/[organizationSlug]", {
+        organizationSlug: organizations[0].slug,
+      }),
+    );
+  }
+};

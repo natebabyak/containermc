@@ -1,6 +1,6 @@
 {
   "$schema": "./node_modules/oxfmt/configuration_schema.json",
-  "ignorePatterns": [],
+  "ignorePatterns": [".agents", ".svelte-kit", ".vercel", "node_modules", "bun.lock"],
   "sortImports": true,
   "sortTailwindcss": true,
   "svelte": true
