@@ -8,12 +8,13 @@ import {
   RESEND_API_KEY,
   STRIPE_SECRET_KEY,
   STRIPE_WEBHOOK_SECRET,
+  TURNSTILE_SECRET_KEY,
 } from "$app/env/private";
 import { getRequestEvent } from "$app/server";
 import { drizzleAdapter } from "@better-auth/drizzle-adapter/relations-v2";
 import { stripe } from "@better-auth/stripe";
 import { betterAuth } from "better-auth/minimal";
-import { organization } from "better-auth/plugins";
+import { captcha, organization } from "better-auth/plugins";
 import { emailOTP } from "better-auth/plugins";
 import { sveltekitCookies } from "better-auth/svelte-kit";
 import { nanoid } from "nanoid";
@@ -37,10 +38,6 @@ export const auth = betterAuth({
     provider: "pg",
     schema,
   }),
-  emailAndPassword: {
-    enabled: true,
-    requireEmailVerification: true,
-  },
   socialProviders: {
     discord: {
       clientId: DISCORD_CLIENT_ID,
@@ -52,6 +49,11 @@ export const auth = betterAuth({
     },
   },
   plugins: [
+    captcha({
+      provider: "cloudflare-turnstile",
+      secretKey: TURNSTILE_SECRET_KEY,
+      endpoints: ["/email-otp/send-verification-otp"],
+    }),
     emailOTP({
       async sendVerificationOTP({ email, otp, type }) {
         if (type === "sign-in") {

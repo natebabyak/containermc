@@ -9,6 +9,9 @@
   <h1 class="text-center font-serif text-3xl tracking-tighter">
     Pay only for what you use, by the second
   </h1>
+  <p class="text-muted-foreground text-center text-sm text-balance">
+    Don't pay while your server isn't running.
+  </p>
   <ul class="grid grid-cols-3 gap-4 p-4">
     <li>
       <Card.Root>
@@ -52,5 +55,8 @@
         </Card.Content>
       </Card.Root>
     </li>
+  </ul>
+  <ul>
+    <li></li>
   </ul>
 </main>

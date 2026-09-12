@@ -8,15 +8,17 @@
 
 <Header />
 <main>
-  <h1 class="text-center font-serif text-4xl tracking-tighter text-balance">
-    Deploy Minecraft servers anywhere in minutes
-  </h1>
-  <p></p>
-  <div>
-    <Button href={resolve("/sign-up")} size="lg">
-      Get Started
-      <ArrowRightIcon />
-    </Button>
-    <Button href={resolve("/pricing")} variant="outline" size="lg">Pricing</Button>
-  </div>
+  <section class="flex flex-col items-center gap-4">
+    <h1 class="text-center font-serif text-4xl tracking-tighter text-balance">
+      Deploy Minecraft servers anywhere in minutes
+    </h1>
+    <p></p>
+    <div>
+      <Button href={resolve("/auth")} size="lg">
+        Get Started
+        <ArrowRightIcon />
+      </Button>
+      <Button href={resolve("/pricing")} variant="outline" size="lg">Pricing</Button>
+    </div>
+  </section>
 </main>

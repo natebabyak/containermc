@@ -31,4 +31,11 @@ export const variables = defineEnvVars({
   STRIPE_WEBHOOK_SECRET: {
     description: "Stripe webhook secret",
   },
+  TURNSTILE_SITE_KEY: {
+    public: true,
+    description: "Cloudflare Turnstile site key",
+  },
+  TURNSTILE_SECRET_KEY: {
+    description: "Cloudflare Turnstile secret key",
+  },
 });

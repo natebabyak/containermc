@@ -36,8 +36,7 @@
     </Button>
   {:else}
     <div class="flex gap-2">
-      <Button href={resolve("/sign-in")} variant="outline">Sign in</Button>
-      <Button href={resolve("/sign-up")}>Sign up</Button>
+      <Button href={resolve("/auth")}>Get Started</Button>
     </div>
   {/if}
 </header>
