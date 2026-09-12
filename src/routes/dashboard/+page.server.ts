@@ -7,7 +7,7 @@ import type { PageServerLoad } from "./$types";
 
 export const load: PageServerLoad = async ({ locals, request }) => {
   if (!locals.session) {
-    redirect(303, resolve("/sign-up"));
+    redirect(303, resolve("/auth"));
   }
 
   const organizations = await auth.api.listOrganizations({

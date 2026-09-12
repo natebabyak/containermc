@@ -7,7 +7,7 @@ import type { LayoutServerLoad } from "./$types";
 
 export const load: LayoutServerLoad = async ({ locals, params, request }) => {
   if (!locals.user) {
-    redirect(303, resolve("/sign-up"));
+    redirect(303, resolve("/auth"));
   }
 
   const organizations = await auth.api.listOrganizations({

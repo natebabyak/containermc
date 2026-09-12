@@ -79,4 +79,4 @@ export const serverProperties = z.object({
   "white-list": z.boolean().default(false),
 });
 
-export type ServerProperties = z.infer<typeof serverPropertiesSchema>;
+export type ServerProperties = z.infer<typeof serverProperties>;

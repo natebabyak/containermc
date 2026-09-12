@@ -5,11 +5,11 @@
 
   import type { PageProps } from "./$types";
 
-  let { servers }: PageProps = $props();
+  let { data }: PageProps = $props();
 </script>
 
 <main class="space-y-4 p-4">
-  {#each [] as server}
+  {#each data.servers as server}
     <Card.Root></Card.Root>
   {:else}
     <Empty.Root class="border">
