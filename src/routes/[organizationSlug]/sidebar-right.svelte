@@ -10,7 +10,7 @@
   import * as Sidebar from "#lib/components/ui/sidebar/index.ts";
 </script>
 
-<Sidebar.Root collapsible="none" class="sticky top-0 h-svh border-s">
+<Sidebar.Root collapsible="none" class="sticky top-0 hidden h-svh border-s">
   <Sidebar.Header>
     <Sidebar.Menu>
       <Sidebar.MenuItem>

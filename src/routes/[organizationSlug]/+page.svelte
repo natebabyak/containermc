@@ -9,6 +9,7 @@
 </script>
 
 <main class="space-y-4 p-4">
+  <h1>{data.organization.name}</h1>
   {#each data.servers as server}
     <Card.Root></Card.Root>
   {:else}

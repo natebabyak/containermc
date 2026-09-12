@@ -10,7 +10,7 @@
 <main>
   <section class="flex flex-col items-center gap-4">
     <h1 class="text-center font-serif text-4xl tracking-tighter text-balance">
-      Deploy Minecraft servers anywhere in minutes
+      Deploy and manage Minecraft servers locally in minutes
     </h1>
     <p></p>
     <div>

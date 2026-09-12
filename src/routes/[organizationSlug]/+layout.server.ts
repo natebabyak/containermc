@@ -19,4 +19,8 @@ export const load: LayoutServerLoad = async ({ locals, params, request }) => {
   if (!organization) {
     redirect(303, resolve("/"));
   }
+
+  return {
+    organization,
+  };
 };
