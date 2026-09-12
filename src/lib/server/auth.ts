@@ -52,7 +52,7 @@ export const auth = betterAuth({
     captcha({
       provider: "cloudflare-turnstile",
       secretKey: CLOUDFLARE_SECRET_KEY,
-      endpoints: ["/email-otp/send-verification-otp"],
+      endpoints: ["/email-otp/send-verification-otp", "/sign-in/email-otp"],
     }),
     emailOTP({
       async sendVerificationOTP({ email, otp, type }) {
