@@ -18,7 +18,8 @@
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:studio": "drizzle-kit studio",
-    "auth:schema": "auth generate --config src/lib/server/auth.ts --output src/lib/server/db/auth-schema.ts --yes"
+    "auth:schema": "auth generate --config src/lib/server/auth.ts --output src/lib/server/db/auth-schema.ts --yes",
+    "modrinth": "openapi-typescript https://docs.modrinth.com/openapi.yaml -o src/lib/modrinth/schema.d.ts"
   },
   "dependencies": {
     "@better-auth/drizzle-adapter": "^1.7.4",
@@ -30,6 +31,7 @@
     "drizzle-orm": "^1.0.0-rc.4",
     "mode-watcher": "^1.1.0",
     "nanoid": "^6.0.1",
+    "openapi-fetch": "^0.17.0",
     "pg": "^8.23.0",
     "resend": "^6.27.0",
     "stripe": "^22.6.2",
@@ -49,6 +51,7 @@
     "clsx": "^2.1.1",
     "dotenv": "^17.4.2",
     "drizzle-kit": "1.0.0-rc.4",
+    "openapi-typescript": "^7.13.0",
     "oxfmt": "^0.67.0",
     "oxlint": "^1.82.0",
     "phosphor-svelte": "^3.1.0",
