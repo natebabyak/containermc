@@ -1,6 +1,7 @@
 import {
   BETTER_AUTH_SECRET,
   BETTER_AUTH_URL,
+  CLOUDFLARE_SECRET_KEY,
   DISCORD_CLIENT_ID,
   DISCORD_CLIENT_SECRET,
   GITHUB_CLIENT_ID,
@@ -8,7 +9,6 @@ import {
   RESEND_API_KEY,
   STRIPE_SECRET_KEY,
   STRIPE_WEBHOOK_SECRET,
-  TURNSTILE_SECRET_KEY,
 } from "$app/env/private";
 import { getRequestEvent } from "$app/server";
 import { drizzleAdapter } from "@better-auth/drizzle-adapter/relations-v2";
@@ -51,7 +51,7 @@ export const auth = betterAuth({
   plugins: [
     captcha({
       provider: "cloudflare-turnstile",
-      secretKey: TURNSTILE_SECRET_KEY,
+      secretKey: CLOUDFLARE_SECRET_KEY,
       endpoints: ["/email-otp/send-verification-otp"],
     }),
     emailOTP({

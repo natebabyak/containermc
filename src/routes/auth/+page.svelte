@@ -1,11 +1,13 @@
 <script lang="ts">
-  import { TURNSTILE_SITE_KEY } from "$app/env/public";
+  import { CLOUDFLARE_SITE_KEY } from "$app/env/public";
   import { resolve } from "$app/paths";
   import { SiDiscord, SiGithub } from "@icons-pack/svelte-simple-icons";
   import { createForm } from "@tanstack/svelte-form";
+  import { REGEXP_ONLY_DIGITS } from "bits-ui";
   import { mode } from "mode-watcher";
+  import ArrowLeftIcon from "phosphor-svelte/lib/ArrowLeftIcon";
   import { Turnstile } from "svelte-turnstile";
-  import { z } from "zod";
+  import z from "zod";
 
   import { authClient } from "#lib/auth-client.ts";
   import { Button } from "#lib/components/ui/button/index.ts";
@@ -15,7 +17,7 @@
   import { Input } from "#lib/components/ui/input/index.ts";
   import { Spinner } from "#lib/components/ui/spinner/index.ts";
 
-  let step = $state<"email" | "verification" | "otp">("email");
+  let step = $state<"email" | "verification" | "otp">("otp");
 
   const emailForm = createForm(() => ({
     defaultValues: {
@@ -26,7 +28,7 @@
         email: z.email("Enter a valid email address"),
       }),
     },
-    onSubmit: async ({ value }) => {
+    onSubmit: async () => {
       step = "verification";
     },
   }));
@@ -61,7 +63,7 @@
     },
     validators: {
       onSubmit: z.object({
-        otp: z.string(),
+        otp: z.string().regex(/^\d{6}$/),
       }),
     },
     onSubmit: async ({ value }) => {
@@ -82,7 +84,9 @@
     {#if step === "email"}
       <Card.Header>
         <Card.Title>Get Started</Card.Title>
-        <Card.Description>Create a new account or sign in</Card.Description>
+        <Card.Description class="text-pretty">
+          Create a new account or sign in to your existing account
+        </Card.Description>
       </Card.Header>
       <Card.Content>
         <Field.Group>
@@ -128,6 +132,7 @@
                       onblur={field.handleBlur}
                       oninput={(e) => field.handleChange(e.currentTarget.value)}
                       placeholder="you@example.com"
+                      spellcheck="false"
                       type="email"
                       value={field.state.value}
                     />
@@ -170,6 +175,9 @@
         </span>
       </Card.Footer>
     {:else if step === "verification"}
+      <Card.Header>
+        <Card.Title>Verify you are a human</Card.Title>
+      </Card.Header>
       <Card.Content>
         <form
           onsubmit={(e) => {
@@ -181,19 +189,30 @@
           <verificationForm.Field name="cloudflareTurnstileToken">
             {#snippet children(field)}
               <Turnstile
-                siteKey={TURNSTILE_SITE_KEY}
+                siteKey={CLOUDFLARE_SITE_KEY}
                 theme={mode.current ?? "auto"}
                 size="flexible"
-                on:callback={(e) => field.handleChange(e.detail.token)}
+                on:callback={(e) => {
+                  field.handleChange(e.detail.token);
+                  verificationForm.handleSubmit();
+                }}
               />
             {/snippet}
           </verificationForm.Field>
         </form>
       </Card.Content>
+      <Card.Footer>
+        <Button onclick={() => (step = "email")} variant="ghost">
+          <ArrowLeftIcon />
+          Back to email
+        </Button>
+      </Card.Footer>
     {:else}
       <Card.Header>
         <Card.Title>Check your email</Card.Title>
-        <Card.Description>We sent an email to {emailForm.state.values.email}</Card.Description>
+        <Card.Description>
+          We sent a one-time password to {emailForm.state.values.email}
+        </Card.Description>
       </Card.Header>
       <Card.Content>
         <form
@@ -206,8 +225,24 @@
           <otpForm.Field name="otp">
             {#snippet children(field)}
               <Field.Field data-invalid={field.state.meta.errors.length > 0}>
-                <Field.Label for="otp">Verification code</Field.Label>
-                <InputOTP.Root id="otp" maxlength={6}>
+                <Field.Label for="otp">One-Time Password</Field.Label>
+                <InputOTP.Root
+                  autocomplete="one-time-code"
+                  autocorrect="off"
+                  id="otp"
+                  maxlength={6}
+                  onblur={field.handleBlur}
+                  oninput={(e) => {
+                    field.handleChange(e.currentTarget.value);
+                    if (e.currentTarget.value.length === 6) {
+                      otpForm.handleSubmit();
+                    }
+                  }}
+                  pattern={REGEXP_ONLY_DIGITS}
+                  spellcheck="false"
+                  type="text"
+                  value={field.state.value}
+                >
                   {#snippet children({ cells })}
                     <InputOTP.Group>
                       {#each cells.slice(0, 3) as cell}
@@ -230,6 +265,12 @@
           </otpForm.Field>
         </form>
       </Card.Content>
+      <Card.Footer>
+        <Button onclick={() => (step = "email")} variant="ghost">
+          <ArrowLeftIcon />
+          Back to email
+        </Button>
+      </Card.Footer>
     {/if}
   </Card.Root>
 </main>
