@@ -1,0 +1,43 @@
+{
+  "Command": null,
+  "ContainerPort": 25565,
+  "Name": "containermc-01ARZ3NDEKTSV4RRFFQ69G5FAV",
+  "Image": "itzg/minecraft-server:java21-alpine@sha256:6a254535fa6768ae72242df1841344bdeda088838b511ea30373709dff08f6c8",
+  "Volume": "containermc-01ARZ3NDEKTSV4RRFFQ69G5FAV-data",
+  "Env": [
+    "DIFFICULTY=normal",
+    "ENABLE_RCON=TRUE",
+    "ENABLE_WHITELIST=false",
+    "EULA=TRUE",
+    "MEMORY=2048M",
+    "MOTD=A ContainerMC server",
+    "ONLINE_MODE=TRUE",
+    "OPS=",
+    "TYPE=VANILLA",
+    "VERSION=1.21.1",
+    "WHITELIST="
+  ],
+  "Labels": {
+    "app.server-id": "01ARZ3NDEKTSV4RRFFQ69G5FAV",
+    "app.spec": "{\"apiVersion\":\"v1alpha1\",\"id\":\"01ARZ3NDEKTSV4RRFFQ69G5FAV\",\"name\":\"My server\",\"loader\":\"VANILLA\",\"version\":\"1.21.1\",\"resources\":{\"heapMiB\":2048,\"memoryMiB\":3072},\"network\":{\"port\":25565,\"lan\":false,\"share\":true},\"properties\":{\"difficulty\":\"normal\",\"motd\":\"A ContainerMC server\",\"whitelist\":false},\"restart\":\"unless-stopped\",\"eula\":true}",
+    "app.spec-hash": "b6e89a1397b5d5895220f165c28468d39a8fa9d3e56122735559e3124134ec00",
+    "app.version": "test"
+  },
+  "HostIP": "127.0.0.1",
+  "HostPort": 25565,
+  "MemoryBytes": 3221225472,
+  "NanoCPUs": 0,
+  "PIDs": 512,
+  "Restart": "unless-stopped",
+  "CapDrop": [
+    "AUDIT_WRITE",
+    "FSETID",
+    "KILL",
+    "MKNOD",
+    "NET_BIND_SERVICE",
+    "NET_RAW",
+    "SETFCAP",
+    "SETPCAP",
+    "SYS_CHROOT"
+  ]
+}

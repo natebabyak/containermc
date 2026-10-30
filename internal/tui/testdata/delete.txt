@@ -1,0 +1,24 @@
+                                                                                
+  ▣ ContainerMC                                                  Delete server  
+                                                                                
+  ╭──────────────────────────────────────────────────────────────────────────╮  
+  │  Delete My server?                                                       │  
+  │                                                                          │  
+  │  k  Remove the server and keep its world volume.                         │  
+  │  d  Remove the server and permanently delete its world.                  │  
+  │                                                                          │  
+  │  Press Esc to go back.                                                   │  
+  │                                                                          │  
+  │                                                                          │  
+  │                                                                          │  
+  │                                                                          │  
+  │                                                                          │  
+  │                                                                          │  
+  │                                                                          │  
+  │                                                                          │  
+  │                                                                          │  
+  │                                                                          │  
+  ╰──────────────────────────────────────────────────────────────────────────╯  
+  k keep world   d delete world   esc cancel                                    
+                                                                                
+                                                                                

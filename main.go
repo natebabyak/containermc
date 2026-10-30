@@ -2,116 +2,64 @@ package main
 
 import (
 	"context"
+	"flag"
 	"fmt"
-	"log"
-	"net/netip"
+	"log/slog"
 	"os"
+	"os/signal"
+	"path/filepath"
 
-	"github.com/containerd/errdefs"
-	"github.com/moby/moby/api/pkg/stdcopy"
-	"github.com/moby/moby/api/types/container"
-	"github.com/moby/moby/api/types/mount"
-	"github.com/moby/moby/api/types/network"
-	"github.com/moby/moby/client"
+	"containermc/internal/core"
+	"containermc/internal/network"
+	"containermc/internal/platform"
+	"containermc/internal/runtime/docker"
+	"containermc/internal/store"
+	"containermc/internal/tui"
 )
+
+var version = "dev"
 
 func main() {
 	if err := run(); err != nil {
-		log.Fatal(err)
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
 	}
 }
-
 func run() error {
-	ctx := context.Background()
-
-	cli, err := client.New(client.FromEnv)
+	showVersion := flag.Bool("version", false, "print version")
+	flag.Parse()
+	if *showVersion {
+		fmt.Println(version)
+		return nil
+	}
+	if flag.NArg() != 0 {
+		return fmt.Errorf("run ContainerMC without subcommands")
+	}
+	dir, err := platform.DataDir()
 	if err != nil {
 		return err
 	}
-	defer cli.Close()
-
-	const name = "mc-survival"
-	const image = "itzg/minecraft-server:latest"
-
-	existing, err := cli.ContainerInspect(ctx, name, client.ContainerInspectOptions{})
-	switch {
-	case err == nil:
-		fmt.Println("Using existing server:", existing.Container.ID)
-
-	case errdefs.IsNotFound(err):
-		fmt.Println("Pulling Minecraft server image...")
-
-		pull, err := cli.ImagePull(ctx, image, client.ImagePullOptions{})
-		if err != nil {
-			return err
-		}
-		err = pull.Wait(ctx)
-		pull.Close()
-		if err != nil {
-			return err
-		}
-
-		_, err = cli.VolumeCreate(ctx, client.VolumeCreateOptions{
-			Name: name + "-data",
-		})
-		if err != nil {
-			return err
-		}
-
-		port := network.MustParsePort("25565/tcp")
-
-		_, err = cli.ContainerCreate(ctx, client.ContainerCreateOptions{
-			Name: name,
-			Config: &container.Config{
-				Image: image,
-				Env: []string{
-					"EULA=TRUE", // Set only if you accept Minecraft's EULA.
-					"MEMORY=2G",
-					"VERSION=1.21.1",
-				},
-			},
-			HostConfig: &container.HostConfig{
-				Mounts: []mount.Mount{
-					{
-						Type:   mount.TypeVolume,
-						Source: name + "-data",
-						Target: "/data",
-					},
-				},
-				PortBindings: network.PortMap{
-					port: {
-						{
-							HostIP:   netip.MustParseAddr("127.0.0.1"),
-							HostPort: "25565",
-						},
-					},
-				},
-			},
-		})
-		if err != nil {
-			return err
-		}
-
-	default:
-		return err
-	}
-
-	if _, err := cli.ContainerStart(ctx, name, client.ContainerStartOptions{}); err != nil {
-		return err
-	}
-
-	logs, err := cli.ContainerLogs(ctx, name, client.ContainerLogsOptions{
-		ShowStdout: true,
-		ShowStderr: true,
-		Follow:     true,
-		Tail:       "50",
-	})
+	f, err := os.OpenFile(filepath.Join(dir, "app.log"), os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0600)
 	if err != nil {
 		return err
 	}
-	defer logs.Close()
-
-	fmt.Println("Once ready, join localhost:25565")
-	_, err = stdcopy.StdCopy(os.Stdout, os.Stderr, logs)
-	return err
+	defer f.Close()
+	slog.SetDefault(slog.New(slog.NewJSONHandler(f, nil)))
+	st, err := store.Open(filepath.Join(dir, "containermc.db"))
+	if err != nil {
+		return err
+	}
+	defer st.Close()
+	rt, err := docker.New(platform.EngineHost())
+	if err != nil {
+		return err
+	}
+	defer rt.Close()
+	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
+	defer cancel()
+	svc := core.New(rt, st, network.Allocator{Store: st}, platform.FileLock{Path: filepath.Join(dir, "operation.lock")}, dir, version)
+	watchDone := make(chan struct{})
+	go func() { svc.Watch(ctx); close(watchDone) }()
+	defer func() { cancel(); <-watchDone }()
+	return tui.Run(ctx, svc)
 }

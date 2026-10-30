@@ -1,0 +1,24 @@
+                                                                                
+  ▣ ContainerMC                                                        Servers  
+                                                                                
+  ╭──────────────────────────────────────────────────────────────────────────╮  
+  │  Your servers  1 total                                                   │  
+  │                                                                          │  
+  │   SERVER                        VERSION    STATE         PORT            │  
+  │   My server                     1.21.1     running       25565           │  
+  │                                                                          │  
+  │                                                                          │  
+  │                                                                          │  
+  │                                                                          │  
+  │                                                                          │  
+  │                                                                          │  
+  │  Servers keep running when you close ContainerMC.                        │  
+  │                                                                          │  
+  │                                                                          │  
+  │                                                                          │  
+  │                                                                          │  
+  │                                                                          │  
+  ╰──────────────────────────────────────────────────────────────────────────╯  
+  n new   enter open   c console   p connection   q quit                        
+                                                                                
+                                                                                

@@ -1,0 +1,1 @@
+CREATE TABLE IF NOT EXISTS exposure (server_id TEXT PRIMARY KEY, state BLOB NOT NULL);

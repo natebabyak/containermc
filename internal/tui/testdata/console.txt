@@ -1,0 +1,24 @@
+                                                                                
+  ▣ ContainerMC                                                        Console  
+                                                                                
+  ╭──────────────────────────────────────────────────────────────────────────╮  
+  │  My server  ● running  following                                         │  
+  │                                                                          │  
+  │  [INFO] Server ready                                                     │  
+  │  [WARN] Slow tick                                                        │  
+  │                                                                          │  
+  │                                                                          │  
+  │                                                                          │  
+  │                                                                          │  
+  │                                                                          │  
+  │                                                                          │  
+  │                                                                          │  
+  │  > Type a command, e.g. list or say hi                                   │  
+  │                                                                          │  
+  │                                                                          │  
+  │                                                                          │  
+  │                                                                          │  
+  ╰──────────────────────────────────────────────────────────────────────────╯  
+  enter send   ctrl+f follow   ctrl+s filter   esc back                         
+                                                                                
+                                                                                

@@ -1,0 +1,24 @@
+                                                                                
+  ▣ ContainerMC                                                     New server  
+                                                                                
+  ╭──────────────────────────────────────────────────────────────────────────╮  
+  │  New server                                                              │  
+  │  A name, a version, and you're ready to play.                            │  
+  │                                                                          │  
+  │  Server name                                                             │  
+  │  › My server                                                             │  
+  │                                                                          │  
+  │  Minecraft version                                                       │  
+  │  › 1.21.1                                                                │  
+  │                                                                          │  
+  │  Vanilla · 2 GiB memory · automatic port · local play                    │  
+  │                                                                          │  
+  │    ○ I accept Minecraft's EULA                                           │  
+  │    https://aka.ms/MinecraftEULA                                          │  
+  │                                                                          │  
+  │    Create server                                                         │  
+  │                                                                          │  
+  ╰──────────────────────────────────────────────────────────────────────────╯  
+  tab next   space toggle   ctrl+s create   esc back                            
+                                                                                
+                                                                                
