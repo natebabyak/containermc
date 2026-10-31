@@ -65,11 +65,6 @@ func TestCreateFromSingleForm(t *testing.T) {
 		t.Fatal("did not open create form")
 	}
 	_, cmd := m.Update(key("ctrl+s"))
-	if cmd != nil || m.busy || !strings.Contains(m.create.err, "eula") {
-		t.Fatal("creation must require explicit EULA acceptance")
-	}
-	m.Update(key("space"))
-	_, cmd = m.Update(key("ctrl+s"))
 	if cmd == nil || !m.busy || m.screen != createScreen {
 		t.Fatal("creation should run asynchronously on this screen")
 	}
@@ -85,6 +80,9 @@ func TestCreateFromSingleForm(t *testing.T) {
 	if err != nil || len(rows) != 1 {
 		t.Fatal(rows, err)
 	}
+	if !rows[0].Spec.Network.LAN || !rows[0].Spec.EULA {
+		t.Fatal("creation must enable LAN access and accept the EULA automatically")
+	}
 }
 
 func TestFailedCreateCanRetryWithoutDuplicate(t *testing.T) {
@@ -94,8 +92,6 @@ func TestFailedCreateCanRetryWithoutDuplicate(t *testing.T) {
 	s := m.service.(*corefake.Service)
 	s.Runtime.Failures["EnsureImage"] = fmt.Errorf("registry unavailable")
 	m.Update(key("n"))
-	m.Update(key("ctrl+s"))
-	m.Update(key("space"))
 	_, cmd := m.Update(key("ctrl+s"))
 	m.Update(cmd())
 	if m.screen != createScreen || m.create.saved == nil || !strings.Contains(m.create.err, "registry unavailable") {

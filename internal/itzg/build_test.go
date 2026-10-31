@@ -21,6 +21,7 @@ func TestBuildGolden(t *testing.T) {
 			s.EULA = true
 			s.Network.Port = 25565
 			s.Network.Share = false
+			s.Network.LAN = false
 			switch name {
 			case "paper":
 				s.Loader = "PAPER"

@@ -63,7 +63,7 @@ type Record struct {
 }
 
 func Defaults() Server {
-	return Server{APIVersion: APIVersion, ID: ulid.Make().String(), Name: "My server", Loader: "VANILLA", Version: "1.21.1", Resources: Resources{HeapMiB: 2048, MemoryMiB: 3072}, Network: Network{Share: true}, Properties: Properties{Difficulty: "normal", MOTD: "A ContainerMC server"}, Restart: "unless-stopped"}
+	return Server{APIVersion: APIVersion, ID: ulid.Make().String(), Name: "My server", Loader: "VANILLA", Version: "1.21.1", Resources: Resources{HeapMiB: 2048, MemoryMiB: 3072}, Network: Network{LAN: true, Share: true}, Properties: Properties{Difficulty: "normal", MOTD: "A ContainerMC server"}, Restart: "unless-stopped", EULA: true}
 }
 
 type FieldError struct{ Field, Message string }

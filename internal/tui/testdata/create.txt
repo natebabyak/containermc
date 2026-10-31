@@ -11,9 +11,9 @@
   │  Minecraft version                                                       │  
   │  › 1.21.1                                                                │  
   │                                                                          │  
-  │  Vanilla · 2 GiB memory · automatic port · local play                    │  
+  │  Vanilla · 2 GiB memory · automatic port · LAN access                    │  
   │                                                                          │  
-  │    ○ I accept Minecraft's EULA                                           │  
+  │    ● I accept Minecraft's EULA                                           │  
   │    https://aka.ms/MinecraftEULA                                          │  
   │                                                                          │  
   │    Create server                                                         │  

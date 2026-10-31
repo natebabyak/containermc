@@ -16,7 +16,8 @@ protect mutations; SQLite uniqueness protects port reservations.
 
 The UI has a server list, detail, console, connection checks, delete confirmation
 and a single create form built from Bubbles text inputs. Creation defaults to
-Vanilla with a 2 GiB heap and automatic loopback port. EULA acceptance is explicit.
+Vanilla with a 2 GiB heap, an automatic port bound to all interfaces for LAN
+access, and EULA acceptance enabled by default in the create form.
 Errors keep the form open. A retry updates/applies the saved server identity and
 reserved port rather than creating duplicates. Settings-file scaffolding and
 multi-page forms are intentionally absent from the current flow.

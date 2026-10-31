@@ -8,7 +8,7 @@ import (
 	"containermc/internal/spec"
 )
 
-// Creation is one form. Everything beyond name, version and EULA uses defaults.
+// Creation is one form. LAN access and EULA acceptance are enabled by default.
 type createForm struct {
 	inputs   []textinput.Model
 	focus    int
@@ -20,7 +20,7 @@ type createForm struct {
 
 func newCreateForm() *createForm {
 	s := spec.Defaults()
-	f := &createForm{seed: s, inputs: make([]textinput.Model, 2)}
+	f := &createForm{seed: s, accepted: s.EULA, inputs: make([]textinput.Model, 2)}
 	for i, value := range []string{s.Name, s.Version} {
 		input := textinput.New()
 		input.SetStyles(inputStyles())
@@ -166,7 +166,7 @@ func (f *createForm) view() string {
 		}
 		b.WriteString(style.Render(label) + "\n" + f.inputs[i].View() + "\n\n")
 	}
-	b.WriteString(mutedStyle.Render("Vanilla · 2 GiB memory · automatic port · local play") + "\n\n")
+	b.WriteString(mutedStyle.Render("Vanilla · 2 GiB memory · automatic port · LAN access") + "\n\n")
 	checkbox := "○"
 	if f.accepted {
 		checkbox = "●"
